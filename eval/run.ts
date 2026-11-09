@@ -13,7 +13,15 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import type { Body } from "../dist/index.js";
-import { type Comparison, compare, type ItemScore, wer, wordErrors, words } from "./metrics.ts";
+import {
+  type Comparison,
+  compare,
+  type ItemScore,
+  sameTranscripts,
+  wer,
+  wordErrors,
+  words,
+} from "./metrics.ts";
 import type { RenderJob } from "./render-worker.ts";
 
 /** Bump when scoring or the corpus's meaning changes: reports of different versions never compare. */
@@ -199,6 +207,8 @@ const report: Report = {
   dev: {},
 };
 
+// Kept in memory only, to check the recognizers really are two.
+const heardBy: Record<string, Record<string, string>> = {};
 for (const backend of backends) {
   const transcripts = await transcribe(backend, manifest, join(out, `${backend}.transcripts.json`));
   const scored = selected.flatMap((sentence) =>
@@ -236,6 +246,13 @@ for (const backend of backends) {
     .map(({ id, body, text, heard, errors }) => ({ id, body, text, heard, errors }));
   // The raw transcripts include the held-out sentences: only the scores may survive the run.
   await Bun.file(join(out, `${backend}.transcripts.json`)).delete();
+  heardBy[backend] = transcripts;
+}
+const twins = sameTranscripts(heardBy);
+if (twins) {
+  throw new Error(
+    `${twins.join(" and ")} heard the same text in every clip: one output was read twice, no report`,
+  );
 }
 
 await Bun.write(join(out, "report.json"), `${JSON.stringify(report, null, 1)}\n`);

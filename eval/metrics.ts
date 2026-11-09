@@ -99,3 +99,26 @@ export function compare(before: readonly ItemScore[], after: readonly ItemScore[
     verdict: high < 0 ? "better" : low > 0 ? "worse" : "no clear change",
   };
 }
+
+/**
+ * The first two recognizers that heard the same text in every clip. Independent models disagree
+ * on some of any few dozen synthesized sentences (12 of 240 dev clips agreed in a sound run), so
+ * a full match means one recognizer's output was read twice. A run of 2026-11-09 did that,
+ * reported Whisper with Parakeet's numbers, and rejected a real gain.
+ */
+export function sameTranscripts(
+  heard: Readonly<Record<string, Readonly<Record<string, string>>>>,
+  minimum = 20,
+): [string, string] | undefined {
+  const backends = Object.keys(heard);
+  for (const [i, a] of backends.entries()) {
+    for (const b of backends.slice(i + 1)) {
+      const first = heard[a] ?? {};
+      const second = heard[b] ?? {};
+      const keys = Object.keys(first);
+      if (keys.length < minimum || keys.length !== Object.keys(second).length) continue;
+      if (keys.every((key) => second[key] === first[key])) return [a, b];
+    }
+  }
+  return undefined;
+}
