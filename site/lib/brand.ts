@@ -5,14 +5,15 @@ const production = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 export const BRAND = {
   name: "intone",
   origin: production ? `https://${production}` : "http://localhost:3000",
-  title: "intone: a voice with a throat",
+  title: "intone: a voice you can direct",
   description:
-    "Text to speech that simulates a human airway in your browser. No model weights, no server, first sound in milliseconds.",
+    "Speech that runs in the page, starts in milliseconds and does what your code says, down to the syllable. Powered by CHIMERA.",
   keywords: [
     "text to speech",
     "speech synthesis",
+    "low latency",
     "physical modeling",
-    "vocal tract",
+    "CHIMERA",
     "WebAssembly",
     "singing synthesis",
     "browser TTS",
