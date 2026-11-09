@@ -4,6 +4,7 @@ import { play, unlockAudio } from "./player.js";
 const real = {
   navigator: globalThis.navigator,
   AudioContext: globalThis.AudioContext,
+  AudioWorkletNode: globalThis.AudioWorkletNode,
   Audio: globalThis.Audio,
 };
 const browser = (value: object) =>
@@ -11,7 +12,11 @@ const browser = (value: object) =>
 
 afterEach(() => {
   browser(real.navigator);
-  Object.assign(globalThis, { AudioContext: real.AudioContext, Audio: real.Audio });
+  Object.assign(globalThis, {
+    AudioContext: real.AudioContext,
+    AudioWorkletNode: real.AudioWorkletNode,
+    Audio: real.Audio,
+  });
 });
 
 function context(state: string) {
@@ -110,5 +115,48 @@ describe("play", () => {
     play([], 48_000, { context: fake as unknown as BaseAudioContext });
     expect(fake.resumed).toBe(1);
     expect((navigator as unknown as { audioSession: { type: string } }).audioSession.type).toBe("playback");
+  });
+
+  test("settles queued and rejects done when the worklet cannot load, rather than hanging", async () => {
+    browser({});
+    class FakeContext {
+      state = "running";
+      audioWorklet = { addModule: () => Promise.reject(new Error("no worklet here")) };
+      async resume() {}
+    }
+    Object.assign(globalThis, { AudioContext: FakeContext });
+    const playback = play([], 48_000, { context: new FakeContext() as unknown as BaseAudioContext });
+    await playback.queued;
+    await expect(playback.done).rejects.toThrow("no worklet here");
+  });
+
+  test("ends when the caller closes its own context mid-stream, though the worklet never says so", async () => {
+    browser({});
+    class FakeContext extends EventTarget {
+      state = "running";
+      currentTime = 0;
+      destination = {};
+      audioWorklet = { addModule: async () => {} };
+      async resume() {}
+    }
+    const posted: unknown[] = [];
+    class FakeNode {
+      port = { postMessage: (message: unknown) => posted.push(message), onmessage: null };
+      connect() {}
+      disconnect() {
+        throw new DOMException("the context is closed", "InvalidStateError");
+      }
+    }
+    Object.assign(globalThis, { AudioContext: FakeContext, AudioWorkletNode: FakeNode });
+    const context = new FakeContext();
+    const playback = play([new Float32Array(128)], 48_000, {
+      context: context as unknown as BaseAudioContext,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    context.state = "closed";
+    context.dispatchEvent(new Event("statechange"));
+    expect(await playback.done).toEqual({ underruns: 0 });
+    await playback.queued;
+    expect(posted).toContain("stop");
   });
 });

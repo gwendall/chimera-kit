@@ -140,25 +140,15 @@ function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?:
     markDone = resolve;
   });
 
-  // `done`'s only other source is the AudioWorklet's own "done" message, posted from inside
-  // `process()` (see PROCESSOR below) -- which the browser stops calling the moment the context
-  // it runs on closes. A caller-owned context closed directly (not through `stop()`) therefore
-  // never posts it: `done` would hang forever, found live by e2e/scenarios/reliability.ts's
-  // "context closed mid-stream" case (confirmed: still pending after 140s, not just slow). Treat
-  // an external close the same as `stop()` and settle both promises ourselves; the real underrun
-  // count is unknowable once the audio thread has stopped running, so this reports 0.
+  // The worklet posts "done" from `process()`, which a closed context no longer calls: a caller
+  // closing its own context mid-stream would leave `done` pending forever. Such a close is a
+  // `stop()`; the underruns are unknowable once the audio thread has stopped, so it reports 0.
+  // (The `addEventListener` check spares a caller's partial context double.)
   let onContextClosed: (() => void) | undefined;
-  // `instanceof AudioContext` alone isn't enough: a caller-supplied `options.context` only has to
-  // satisfy BaseAudioContext, and a test double can pass `instanceof` (by swapping the global
-  // AudioContext it's checked against) without implementing EventTarget at all -- found live by
-  // player.test.ts's "wakes the context ... while still inside the tap" case, which crashed with
-  // "context.addEventListener is not a function" once this guard was added. Real AudioContexts
-  // always have it; this just stops a partial double from crashing a caller that never asked for
-  // the new behavior.
   if (!owned && context instanceof AudioContext && typeof context.addEventListener === "function") {
     onContextClosed = () => {
       if (context.state !== "closed") return;
-      stopped = true;
+      stop();
       markQueued();
       markDone({ underruns: 0 });
     };
@@ -167,10 +157,8 @@ function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?:
 
   const run = async (): Promise<PlaybackEnd> => {
     try {
-      // `addProcessor` and the node below can both reject or throw (no AudioWorklet support, a
-      // strict CSP blocking the blob: URL it loads through). Everything that can fail is inside
-      // this try, so `queued` always settles in `finally` instead of hanging forever while `done`
-      // rejects on its own: a caller awaiting either promise gets a clear outcome, never a stall.
+      // Loading the processor can fail (no AudioWorklet, a CSP refusing blob: URLs): inside the
+      // try, `queued` still settles in `finally` and `done` rejects, so neither hangs.
       await addProcessor(context);
       if (context instanceof AudioContext && context.state !== "running") void context.resume();
       const player = new AudioWorkletNode(context, "intone-player", {
@@ -189,13 +177,10 @@ function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?:
       return await finished;
     } finally {
       markQueued();
-      // A context closed externally (the case onContextClosed exists for) also makes
-      // disconnect() throw InvalidStateError; nothing is listening on the audio thread by then
-      // either way, so this is a safe no-op in that case.
       try {
         node?.disconnect();
       } catch {
-        // already closed
+        // A closed context's node throws InvalidStateError here, with nothing left to disconnect.
       }
       options.signal?.removeEventListener("abort", stop);
       if (onContextClosed) context.removeEventListener("statechange", onContextClosed);
