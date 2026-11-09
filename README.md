@@ -215,7 +215,7 @@ control is macOS `say`, which shows what a clear voice scores on the same test.
 
 |                                 | Parakeet TDT 0.6b v3 | Whisper large-v3-turbo |
 | ------------------------------- | -------------------- | ---------------------- |
-| intone                          | 46.9 %               | 26.5 %                 |
+| intone                          | 42.8 %               | 23.7 %                 |
 | Control (macOS `say`, Samantha) | 2.3 %                | 2.6 %                  |
 
 It is still hard to understand, and improving that is the current work. See
@@ -224,7 +224,9 @@ It is still hard to understand, and improving that is the current work. See
 ## How it stays in step with upstream
 
 The engine is [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth) by Jameson Hodge, a
-physical-modeling vocal synthesizer, kept unmodified in `crates/chimera` as a git subtree.
+physical-modeling vocal synthesizer, kept in `crates/chimera` as a git subtree. The few changes it
+carries here, each measured and meant for upstream, are listed in
+[docs/upstream-patches.md](docs/upstream-patches.md).
 `bun run sync-upstream` merges new upstream work in. Everything specific to this package lives in
 `crates/intone-chimera` and `src/`.
 

@@ -1,57 +1,57 @@
 {
  "judge": 1,
  "corpus": "baea45dc57dd8f18",
- "commit": "0cd50ff",
- "dirty": true,
+ "commit": "e71688e",
+ "dirty": false,
  "engine": "07594761516e79d4977e7276866c22ecdfb09f9f",
  "voice": "chimera",
  "wer": {
   "parakeet": {
    "dev": {
-    "all": 46.22,
-    "female": 42.5,
-    "harvard": 42.24,
-    "harvard/female": 40.09,
-    "harvard/male": 44.4,
-    "male": 49.94,
-    "sus": 50.59,
-    "sus/female": 45.15,
-    "sus/male": 56.03
+    "all": 42.62,
+    "female": 40.14,
+    "harvard": 40.52,
+    "harvard/female": 39.87,
+    "harvard/male": 41.16,
+    "male": 45.1,
+    "sus": 44.92,
+    "sus/female": 40.43,
+    "sus/male": 49.41
    },
    "held": {
-    "all": 46.94,
-    "female": 43.56,
-    "harvard": 47.21,
-    "harvard/female": 44.91,
-    "harvard/male": 49.5,
-    "male": 50.32,
-    "sus": 46.64,
-    "sus/female": 42,
-    "sus/male": 51.28
+    "all": 42.81,
+    "female": 41.52,
+    "harvard": 42.81,
+    "harvard/female": 41.32,
+    "harvard/male": 44.31,
+    "male": 44.1,
+    "sus": 42.81,
+    "sus/female": 41.76,
+    "sus/male": 43.85
    }
   },
   "whisper": {
    "dev": {
-    "all": 26.38,
-    "female": 28.52,
-    "harvard": 26.29,
-    "harvard/female": 29.53,
-    "harvard/male": 23.06,
-    "male": 24.24,
-    "sus": 26.48,
-    "sus/female": 27.42,
-    "sus/male": 25.53
+    "all": 22.83,
+    "female": 26.16,
+    "harvard": 22.41,
+    "harvard/female": 26.72,
+    "harvard/male": 18.1,
+    "male": 19.5,
+    "sus": 23.29,
+    "sus/female": 25.53,
+    "sus/male": 21.04
    },
    "held": {
-    "all": 26.5,
-    "female": 30.79,
-    "harvard": 26.95,
-    "harvard/female": 31.34,
-    "harvard/male": 22.55,
-    "male": 22.21,
-    "sus": 25.99,
-    "sus/female": 30.16,
-    "sus/male": 21.81
+    "all": 23.71,
+    "female": 27.25,
+    "harvard": 23.25,
+    "harvard/female": 26.35,
+    "harvard/male": 20.16,
+    "male": 20.17,
+    "sus": 24.25,
+    "sus/female": 28.31,
+    "sus/male": 20.19
    }
   }
  },
@@ -63,7 +63,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 5,
+    "errors": 4,
     "words": 8
    },
    {
@@ -72,7 +72,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 5,
+    "errors": 4,
     "words": 8
    },
    {
@@ -99,7 +99,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 9
    },
    {
@@ -153,7 +153,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 5,
+    "errors": 1,
     "words": 7
    },
    {
@@ -162,7 +162,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -171,7 +171,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 3,
     "words": 8
    },
    {
@@ -180,7 +180,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 1,
+    "errors": 2,
     "words": 8
    },
    {
@@ -189,7 +189,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 7,
+    "errors": 6,
     "words": 8
    },
    {
@@ -207,7 +207,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -243,7 +243,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 8
    },
    {
@@ -252,7 +252,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 1,
     "words": 8
    },
    {
@@ -279,7 +279,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 10
    },
    {
@@ -288,7 +288,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 3,
     "words": 10
    },
    {
@@ -297,7 +297,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 7
    },
    {
@@ -333,7 +333,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 6,
+    "errors": 5,
     "words": 9
    },
    {
@@ -342,7 +342,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 6,
+    "errors": 7,
     "words": 9
    },
    {
@@ -360,7 +360,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 5,
     "words": 6
    },
    {
@@ -405,7 +405,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 5,
     "words": 8
    },
    {
@@ -441,7 +441,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 1,
     "words": 9
    },
    {
@@ -459,7 +459,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 6,
+    "errors": 5,
     "words": 10
    },
    {
@@ -468,7 +468,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 6,
+    "errors": 5,
     "words": 10
    },
    {
@@ -477,7 +477,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 5,
+    "errors": 7,
     "words": 8
    },
    {
@@ -486,7 +486,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 5,
     "words": 8
    },
    {
@@ -504,7 +504,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 0,
+    "errors": 1,
     "words": 9
    },
    {
@@ -531,7 +531,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 5,
     "words": 7
    },
    {
@@ -540,7 +540,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 5,
     "words": 7
    },
    {
@@ -567,7 +567,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 8
    },
    {
@@ -576,7 +576,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 5,
+    "errors": 4,
     "words": 8
    },
    {
@@ -594,7 +594,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 6
    },
    {
@@ -603,7 +603,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -693,7 +693,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 6,
     "words": 8
    },
    {
@@ -756,7 +756,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 3,
     "words": 8
    },
    {
@@ -810,7 +810,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 9
    },
    {
@@ -891,7 +891,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 1,
     "words": 9
    },
    {
@@ -900,7 +900,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 0,
     "words": 9
    },
    {
@@ -909,7 +909,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 5,
+    "errors": 4,
     "words": 7
    },
    {
@@ -918,7 +918,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 6,
+    "errors": 4,
     "words": 7
    },
    {
@@ -1017,7 +1017,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 3,
     "words": 9
    },
    {
@@ -1026,7 +1026,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 0,
+    "errors": 1,
     "words": 9
    },
    {
@@ -1035,7 +1035,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 7,
+    "errors": 5,
     "words": 9
    },
    {
@@ -1044,7 +1044,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 7,
+    "errors": 6,
     "words": 9
    },
    {
@@ -1053,7 +1053,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -1134,7 +1134,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 4,
     "words": 8
    },
    {
@@ -1143,7 +1143,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 8,
     "words": 8
    },
    {
@@ -1152,7 +1152,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 6,
+    "errors": 4,
     "words": 8
    },
    {
@@ -1224,7 +1224,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 6,
+    "errors": 7,
     "words": 7
    },
    {
@@ -1233,7 +1233,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 0,
+    "errors": 1,
     "words": 10
    },
    {
@@ -1287,7 +1287,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 1,
+    "errors": 2,
     "words": 9
    },
    {
@@ -1296,7 +1296,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 2,
     "words": 9
    },
    {
@@ -1314,7 +1314,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 5,
+    "errors": 6,
     "words": 7
    },
    {
@@ -1368,7 +1368,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 9
    },
    {
@@ -1377,7 +1377,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 11
    },
    {
@@ -1386,7 +1386,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 1,
     "words": 11
    },
    {
@@ -1395,7 +1395,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 2,
     "words": 8
    },
    {
@@ -1404,7 +1404,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 7,
+    "errors": 3,
     "words": 8
    },
    {
@@ -1413,7 +1413,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 4,
     "words": 7
    },
    {
@@ -1440,7 +1440,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 0,
     "words": 7
    },
    {
@@ -1467,7 +1467,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 1,
     "words": 9
    },
    {
@@ -1476,7 +1476,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 9
    },
    {
@@ -1494,7 +1494,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 5,
+    "errors": 4,
     "words": 9
    },
    {
@@ -1512,7 +1512,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 5,
+    "errors": 3,
     "words": 9
    },
    {
@@ -1539,7 +1539,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 8,
+    "errors": 6,
     "words": 10
    },
    {
@@ -1548,7 +1548,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 7,
+    "errors": 2,
     "words": 10
    },
    {
@@ -1575,7 +1575,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 9
    },
    {
@@ -1584,7 +1584,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 5,
+    "errors": 4,
     "words": 9
    },
    {
@@ -1602,7 +1602,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 11
    },
    {
@@ -1647,7 +1647,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 4,
     "words": 6
    },
    {
@@ -1656,7 +1656,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 6,
+    "errors": 3,
     "words": 6
    },
    {
@@ -1665,7 +1665,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 6,
+    "errors": 4,
     "words": 7
    },
    {
@@ -1674,7 +1674,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 4,
     "words": 7
    },
    {
@@ -1719,7 +1719,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 6,
+    "errors": 2,
     "words": 9
    },
    {
@@ -1728,7 +1728,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 6,
+    "errors": 4,
     "words": 9
    },
    {
@@ -1755,7 +1755,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 1,
     "words": 8
    },
    {
@@ -1845,7 +1845,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 7,
+    "errors": 3,
     "words": 8
    },
    {
@@ -1872,7 +1872,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 0,
     "words": 8
    },
    {
@@ -1890,7 +1890,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 2,
     "words": 6
    },
    {
@@ -1935,7 +1935,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 7,
+    "errors": 6,
     "words": 8
    },
    {
@@ -1953,7 +1953,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 7,
+    "errors": 6,
     "words": 8
    },
    {
@@ -1962,7 +1962,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 6,
+    "errors": 7,
     "words": 8
    },
    {
@@ -1971,7 +1971,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 8
    },
    {
@@ -1980,7 +1980,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 2,
     "words": 8
    },
    {
@@ -2007,7 +2007,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 4,
     "words": 8
    },
    {
@@ -2016,7 +2016,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 6,
+    "errors": 8,
     "words": 8
    },
    {
@@ -2025,7 +2025,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 8,
     "words": 8
    },
    {
@@ -2034,7 +2034,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 3,
+    "errors": 8,
     "words": 8
    },
    {
@@ -2061,7 +2061,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 7,
+    "errors": 3,
     "words": 9
    },
    {
@@ -2070,7 +2070,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 7,
+    "errors": 4,
     "words": 9
    },
    {
@@ -2097,7 +2097,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 6,
+    "errors": 4,
     "words": 8
    },
    {
@@ -2151,7 +2151,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 6,
+    "errors": 5,
     "words": 9
    },
    {
@@ -2160,7 +2160,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 5,
     "words": 9
    },
    {
@@ -2169,7 +2169,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 3,
     "words": 9
    },
    {
@@ -2259,7 +2259,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 7,
+    "errors": 5,
     "words": 7
    },
    {
@@ -2268,7 +2268,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 6,
+    "errors": 3,
     "words": 7
    },
    {
@@ -2295,7 +2295,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 0,
     "words": 7
    },
    {
@@ -2340,7 +2340,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 8
    },
    {
@@ -2349,7 +2349,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 7,
+    "errors": 1,
     "words": 7
    },
    {
@@ -2358,7 +2358,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -2412,7 +2412,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 7,
+    "errors": 3,
     "words": 7
    },
    {
@@ -2457,7 +2457,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 5,
+    "errors": 3,
     "words": 8
    },
    {
@@ -2466,7 +2466,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 3,
     "words": 8
    },
    {
@@ -2475,7 +2475,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 4,
     "words": 7
    },
    {
@@ -2484,7 +2484,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 5,
+    "errors": 3,
     "words": 7
    },
    {
@@ -2511,7 +2511,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 3,
     "words": 7
    },
    {
@@ -2520,7 +2520,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -2547,7 +2547,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 8
    },
    {
@@ -2556,7 +2556,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 0,
+    "errors": 1,
     "words": 8
    },
    {
@@ -2583,7 +2583,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 5,
+    "errors": 4,
     "words": 7
    },
    {
@@ -2592,7 +2592,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -2646,7 +2646,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 5,
     "words": 7
    },
    {
@@ -2682,7 +2682,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 5,
+    "errors": 4,
     "words": 7
    },
    {
@@ -2691,7 +2691,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 1,
     "words": 7
    },
    {
@@ -2700,7 +2700,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -2709,7 +2709,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 7,
+    "errors": 5,
     "words": 7
    },
    {
@@ -2781,7 +2781,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 4,
     "words": 8
    },
    {
@@ -2790,7 +2790,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 4,
     "words": 8
    },
    {
@@ -2817,7 +2817,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -2826,7 +2826,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -2889,7 +2889,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -3042,7 +3042,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 7,
+    "errors": 4,
     "words": 7
    },
    {
@@ -3051,7 +3051,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 7,
+    "errors": 1,
     "words": 7
    },
    {
@@ -3060,7 +3060,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 1,
     "words": 7
    },
    {
@@ -3069,7 +3069,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 6,
+    "errors": 4,
     "words": 7
    },
    {
@@ -3078,7 +3078,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 6,
     "words": 7
    },
    {
@@ -3141,7 +3141,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -3204,7 +3204,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 8
    },
    {
@@ -3231,7 +3231,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 7,
+    "errors": 2,
     "words": 7
    },
    {
@@ -3267,7 +3267,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 4,
     "words": 7
    },
    {
@@ -3276,7 +3276,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -3339,7 +3339,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 5,
     "words": 8
    },
    {
@@ -3402,7 +3402,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 8
    },
    {
@@ -3447,7 +3447,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -3456,7 +3456,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -3465,7 +3465,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 0,
+    "errors": 2,
     "words": 8
    },
    {
@@ -3474,7 +3474,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 0,
+    "errors": 1,
     "words": 8
    },
    {
@@ -3483,7 +3483,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 1,
+    "errors": 2,
     "words": 8
    },
    {
@@ -3492,7 +3492,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 2,
     "words": 8
    },
    {
@@ -3519,7 +3519,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 7,
+    "errors": 2,
     "words": 7
    },
    {
@@ -3528,7 +3528,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -3573,7 +3573,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 7,
+    "errors": 1,
     "words": 7
    },
    {
@@ -3582,7 +3582,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 3,
     "words": 7
    },
    {
@@ -3591,7 +3591,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -3600,7 +3600,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 5,
+    "errors": 4,
     "words": 7
    },
    {
@@ -3654,7 +3654,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 6,
     "words": 7
    },
    {
@@ -3699,7 +3699,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 8
    },
    {
@@ -3726,7 +3726,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -3753,7 +3753,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 4,
     "words": 8
    },
    {
@@ -3771,7 +3771,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 7,
+    "errors": 3,
     "words": 7
    },
    {
@@ -3780,7 +3780,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 3,
     "words": 7
    },
    {
@@ -3789,7 +3789,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 8
    },
    {
@@ -3798,7 +3798,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 2,
     "words": 8
    },
    {
@@ -3825,7 +3825,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -3834,7 +3834,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 0,
+    "errors": 3,
     "words": 7
    },
    {
@@ -3852,7 +3852,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 5,
+    "errors": 3,
     "words": 7
    },
    {
@@ -3861,7 +3861,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -3870,7 +3870,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 6,
+    "errors": 3,
     "words": 7
    },
    {
@@ -3915,7 +3915,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -3933,7 +3933,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 7
    },
    {
@@ -4005,7 +4005,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -4014,7 +4014,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -4023,7 +4023,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -4032,7 +4032,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 4,
     "words": 7
    },
    {
@@ -4041,7 +4041,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 8
    },
    {
@@ -4059,7 +4059,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 1,
     "words": 7
    },
    {
@@ -4086,7 +4086,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -4113,7 +4113,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 7,
+    "errors": 4,
     "words": 7
    },
    {
@@ -4122,7 +4122,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 3,
+    "errors": 4,
     "words": 7
    },
    {
@@ -4185,7 +4185,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 4,
     "words": 7
    },
    {
@@ -4203,7 +4203,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -4212,7 +4212,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 6,
     "words": 7
    },
    {
@@ -4230,7 +4230,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 5,
+    "errors": 2,
     "words": 7
    },
    {
@@ -4275,7 +4275,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 4,
     "words": 7
    },
    {
@@ -4284,7 +4284,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 3,
     "words": 7
    },
    {
@@ -4293,7 +4293,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 6,
     "words": 7
    },
    {
@@ -4302,7 +4302,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 6,
+    "errors": 5,
     "words": 7
    },
    {
@@ -4311,7 +4311,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -4320,7 +4320,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 7,
+    "errors": 3,
     "words": 7
    },
    {
@@ -4347,7 +4347,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 7
    },
    {
@@ -4356,7 +4356,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 2,
     "words": 7
    },
    {
@@ -4385,7 +4385,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 5,
+    "errors": 4,
     "words": 8
    },
    {
@@ -4394,7 +4394,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 6,
+    "errors": 5,
     "words": 8
    },
    {
@@ -4475,7 +4475,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -4484,7 +4484,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -4511,7 +4511,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 8
    },
    {
@@ -4529,7 +4529,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -4565,7 +4565,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 8
    },
    {
@@ -4601,7 +4601,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 10
    },
    {
@@ -4673,7 +4673,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 5,
+    "errors": 3,
     "words": 6
    },
    {
@@ -4727,7 +4727,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 3,
     "words": 8
    },
    {
@@ -4736,7 +4736,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 5,
+    "errors": 2,
     "words": 8
    },
    {
@@ -4763,7 +4763,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 9
    },
    {
@@ -4772,7 +4772,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 1,
+    "errors": 0,
     "words": 9
    },
    {
@@ -4781,7 +4781,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 10
    },
    {
@@ -4790,7 +4790,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 5,
+    "errors": 3,
     "words": 10
    },
    {
@@ -4799,7 +4799,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 8
    },
    {
@@ -4808,7 +4808,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 0,
+    "errors": 4,
     "words": 8
    },
    {
@@ -4817,7 +4817,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 0,
     "words": 9
    },
    {
@@ -4826,7 +4826,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 9
    },
    {
@@ -4862,7 +4862,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 0,
+    "errors": 2,
     "words": 7
    },
    {
@@ -4871,7 +4871,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 6,
+    "errors": 5,
     "words": 8
    },
    {
@@ -4889,7 +4889,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 8
    },
    {
@@ -4898,7 +4898,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 0,
     "words": 8
    },
    {
@@ -4925,7 +4925,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 2,
     "words": 7
    },
    {
@@ -4934,7 +4934,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 1,
+    "errors": 2,
     "words": 7
    },
    {
@@ -4961,7 +4961,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 8
    },
    {
@@ -4970,7 +4970,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 8
    },
    {
@@ -5096,7 +5096,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 0,
     "words": 6
    },
    {
@@ -5123,7 +5123,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 9
    },
    {
@@ -5132,7 +5132,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 9
    },
    {
@@ -5213,7 +5213,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 9
    },
    {
@@ -5222,7 +5222,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 1,
+    "errors": 0,
     "words": 9
    },
    {
@@ -5240,7 +5240,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 7,
+    "errors": 6,
     "words": 7
    },
    {
@@ -5357,7 +5357,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 5,
+    "errors": 6,
     "words": 9
    },
    {
@@ -5366,7 +5366,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 5,
+    "errors": 6,
     "words": 9
    },
    {
@@ -5375,7 +5375,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 7
    },
    {
@@ -5384,7 +5384,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 8,
+    "errors": 7,
     "words": 7
    },
    {
@@ -5447,7 +5447,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 8
    },
    {
@@ -5456,7 +5456,7 @@
     "kind": "harvard",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 8
    },
    {
@@ -5537,7 +5537,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -5609,7 +5609,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 9
    },
    {
@@ -5627,7 +5627,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 6,
     "words": 7
    },
    {
@@ -5699,7 +5699,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 11
    },
    {
@@ -5708,7 +5708,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 11
    },
    {
@@ -5717,7 +5717,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 8
    },
    {
@@ -5726,7 +5726,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 5,
+    "errors": 1,
     "words": 8
    },
    {
@@ -5753,7 +5753,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 7
    },
    {
@@ -5762,7 +5762,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 0,
     "words": 7
    },
    {
@@ -5780,7 +5780,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 3,
     "words": 8
    },
    {
@@ -5807,7 +5807,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 9
    },
    {
@@ -5816,7 +5816,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 5,
+    "errors": 4,
     "words": 9
    },
    {
@@ -5834,7 +5834,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 9
    },
    {
@@ -5861,7 +5861,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 10
    },
    {
@@ -5906,7 +5906,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 0,
+    "errors": 1,
     "words": 9
    },
    {
@@ -5924,7 +5924,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 11
    },
    {
@@ -5969,7 +5969,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 4,
     "words": 6
    },
    {
@@ -5987,7 +5987,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -5996,7 +5996,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 0,
     "words": 7
    },
    {
@@ -6005,7 +6005,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 3,
     "words": 8
    },
    {
@@ -6041,7 +6041,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 0,
+    "errors": 2,
     "words": 9
    },
    {
@@ -6050,7 +6050,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 6,
     "words": 9
    },
    {
@@ -6068,7 +6068,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 2,
     "words": 9
    },
    {
@@ -6077,7 +6077,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 6,
+    "errors": 2,
     "words": 8
    },
    {
@@ -6086,7 +6086,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 5,
     "words": 8
    },
    {
@@ -6095,7 +6095,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 8
    },
    {
@@ -6104,7 +6104,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 2,
     "words": 8
    },
    {
@@ -6149,7 +6149,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 4,
     "words": 6
    },
    {
@@ -6176,7 +6176,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 7,
+    "errors": 4,
     "words": 8
    },
    {
@@ -6185,7 +6185,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 8
    },
    {
@@ -6194,7 +6194,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 3,
+    "errors": 1,
     "words": 8
    },
    {
@@ -6221,7 +6221,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 0,
+    "errors": 2,
     "words": 8
    },
    {
@@ -6230,7 +6230,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 3,
+    "errors": 1,
     "words": 8
    },
    {
@@ -6257,7 +6257,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 3,
     "words": 8
    },
    {
@@ -6275,7 +6275,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 8
    },
    {
@@ -6284,7 +6284,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 5,
+    "errors": 3,
     "words": 8
    },
    {
@@ -6293,7 +6293,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 1,
+    "errors": 2,
     "words": 8
    },
    {
@@ -6302,7 +6302,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 8
    },
    {
@@ -6329,7 +6329,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 4,
     "words": 8
    },
    {
@@ -6347,7 +6347,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 0,
+    "errors": 1,
     "words": 8
    },
    {
@@ -6383,7 +6383,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 9
    },
    {
@@ -6410,7 +6410,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 0,
     "words": 8
    },
    {
@@ -6473,7 +6473,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 4,
     "words": 9
    },
    {
@@ -6509,7 +6509,7 @@
     "kind": "harvard",
     "split": "held",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 9
    },
    {
@@ -6581,7 +6581,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 0,
     "words": 7
    },
    {
@@ -6590,7 +6590,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -6617,7 +6617,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 0,
+    "errors": 1,
     "words": 7
    },
    {
@@ -6626,7 +6626,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -6662,7 +6662,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 1,
+    "errors": 2,
     "words": 8
    },
    {
@@ -6671,7 +6671,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -6680,7 +6680,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -6734,7 +6734,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 4,
     "words": 7
    },
    {
@@ -6743,7 +6743,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 5,
     "words": 7
    },
    {
@@ -6797,7 +6797,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -6806,7 +6806,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 5,
+    "errors": 3,
     "words": 7
    },
    {
@@ -6833,7 +6833,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 0,
     "words": 7
    },
    {
@@ -6842,7 +6842,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 1,
     "words": 7
    },
    {
@@ -6869,7 +6869,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 8
    },
    {
@@ -6878,7 +6878,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 3,
     "words": 8
    },
    {
@@ -6887,7 +6887,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -6896,7 +6896,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -6914,7 +6914,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 1,
     "words": 7
    },
    {
@@ -6959,7 +6959,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -6968,7 +6968,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7004,7 +7004,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 1,
+    "errors": 3,
     "words": 7
    },
    {
@@ -7013,7 +7013,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 1,
     "words": 7
    },
    {
@@ -7031,7 +7031,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7139,7 +7139,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -7202,7 +7202,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7211,7 +7211,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7265,7 +7265,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 7
    },
    {
@@ -7337,7 +7337,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 2,
     "words": 8
    },
    {
@@ -7355,7 +7355,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7373,7 +7373,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7391,7 +7391,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7400,7 +7400,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7463,7 +7463,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7472,7 +7472,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 3,
+    "errors": 4,
     "words": 7
    },
    {
@@ -7499,7 +7499,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "male",
-    "errors": 1,
+    "errors": 2,
     "words": 8
    },
    {
@@ -7526,7 +7526,7 @@
     "kind": "sus",
     "split": "dev",
     "body": "female",
-    "errors": 2,
+    "errors": 3,
     "words": 8
    },
    {
@@ -7634,7 +7634,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 0,
     "words": 8
    },
    {
@@ -7724,7 +7724,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 6,
+    "errors": 2,
     "words": 8
    },
    {
@@ -7769,7 +7769,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 7,
     "words": 7
    },
    {
@@ -7778,7 +7778,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 5,
     "words": 7
    },
    {
@@ -7841,7 +7841,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7967,7 +7967,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -7976,7 +7976,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -8021,7 +8021,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 8
    },
    {
@@ -8039,7 +8039,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 3,
     "words": 7
    },
    {
@@ -8102,7 +8102,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 3,
     "words": 7
    },
    {
@@ -8111,7 +8111,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 0,
+    "errors": 3,
     "words": 8
    },
    {
@@ -8120,7 +8120,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 4,
     "words": 8
    },
    {
@@ -8156,7 +8156,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 1,
     "words": 7
    },
    {
@@ -8165,7 +8165,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 5,
+    "errors": 2,
     "words": 7
    },
    {
@@ -8174,7 +8174,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -8192,7 +8192,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 2,
     "words": 7
    },
    {
@@ -8237,7 +8237,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 2,
     "words": 7
    },
    {
@@ -8255,7 +8255,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 1,
+    "errors": 0,
     "words": 7
    },
    {
@@ -8264,7 +8264,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 0,
     "words": 7
    },
    {
@@ -8327,7 +8327,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -8345,7 +8345,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -8354,7 +8354,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -8399,7 +8399,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -8408,7 +8408,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 3,
+    "errors": 1,
     "words": 7
    },
    {
@@ -8435,7 +8435,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 3,
+    "errors": 2,
     "words": 7
    },
    {
@@ -8507,7 +8507,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -8525,7 +8525,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 1,
     "words": 7
    },
    {
@@ -8534,7 +8534,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 1,
+    "errors": 3,
     "words": 7
    },
    {
@@ -8615,7 +8615,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 4,
+    "errors": 3,
     "words": 7
    },
    {
@@ -8624,7 +8624,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 4,
     "words": 7
    },
    {
@@ -8642,7 +8642,7 @@
     "kind": "sus",
     "split": "held",
     "body": "female",
-    "errors": 2,
+    "errors": 0,
     "words": 7
    },
    {
@@ -8669,7 +8669,7 @@
     "kind": "sus",
     "split": "held",
     "body": "male",
-    "errors": 2,
+    "errors": 3,
     "words": 7
    },
    {
@@ -8707,15 +8707,15 @@
     "id": "harvard-01-01",
     "body": "male",
     "text": "The birch canoe slid on the smooth planks.",
-    "heard": "The bird cnoof in the smooth plans.",
-    "errors": 5
+    "heard": "The bird cnoof on the smooth length.",
+    "errors": 4
    },
    {
     "id": "harvard-01-01",
     "body": "female",
     "text": "The birch canoe slid on the smooth planks.",
-    "heard": "The bird snoof in the smooth lengths.",
-    "errors": 5
+    "heard": "The bird snow shit on the smooth lengths.",
+    "errors": 4
    },
    {
     "id": "harvard-01-02",
@@ -8735,8 +8735,8 @@
     "id": "harvard-01-03",
     "body": "male",
     "text": "It's easy to tell the depth of a well.",
-    "heard": "Which is to tell depth of the well.",
-    "errors": 4
+    "heard": "Which is to tell depth of a well.",
+    "errors": 3
    },
    {
     "id": "harvard-01-03",
@@ -8777,56 +8777,56 @@
     "id": "harvard-01-06",
     "body": "male",
     "text": "The juice of lemons makes fine punch.",
-    "heard": "The Drush Lemon Make and Punch.",
-    "errors": 5
+    "heard": "The juice of lemon makes fine punch.",
+    "errors": 1
    },
    {
     "id": "harvard-01-06",
     "body": "female",
     "text": "The juice of lemons makes fine punch.",
-    "heard": "The Josh Lemon makes hine punch.",
-    "errors": 4
+    "heard": "The juice of lemon makes hine punch.",
+    "errors": 2
    },
    {
     "id": "harvard-01-07",
     "body": "male",
     "text": "The box was thrown beside the parked truck.",
-    "heard": "The box was thrown beside the park truck.",
-    "errors": 1
+    "heard": "The backslash thrown beside the park truck.",
+    "errors": 3
    },
    {
     "id": "harvard-01-07",
     "body": "female",
     "text": "The box was thrown beside the parked truck.",
-    "heard": "The box was thrown beside the park truck.",
-    "errors": 1
+    "heard": "The box was home beside the park truck.",
+    "errors": 2
    },
    {
     "id": "harvard-01-08",
     "body": "male",
     "text": "The hogs were fed chopped corn and garbage.",
-    "heard": "The Hague Horn Barbage.",
-    "errors": 7
+    "heard": "The Hague Horn and Carbage.",
+    "errors": 6
    },
    {
     "id": "harvard-01-08",
     "body": "female",
     "text": "The hogs were fed chopped corn and garbage.",
-    "heard": "The hugs were fed up carn and garbage.",
+    "heard": "The hugs were fetch up corn and garbage.",
     "errors": 3
    },
    {
     "id": "harvard-01-09",
     "body": "male",
     "text": "Four hours of steady work faced us.",
-    "heard": "Four hours of dead work fish.",
-    "errors": 3
+    "heard": "Four hours of steady work fish.",
+    "errors": 2
    },
    {
     "id": "harvard-01-09",
     "body": "female",
     "text": "Four hours of steady work faced us.",
-    "heard": "Four hours of tell the work fish.",
+    "heard": "Four hours after the work fish.",
     "errors": 4
    },
    {
@@ -8847,15 +8847,15 @@
     "id": "harvard-02-01",
     "body": "male",
     "text": "The boy was there when the sun rose.",
-    "heard": "The boy was there when the side.",
-    "errors": 2
+    "heard": "The boy was there when the sun rose.",
+    "errors": 0
    },
    {
     "id": "harvard-02-01",
     "body": "female",
     "text": "The boy was there when the sun rose.",
-    "heard": "The boy was the wind of the sun old.",
-    "errors": 4
+    "heard": "The boy was there when the sun rules.",
+    "errors": 1
    },
    {
     "id": "harvard-02-02",
@@ -8875,22 +8875,22 @@
     "id": "harvard-02-03",
     "body": "male",
     "text": "The source of the huge river is the clear spring.",
-    "heard": "The short of the huge ray very clear spring.",
-    "errors": 4
+    "heard": "The shorts of the U Diver is the clear spring.",
+    "errors": 3
    },
    {
     "id": "harvard-02-03",
     "body": "female",
     "text": "The source of the huge river is the clear spring.",
-    "heard": "The short of the few river is the clear spring.",
-    "errors": 2
+    "heard": "The shores of the Few River is a clear spring.",
+    "errors": 3
    },
    {
     "id": "harvard-02-04",
     "body": "male",
     "text": "Kick the ball straight and follow through.",
-    "heard": "Kick the ball straight and hattle through.",
-    "errors": 1
+    "heard": "Kick the ball straight and follow through.",
+    "errors": 0
    },
    {
     "id": "harvard-02-04",
@@ -8917,15 +8917,15 @@
     "id": "harvard-02-06",
     "body": "male",
     "text": "A pot of tea helps to pass the evening.",
-    "heard": "The party helped to pass the name.",
-    "errors": 6
+    "heard": "A paddle help to pass the inning.",
+    "errors": 5
    },
    {
     "id": "harvard-02-06",
     "body": "female",
     "text": "A pot of tea helps to pass the evening.",
-    "heard": "The party helped to pass the inning.",
-    "errors": 6
+    "heard": "The paddle helped to patch the inning.",
+    "errors": 7
    },
    {
     "id": "harvard-02-07",
@@ -8938,8 +8938,8 @@
     "id": "harvard-02-07",
     "body": "female",
     "text": "Smoky fires lack flame and heat.",
-    "heard": "Smoke fire like flame and heat.",
-    "errors": 3
+    "heard": "Smoke fire like flam and hit.",
+    "errors": 5
    },
    {
     "id": "harvard-02-08",
@@ -8973,14 +8973,14 @@
     "id": "harvard-02-10",
     "body": "male",
     "text": "The girl at the booth sold fifty bonds.",
-    "heard": "The girl with the book shoulder fifty band.",
-    "errors": 4
+    "heard": "The girl had the books shoulder bad.",
+    "errors": 5
    },
    {
     "id": "harvard-02-10",
     "body": "female",
     "text": "The girl at the booth sold fifty bonds.",
-    "heard": "The girl at the books showed fifty band.",
+    "heard": "The girl at the bookstore at fifty bundle.",
     "errors": 3
    },
    {
@@ -9001,43 +9001,43 @@
     "id": "harvard-03-02",
     "body": "male",
     "text": "The fish twisted and turned on the bent hook.",
-    "heard": "The fish twist didn't turn into the bent hook.",
-    "errors": 4
+    "heard": "The fish twisted and turned down the bent hook.",
+    "errors": 1
    },
    {
     "id": "harvard-03-02",
     "body": "female",
     "text": "The fish twisted and turned on the bent hook.",
-    "heard": "The fish twisted and turned in the bent hook.",
+    "heard": "The fish twisted and turned down the bent hook.",
     "errors": 1
    },
    {
     "id": "harvard-03-03",
     "body": "male",
     "text": "Press the pants and sew a button on the vest.",
-    "heard": "Press the Punch Control button in the desk.",
-    "errors": 6
+    "heard": "Press the pen control button on the list.",
+    "errors": 5
    },
    {
     "id": "harvard-03-03",
     "body": "female",
     "text": "Press the pants and sew a button on the vest.",
-    "heard": "Press the pension shore button in the desk.",
-    "errors": 6
-   },
-   {
-    "id": "harvard-03-04",
-    "body": "male",
-    "text": "The swan dive was far short of perfect.",
-    "heard": "The slang die was hard hard of effect.",
+    "heard": "Press the pen control button on the list.",
     "errors": 5
    },
    {
     "id": "harvard-03-04",
+    "body": "male",
+    "text": "The swan dive was far short of perfect.",
+    "heard": "The Shlandi slash hard effect.",
+    "errors": 7
+   },
+   {
+    "id": "harvard-03-04",
     "body": "female",
     "text": "The swan dive was far short of perfect.",
-    "heard": "The Swan Dye was harsh hard of effect.",
-    "errors": 4
+    "heard": "The slandial was hard of effect.",
+    "errors": 5
    },
    {
     "id": "harvard-03-05",
@@ -9050,8 +9050,8 @@
     "id": "harvard-03-05",
     "body": "female",
     "text": "The beauty of the view stunned the young boy.",
-    "heard": "The beauty of the view stunned the young boy.",
-    "errors": 0
+    "heard": "The beauty of the view turned the young boy.",
+    "errors": 1
    },
    {
     "id": "harvard-03-06",
@@ -9071,43 +9071,43 @@
     "id": "harvard-03-07",
     "body": "male",
     "text": "Her purse was full of useless trash.",
-    "heard": "Her personal total of Ushish trash.",
-    "errors": 4
+    "heard": "Her personalized photo of Uh.",
+    "errors": 5
    },
    {
     "id": "harvard-03-07",
     "body": "female",
     "text": "Her purse was full of useless trash.",
-    "heard": "Her purse was full of Uish.",
-    "errors": 2
+    "heard": "Her personalized photo of Uh.",
+    "errors": 5
    },
    {
     "id": "harvard-03-08",
     "body": "male",
     "text": "The colt reared and threw the tall rider.",
-    "heard": "The call and through the color right here.",
+    "heard": "The call share than through the tallerizer.",
     "errors": 6
    },
    {
     "id": "harvard-03-08",
     "body": "female",
     "text": "The colt reared and threw the tall rider.",
-    "heard": "The call and through the taller.",
+    "heard": "The cool shirt and through the taller.",
     "errors": 5
    },
    {
     "id": "harvard-03-09",
     "body": "male",
     "text": "It snowed, rained, and hailed the same morning.",
-    "heard": "It snowed rained until the same morning.",
-    "errors": 2
+    "heard": "It snowed, rained, and hill the same morning.",
+    "errors": 1
    },
    {
     "id": "harvard-03-09",
     "body": "female",
     "text": "It snowed, rained, and hailed the same morning.",
-    "heard": "It no same morning.",
-    "errors": 5
+    "heard": "It's Node, Rain, and Taylor the same morning.",
+    "errors": 4
    },
    {
     "id": "harvard-03-10",
@@ -9120,15 +9120,15 @@
     "id": "harvard-03-10",
     "body": "female",
     "text": "Read verse out loud for pleasure.",
-    "heard": "Right loud for pleasure.",
-    "errors": 3
+    "heard": "Right out loud for pleasure.",
+    "errors": 2
    },
    {
     "id": "harvard-04-01",
     "body": "male",
     "text": "Hoist the load to your left shoulder.",
-    "heard": "How much to the shoulder to your left shoulder.",
-    "errors": 4
+    "heard": "How it's the load to your left shoulder.",
+    "errors": 2
    },
    {
     "id": "harvard-04-01",
@@ -9155,14 +9155,14 @@
     "id": "harvard-04-03",
     "body": "male",
     "text": "Note closely the size of the gas tank.",
-    "heard": "Not closely the size of the gas tank.",
+    "heard": "No closely the size of the gas tank.",
     "errors": 1
    },
    {
     "id": "harvard-04-03",
     "body": "female",
     "text": "Note closely the size of the gas tank.",
-    "heard": "Not crossy the size of the gas tank.",
+    "heard": "Not crossing the size of the gas tank.",
     "errors": 2
    },
    {
@@ -9197,14 +9197,14 @@
     "id": "harvard-04-06",
     "body": "male",
     "text": "The wrist was badly strained and hung limp.",
-    "heard": "The rest was badly stranded and hung limp.",
-    "errors": 2
+    "heard": "The rest class badge is string and tongue limp.",
+    "errors": 6
    },
    {
     "id": "harvard-04-06",
     "body": "female",
     "text": "The wrist was badly strained and hung limp.",
-    "heard": "The rest was beyond strand and tongue limp.",
+    "heard": "The rest was busy strength and tongue limp.",
     "errors": 4
    },
    {
@@ -9246,21 +9246,21 @@
     "id": "harvard-04-09",
     "body": "female",
     "text": "The meal was cooked before the bell rang.",
-    "heard": "The meal was cooked before the better end.",
-    "errors": 2
+    "heard": "The mealer was cooked before the better end.",
+    "errors": 3
    },
    {
     "id": "harvard-04-10",
     "body": "male",
     "text": "What joy there is in living.",
-    "heard": "What draw the reason you're leaving?",
+    "heard": "What do you think there is?",
     "errors": 5
    },
    {
     "id": "harvard-04-10",
     "body": "female",
     "text": "What joy there is in living.",
-    "heard": "Let's try there is new thing.",
+    "heard": "What do you know is living?",
     "errors": 4
    },
    {
@@ -9281,15 +9281,15 @@
     "id": "harvard-05-02",
     "body": "male",
     "text": "The ship was torn apart on the sharp reef.",
-    "heard": "The ship was torn apart in the sharp reef.",
+    "heard": "The ship was torn apart under the sharp reef.",
     "errors": 1
    },
    {
     "id": "harvard-05-02",
     "body": "female",
     "text": "The ship was torn apart on the sharp reef.",
-    "heard": "The ship was torn apart in the sharp leaf.",
-    "errors": 2
+    "heard": "The ship was torn apart under the sharp reef.",
+    "errors": 1
    },
    {
     "id": "harvard-05-03",
@@ -9351,29 +9351,29 @@
     "id": "harvard-05-07",
     "body": "male",
     "text": "The rope will bind the seven books at once.",
-    "heard": "The rope was bind the seven books launch.",
-    "errors": 3
+    "heard": "The rope will bind the seven books at launch.",
+    "errors": 1
    },
    {
     "id": "harvard-05-07",
     "body": "female",
     "text": "The rope will bind the seven books at once.",
-    "heard": "The rope will bind the seven books to launch.",
-    "errors": 2
+    "heard": "The rope will bind the seven books at once.",
+    "errors": 0
    },
    {
     "id": "harvard-05-08",
     "body": "male",
     "text": "Hop over the fence and plunge in.",
-    "heard": "Uh power the fans and blundering.",
-    "errors": 5
+    "heard": "Happen the fence and blunder.",
+    "errors": 4
    },
    {
     "id": "harvard-05-08",
     "body": "female",
     "text": "Hop over the fence and plunge in.",
-    "heard": "Uh poor the fension blunder.",
-    "errors": 6
+    "heard": "Hor the fence and plunger.",
+    "errors": 4
    },
    {
     "id": "harvard-05-09",
@@ -9449,42 +9449,42 @@
     "id": "harvard-06-04",
     "body": "male",
     "text": "The show was a flop from the very start.",
-    "heard": "The show was a flap from the very start.",
-    "errors": 1
+    "heard": "The shoal was flap from the very start.",
+    "errors": 3
    },
    {
     "id": "harvard-06-04",
     "body": "female",
     "text": "The show was a flop from the very start.",
-    "heard": "The show was a flop from the very start.",
-    "errors": 0
+    "heard": "The show as a flop from the very start.",
+    "errors": 1
    },
    {
     "id": "harvard-06-05",
     "body": "male",
     "text": "A saw is a tool used for making boards.",
-    "heard": "The shawty too for making bards.",
-    "errors": 7
+    "heard": "The shaw is too good for making boards.",
+    "errors": 5
    },
    {
     "id": "harvard-06-05",
     "body": "female",
     "text": "A saw is a tool used for making boards.",
-    "heard": "The side tour you for making bards.",
-    "errors": 7
+    "heard": "The shawty tour you for making boards.",
+    "errors": 6
    },
    {
     "id": "harvard-06-06",
     "body": "male",
     "text": "The wagon moved on well oiled wheels.",
-    "heard": "The wagon moves in Will Oil Wheels.",
-    "errors": 4
+    "heard": "The wagon moved on well oil wheel.",
+    "errors": 2
    },
    {
     "id": "harvard-06-06",
     "body": "female",
     "text": "The wagon moved on well oiled wheels.",
-    "heard": "The way can move and well oiled wheels.",
+    "heard": "The way can move on well oiled wheel.",
     "errors": 4
    },
    {
@@ -9512,7 +9512,7 @@
     "id": "harvard-06-08",
     "body": "female",
     "text": "A cup of sugar makes sweet fudge.",
-    "heard": "The cup of sugar makes sweet fat.",
+    "heard": "The cup of sugar makes sweet hard.",
     "errors": 2
    },
    {
@@ -9533,15 +9533,15 @@
     "id": "harvard-06-10",
     "body": "male",
     "text": "Both lost their lives in the raging storm.",
-    "heard": "Both lost their aging storm.",
+    "heard": "Both lost their egg and storm.",
     "errors": 4
    },
    {
     "id": "harvard-06-10",
     "body": "female",
     "text": "Both lost their lives in the raging storm.",
-    "heard": "Both lost their lives in their living storm.",
-    "errors": 2
+    "heard": "Both lost their living storm.",
+    "errors": 4
    },
    {
     "id": "sus-dev-001",
@@ -9575,15 +9575,15 @@
     "id": "sus-dev-003",
     "body": "male",
     "text": "Touch the kettle and the silver pillow.",
-    "heard": "How do the casual and the shell in your penal.",
-    "errors": 7
+    "heard": "Touch the casual and the shit on your pigle.",
+    "errors": 5
    },
    {
     "id": "sus-dev-003",
     "body": "female",
     "text": "Touch the kettle and the silver pillow.",
-    "heard": "Talk to the cadre and the shit or pitch.",
-    "errors": 6
+    "heard": "Touch the cudgel and the sheller pigle.",
+    "errors": 3
    },
    {
     "id": "sus-dev-004",
@@ -9603,8 +9603,8 @@
     "id": "sus-dev-005",
     "body": "male",
     "text": "Measure the bridge and the young rope.",
-    "heard": "Measure the bridge into the younger.",
-    "errors": 3
+    "heard": "Measure the bridge and the young rope.",
+    "errors": 0
    },
    {
     "id": "sus-dev-005",
@@ -9631,29 +9631,29 @@
     "id": "sus-dev-007",
     "body": "male",
     "text": "Where does the kitchen chase the shallow letter?",
-    "heard": "Where does the kitchen fix the schedule ledger?",
+    "heard": "Where does the kitchen fix the special ledger?",
     "errors": 3
    },
    {
     "id": "sus-dev-007",
     "body": "female",
     "text": "Where does the kitchen chase the shallow letter?",
-    "heard": "Where does the kitchen fix the schedule letter?",
-    "errors": 2
+    "heard": "Where does the kitchen chase the schedule letter?",
+    "errors": 1
    },
    {
     "id": "sus-dev-008",
     "body": "male",
     "text": "Lift the page and the smooth bottle.",
-    "heard": "",
-    "errors": 7
+    "heard": "Lift the pig and the smooth bottle.",
+    "errors": 1
    },
    {
     "id": "sus-dev-008",
     "body": "female",
     "text": "Lift the page and the smooth bottle.",
-    "heard": "Lift the pig into the smooth bottle.",
-    "errors": 2
+    "heard": "Lift the pig and the smooth bottle.",
+    "errors": 1
    },
    {
     "id": "sus-dev-009",
@@ -9694,21 +9694,21 @@
     "id": "sus-dev-011",
     "body": "female",
     "text": "Catch the voice and the huge table.",
-    "heard": "",
-    "errors": 7
+    "heard": "Take the light and the fuel table.",
+    "errors": 3
    },
    {
     "id": "sus-dev-012",
     "body": "male",
     "text": "The coin that the mirror followed slept.",
-    "heard": "The coin to the mirror file ship.",
+    "heard": "The coin that the mirror has on ship.",
     "errors": 3
    },
    {
     "id": "sus-dev-012",
     "body": "female",
     "text": "The coin that the mirror followed slept.",
-    "heard": "The coin to the mirror followed shipped.",
+    "heard": "The coin that the Mirror Hallow ship.",
     "errors": 2
    },
    {
@@ -9729,29 +9729,29 @@
     "id": "sus-dev-014",
     "body": "male",
     "text": "When does the wedge judge the young ladder?",
-    "heard": "Lenders the ledger the young ledger",
-    "errors": 5
+    "heard": "When does the ledger to the young ledger?",
+    "errors": 3
    },
    {
     "id": "sus-dev-014",
     "body": "female",
     "text": "When does the wedge judge the young ladder?",
-    "heard": "When does the word out of the young letter?",
-    "errors": 4
+    "heard": "When does the word the young letter?",
+    "errors": 3
    },
    {
     "id": "sus-dev-015",
     "body": "male",
     "text": "The kitchen that the truth tasted vanished.",
-    "heard": "The kitchen is the truth vanished.",
-    "errors": 2
+    "heard": "The kitchen led to the truth is.",
+    "errors": 4
    },
    {
     "id": "sus-dev-015",
     "body": "female",
     "text": "The kitchen that the truth tasted vanished.",
-    "heard": "The kitchen toast tastes delished.",
-    "errors": 5
+    "heard": "The kitchen let the toast taste vanished.",
+    "errors": 3
    },
    {
     "id": "sus-dev-016",
@@ -9771,15 +9771,15 @@
     "id": "sus-dev-017",
     "body": "male",
     "text": "The fish that the wheel washed wandered.",
-    "heard": "The fish the wheel washed landed.",
-    "errors": 2
+    "heard": "The fish that the leader plundered.",
+    "errors": 3
    },
    {
     "id": "sus-dev-017",
     "body": "female",
     "text": "The fish that the wheel washed wandered.",
-    "heard": "The fish is the wheel last blundered.",
-    "errors": 3
+    "heard": "The fish that the wheel last plundered.",
+    "errors": 2
    },
    {
     "id": "sus-dev-018",
@@ -9799,15 +9799,15 @@
     "id": "sus-dev-019",
     "body": "male",
     "text": "How does the engine measure the crooked month?",
-    "heard": "How does the engine measure the cook mouth?",
-    "errors": 2
+    "heard": "How does the engine measure the cooked month?",
+    "errors": 1
    },
    {
     "id": "sus-dev-019",
     "body": "female",
     "text": "How does the engine measure the crooked month?",
-    "heard": "How does the engine measure the crooked month?",
-    "errors": 0
+    "heard": "How does the engine measure the group month?",
+    "errors": 1
    },
    {
     "id": "sus-dev-020",
@@ -9820,22 +9820,22 @@
     "id": "sus-dev-020",
     "body": "female",
     "text": "Watch the monkey and the silver market.",
-    "heard": "The monk and the shill remark.",
+    "heard": "Large the monk and the shill remote.",
     "errors": 4
    },
    {
     "id": "sus-dev-021",
     "body": "male",
     "text": "The thumb that the ribbon measured wandered.",
-    "heard": "The thumbs there have been measured blundered.",
-    "errors": 5
+    "heard": "The thumb that there have been measured glandered.",
+    "errors": 4
    },
    {
     "id": "sus-dev-021",
     "body": "female",
     "text": "The thumb that the ribbon measured wandered.",
-    "heard": "The thumbs that the ribbon measure blundered.",
-    "errors": 3
+    "heard": "The thumb that the ribbon measure blundered.",
+    "errors": 2
    },
    {
     "id": "sus-dev-022",
@@ -9876,8 +9876,8 @@
     "id": "sus-dev-024",
     "body": "female",
     "text": "The nail that the wedge washed whispered.",
-    "heard": "The name is the legal last whispered.",
-    "errors": 4
+    "heard": "Little at the last whispered.",
+    "errors": 5
    },
    {
     "id": "sus-dev-025",
@@ -9904,35 +9904,35 @@
     "id": "sus-dev-026",
     "body": "female",
     "text": "The pencil that the goat fetched sneezed.",
-    "heard": "The penciled the coat that needed.",
-    "errors": 5
-   },
-   {
-    "id": "sus-dev-027",
-    "body": "male",
-    "text": "Push the basket and the smooth orange.",
-    "heard": "Push the best good into the smooth orange.",
-    "errors": 3
-   },
-   {
-    "id": "sus-dev-027",
-    "body": "female",
-    "text": "Push the basket and the smooth orange.",
-    "heard": "Push the best into the school arm.",
+    "heard": "The pencil at the coat that needed.",
     "errors": 4
    },
    {
+    "id": "sus-dev-027",
+    "body": "male",
+    "text": "Push the basket and the smooth orange.",
+    "heard": "Push the basket into the smooth orange.",
+    "errors": 1
+   },
+   {
+    "id": "sus-dev-027",
+    "body": "female",
+    "text": "Push the basket and the smooth orange.",
+    "heard": "Push the biscuit into the smooth orange.",
+    "errors": 2
+   },
+   {
     "id": "sus-dev-028",
     "body": "male",
     "text": "The judge that the fence touched whispered.",
-    "heard": "",
-    "errors": 7
+    "heard": "The draw that to the fence started to expand.",
+    "errors": 5
    },
    {
     "id": "sus-dev-028",
     "body": "female",
     "text": "The judge that the fence touched whispered.",
-    "heard": "The daughters to the fence start twished.",
+    "heard": "The door let the fence start twished.",
     "errors": 4
    },
    {
@@ -9981,15 +9981,15 @@
     "id": "sus-dev-032",
     "body": "male",
     "text": "How does the ship catch the huge cheese?",
-    "heard": "How does the ship tell to the huge keys?",
-    "errors": 3
+    "heard": "How does the ship head to the future?",
+    "errors": 4
    },
    {
     "id": "sus-dev-032",
     "body": "female",
     "text": "How does the ship catch the huge cheese?",
-    "heard": "How does the ship take the few tea?",
-    "errors": 3
+    "heard": "How does the ship tell to the few trees?",
+    "errors": 4
    },
    {
     "id": "sus-dev-033",
@@ -10009,15 +10009,15 @@
     "id": "sus-dev-034",
     "body": "male",
     "text": "Measure the kitchen and the brave badge.",
-    "heard": "Measure the kitchen into the bag.",
-    "errors": 3
+    "heard": "Measure the kitchen and the brain.",
+    "errors": 2
    },
    {
     "id": "sus-dev-034",
     "body": "female",
     "text": "Measure the kitchen and the brave badge.",
-    "heard": "Measure the kitchen into the main edge.",
-    "errors": 3
+    "heard": "Measure the kitchen and the brain edge.",
+    "errors": 2
    },
    {
     "id": "sus-dev-035",
@@ -10051,35 +10051,35 @@
     "id": "sus-dev-037",
     "body": "male",
     "text": "Push the stone and the shallow river.",
-    "heard": "Push the stone into the shadow river.",
+    "heard": "Push the stone and the shadow over.",
     "errors": 2
    },
    {
     "id": "sus-dev-037",
     "body": "female",
     "text": "Push the stone and the shallow river.",
-    "heard": "Push the stone into the shell over.",
+    "heard": "Push the stone into the shadow over.",
     "errors": 3
    },
    {
     "id": "sus-dev-038",
     "body": "male",
     "text": "The horse that the market broke slept.",
-    "heard": "The harshness to the mark broke ship.",
-    "errors": 4
+    "heard": "The heart that the mark broke ship.",
+    "errors": 3
    },
    {
     "id": "sus-dev-038",
     "body": "female",
     "text": "The horse that the market broke slept.",
-    "heard": "The horse of the march broke shipped.",
+    "heard": "The horse let the mark broke slope.",
     "errors": 3
    },
    {
     "id": "sus-dev-039",
     "body": "male",
     "text": "When does the fish paint the crooked tunnel?",
-    "heard": "When does the fish pin to the croak tunnel?",
+    "heard": "When does the fish pin to the group tunnel?",
     "errors": 3
    },
    {
@@ -10107,21 +10107,21 @@
     "id": "sus-dev-041",
     "body": "male",
     "text": "Break the sugar and the silver mirror.",
-    "heard": "Break the sugar into the shit in a mirror.",
+    "heard": "Break the sugar into the shell in a mirror.",
     "errors": 4
    },
    {
     "id": "sus-dev-041",
     "body": "female",
     "text": "Break the sugar and the silver mirror.",
-    "heard": "Break the sugar into the shimmer mirror.",
+    "heard": "Break the sugar into the shell mirror.",
     "errors": 2
    },
    {
     "id": "sus-dev-042",
     "body": "male",
     "text": "Why does the pillow taste the yellow basket?",
-    "heard": "Like does the pig little taste to the yellow basket.",
+    "heard": "Like does the case to the yellow back.",
     "errors": 4
    },
    {
@@ -10163,57 +10163,57 @@
     "id": "sus-dev-045",
     "body": "male",
     "text": "How does the river touch the sudden wedge?",
-    "heard": "How does the touch of the shutter ledge?",
+    "heard": "How does there even touch the shutter ledge?",
     "errors": 4
    },
    {
     "id": "sus-dev-045",
     "body": "female",
     "text": "How does the river touch the sudden wedge?",
-    "heard": "How does the even touch the shut in red?",
+    "heard": "How does it even touch the shot and?",
     "errors": 4
    },
    {
     "id": "sus-dev-046",
     "body": "male",
     "text": "The month that the hammer visited laughed.",
-    "heard": "The monster to the M left.",
+    "heard": "The money to the hand.",
     "errors": 5
    },
    {
     "id": "sus-dev-046",
     "body": "female",
     "text": "The month that the hammer visited laughed.",
-    "heard": "The monks to the hen where it is left.",
-    "errors": 7
-   },
-   {
-    "id": "sus-dev-047",
-    "body": "male",
-    "text": "The table that the village borrowed jumped.",
-    "heard": "",
-    "errors": 7
-   },
-   {
-    "id": "sus-dev-047",
-    "body": "female",
-    "text": "The table that the village borrowed jumped.",
-    "heard": "The table to the middle barrel jumped.",
-    "errors": 3
-   },
-   {
-    "id": "sus-dev-048",
-    "body": "male",
-    "text": "The page that the orange judged vanished.",
-    "heard": "The pigs do all the shit.",
-    "errors": 6
-   },
-   {
-    "id": "sus-dev-048",
-    "body": "female",
-    "text": "The page that the orange judged vanished.",
-    "heard": "The pages to the orange are diminished.",
+    "heard": "The month left the henmar is left.",
     "errors": 4
+   },
+   {
+    "id": "sus-dev-047",
+    "body": "male",
+    "text": "The table that the village borrowed jumped.",
+    "heard": "The table that the village barrel jumped.",
+    "errors": 1
+   },
+   {
+    "id": "sus-dev-047",
+    "body": "female",
+    "text": "The table that the village borrowed jumped.",
+    "heard": "The table that the village barrow jumped.",
+    "errors": 1
+   },
+   {
+    "id": "sus-dev-048",
+    "body": "male",
+    "text": "The page that the orange judged vanished.",
+    "heard": "The page that they are in it.",
+    "errors": 4
+   },
+   {
+    "id": "sus-dev-048",
+    "body": "female",
+    "text": "The page that the orange judged vanished.",
+    "heard": "The piglet are in red.",
+    "errors": 6
    },
    {
     "id": "sus-dev-049",
@@ -10261,14 +10261,14 @@
     "id": "sus-dev-052",
     "body": "male",
     "text": "The monkey that the mirror fetched fell.",
-    "heard": "The monkey to the mirror.",
-    "errors": 3
+    "heard": "The monkey let the mirror felt fell.",
+    "errors": 2
    },
    {
     "id": "sus-dev-052",
     "body": "female",
     "text": "The monkey that the mirror fetched fell.",
-    "heard": "The monkey to the mirror felt fell.",
+    "heard": "The monkey let the mirror felt fell.",
     "errors": 2
    },
    {
@@ -10310,8 +10310,8 @@
     "id": "sus-dev-055",
     "body": "female",
     "text": "How does the month break the smooth leaf?",
-    "heard": "How does the monk break the smoothie?",
-    "errors": 3
+    "heard": "How does the month break the smoothie?",
+    "errors": 2
    },
    {
     "id": "sus-dev-056",
@@ -10331,8 +10331,8 @@
     "id": "sus-dev-057",
     "body": "male",
     "text": "Carry the sugar and the thick river.",
-    "heard": "",
-    "errors": 7
+    "heard": "Carry the sugar into the thick gravy.",
+    "errors": 2
    },
    {
     "id": "sus-dev-057",
@@ -10359,15 +10359,15 @@
     "id": "sus-dev-059",
     "body": "male",
     "text": "Lift the fish and the weak shoe.",
-    "heard": "Lift the fish and the weak true.",
-    "errors": 1
+    "heard": "And the weak.",
+    "errors": 4
    },
    {
     "id": "sus-dev-059",
     "body": "female",
     "text": "Lift the fish and the weak shoe.",
-    "heard": "Lift the fish into the way through.",
-    "errors": 3
+    "heard": "Lift the fish and the weight full.",
+    "errors": 2
    },
    {
     "id": "sus-dev-060",
@@ -10389,15 +10389,15 @@
     "id": "harvard-01-01",
     "body": "male",
     "text": "The birch canoe slid on the smooth planks.",
-    "heard": "The bird canoves it in the smooth legs.",
-    "errors": 5
+    "heard": "The bird canoes it on the smooth legs.",
+    "errors": 4
    },
    {
     "id": "harvard-01-01",
     "body": "female",
     "text": "The birch canoe slid on the smooth planks.",
-    "heard": "The bird with no seed in the small planks.",
-    "errors": 6
+    "heard": "The bird with no slit on the small planks.",
+    "errors": 5
    },
    {
     "id": "harvard-01-02",
@@ -10459,15 +10459,15 @@
     "id": "harvard-01-06",
     "body": "male",
     "text": "The juice of lemons makes fine punch.",
-    "heard": "The juice of lemon makes a fine punch.",
-    "errors": 2
+    "heard": "The juice of lemon makes fine punch.",
+    "errors": 1
    },
    {
     "id": "harvard-01-06",
     "body": "female",
     "text": "The juice of lemons makes fine punch.",
-    "heard": "The Rousse of Lemon makes a fine punch.",
-    "errors": 3
+    "heard": "The drops of lemon makes fine punch.",
+    "errors": 2
    },
    {
     "id": "harvard-01-07",
@@ -10487,8 +10487,8 @@
     "id": "harvard-01-08",
     "body": "male",
     "text": "The hogs were fed chopped corn and garbage.",
-    "heard": "The hogs were fed chopped corn in garbage.",
-    "errors": 1
+    "heard": "The hogs were fed chopped corn and garbage.",
+    "errors": 0
    },
    {
     "id": "harvard-01-08",
@@ -10501,14 +10501,14 @@
     "id": "harvard-01-09",
     "body": "male",
     "text": "Four hours of steady work faced us.",
-    "heard": "Four hours of steady work fistous",
-    "errors": 2
+    "heard": "Four hours of steady work fixed us",
+    "errors": 1
    },
    {
     "id": "harvard-01-09",
     "body": "female",
     "text": "Four hours of steady work faced us.",
-    "heard": "Four hours of steady work, Fistos.",
+    "heard": "Four hours of steady work fistos",
     "errors": 2
    },
    {
@@ -10529,8 +10529,8 @@
     "id": "harvard-02-01",
     "body": "male",
     "text": "The boy was there when the sun rose.",
-    "heard": "The boy was there when the sun rolled.",
-    "errors": 1
+    "heard": "The boy was there when the sun rose.",
+    "errors": 0
    },
    {
     "id": "harvard-02-01",
@@ -10557,8 +10557,8 @@
     "id": "harvard-02-03",
     "body": "male",
     "text": "The source of the huge river is the clear spring.",
-    "heard": "The source of the fuel driver is the clear spring.",
-    "errors": 2
+    "heard": "The source of the huge river is the clear spring.",
+    "errors": 0
    },
    {
     "id": "harvard-02-03",
@@ -10599,28 +10599,28 @@
     "id": "harvard-02-06",
     "body": "male",
     "text": "A pot of tea helps to pass the evening.",
-    "heard": "A pilot he helped to pass the inning.",
+    "heard": "a part that he helped to pass the inning.",
     "errors": 5
    },
    {
     "id": "harvard-02-06",
     "body": "female",
     "text": "A pot of tea helps to pass the evening.",
-    "heard": "A parity help to pass learning.",
+    "heard": "A pilot to help to pass learning.",
     "errors": 6
    },
    {
     "id": "harvard-02-07",
     "body": "male",
     "text": "Smoky fires lack flame and heat.",
-    "heard": "Smokey fire like flamin' heat.",
-    "errors": 5
+    "heard": "Smoke fire like flame and heat.",
+    "errors": 3
    },
    {
     "id": "harvard-02-07",
     "body": "female",
     "text": "Smoky fires lack flame and heat.",
-    "heard": "Smoke the fire like flame and heat.",
+    "heard": "Smoke fire like flame and hit.",
     "errors": 4
    },
    {
@@ -10641,29 +10641,29 @@
     "id": "harvard-02-09",
     "body": "male",
     "text": "The salt breeze came across from the sea.",
-    "heard": "The salisbury's came across from the sea",
+    "heard": "The Sarsberries came across from the sea.",
     "errors": 2
    },
    {
     "id": "harvard-02-09",
     "body": "female",
     "text": "The salt breeze came across from the sea.",
-    "heard": "The sorberries came across from the sea",
+    "heard": "The sorbets came across from the sea",
     "errors": 2
    },
    {
     "id": "harvard-02-10",
     "body": "male",
     "text": "The girl at the booth sold fifty bonds.",
-    "heard": "The girl at the booth sold 50 pounds.",
-    "errors": 2
+    "heard": "The girl at the booth showed 50 pounds.",
+    "errors": 3
    },
    {
     "id": "harvard-02-10",
     "body": "female",
     "text": "The girl at the booth sold fifty bonds.",
-    "heard": "The girl is the book's shoulder 50 pounds.",
-    "errors": 5
+    "heard": "The girl at the booth sold 50 pounds.",
+    "errors": 2
    },
    {
     "id": "harvard-03-01",
@@ -10683,57 +10683,57 @@
     "id": "harvard-03-02",
     "body": "male",
     "text": "The fish twisted and turned on the bent hook.",
-    "heard": "The fish twisted and turned in the bent hook.",
-    "errors": 1
+    "heard": "The fish twisted and turned on the bent hook.",
+    "errors": 0
    },
    {
     "id": "harvard-03-02",
     "body": "female",
     "text": "The fish twisted and turned on the bent hook.",
-    "heard": "The fish twisted and turned in the bent hook.",
-    "errors": 1
+    "heard": "The fish twisted and turned on the bent hook.",
+    "errors": 0
    },
    {
     "id": "harvard-03-03",
     "body": "male",
     "text": "Press the pants and sew a button on the vest.",
-    "heard": "Press the pants and show the button in the vest.",
-    "errors": 3
-   },
-   {
-    "id": "harvard-03-03",
-    "body": "female",
-    "text": "Press the pants and sew a button on the vest.",
-    "heard": "Press the PENCH and SHOW button and the rest.",
-    "errors": 5
-   },
-   {
-    "id": "harvard-03-04",
-    "body": "male",
-    "text": "The swan dive was far short of perfect.",
-    "heard": "The swan dive was that sort of perfect.",
+    "heard": "Press the pants and show the button on the vest.",
     "errors": 2
    },
    {
-    "id": "harvard-03-04",
+    "id": "harvard-03-03",
     "body": "female",
+    "text": "Press the pants and sew a button on the vest.",
+    "heard": "Press the pants and show button on the wrist.",
+    "errors": 3
+   },
+   {
+    "id": "harvard-03-04",
+    "body": "male",
     "text": "The swan dive was far short of perfect.",
     "heard": "The swan dive was far short of perfect.",
     "errors": 0
    },
    {
+    "id": "harvard-03-04",
+    "body": "female",
+    "text": "The swan dive was far short of perfect.",
+    "heard": "This one day was far short of fate.",
+    "errors": 4
+   },
+   {
     "id": "harvard-03-05",
     "body": "male",
     "text": "The beauty of the view stunned the young boy.",
-    "heard": "The beauty is that you stunned the young boy.",
-    "errors": 3
+    "heard": "The beauty of the view stunned the young boy.",
+    "errors": 0
    },
    {
     "id": "harvard-03-05",
     "body": "female",
     "text": "The beauty of the view stunned the young boy.",
-    "heard": "The beauty is that you stunned the young boy.",
-    "errors": 3
+    "heard": "The beauty of the youth and the young boy.",
+    "errors": 2
    },
    {
     "id": "harvard-03-06",
@@ -10760,36 +10760,36 @@
     "id": "harvard-03-07",
     "body": "female",
     "text": "Her purse was full of useless trash.",
-    "heard": "Her purse was full of useless trash.",
+    "heard": "Her purse was full of your sister's.",
+    "errors": 2
+   },
+   {
+    "id": "harvard-03-08",
+    "body": "male",
+    "text": "The colt reared and threw the tall rider.",
+    "heard": "the courtyard and through the tolerator.",
+    "errors": 5
+   },
+   {
+    "id": "harvard-03-08",
+    "body": "female",
+    "text": "The colt reared and threw the tall rider.",
+    "heard": "the courtyard and throw the tower at her",
+    "errors": 6
+   },
+   {
+    "id": "harvard-03-09",
+    "body": "male",
+    "text": "It snowed, rained, and hailed the same morning.",
+    "heard": "It snowed, rained, and hailed the same morning.",
     "errors": 0
    },
    {
-    "id": "harvard-03-08",
-    "body": "male",
-    "text": "The colt reared and threw the tall rider.",
-    "heard": "The court written through the tolerizer.",
-    "errors": 6
-   },
-   {
-    "id": "harvard-03-08",
-    "body": "female",
-    "text": "The colt reared and threw the tall rider.",
-    "heard": "The court heard and throw the toddler at her.",
-    "errors": 6
-   },
-   {
-    "id": "harvard-03-09",
-    "body": "male",
-    "text": "It snowed, rained, and hailed the same morning.",
-    "heard": "It snowed, rained, until the same morning.",
-    "errors": 2
-   },
-   {
     "id": "harvard-03-09",
     "body": "female",
     "text": "It snowed, rained, and hailed the same morning.",
-    "heard": "It snowed, rained, until the same morning.",
-    "errors": 2
+    "heard": "It snowed, rained, and hailed the same morning.",
+    "errors": 0
    },
    {
     "id": "harvard-03-10",
@@ -10802,22 +10802,22 @@
     "id": "harvard-03-10",
     "body": "female",
     "text": "Read verse out loud for pleasure.",
-    "heard": "Read us out loud for pleasure.",
+    "heard": "Read yours out loud for pleasure.",
     "errors": 1
    },
    {
     "id": "harvard-04-01",
     "body": "male",
     "text": "Hoist the load to your left shoulder.",
-    "heard": "hoist the lord to your left shoulder",
-    "errors": 1
+    "heard": "Heist the lord to your left shoulder.",
+    "errors": 2
    },
    {
     "id": "harvard-04-01",
     "body": "female",
     "text": "Hoist the load to your left shoulder.",
-    "heard": "hoist the road to your left shoulder",
-    "errors": 1
+    "heard": "Heist the road to your left shoulder.",
+    "errors": 2
    },
    {
     "id": "harvard-04-02",
@@ -10837,15 +10837,15 @@
     "id": "harvard-04-03",
     "body": "male",
     "text": "Note closely the size of the gas tank.",
-    "heard": "not closely the size of the gas tank.",
-    "errors": 1
+    "heard": "Note closely the size of the gas tank.",
+    "errors": 0
    },
    {
     "id": "harvard-04-03",
     "body": "female",
     "text": "Note closely the size of the gas tank.",
-    "heard": "not grossy the size of the gas tank.",
-    "errors": 2
+    "heard": "not closely the size of the gas tank.",
+    "errors": 1
    },
    {
     "id": "harvard-04-04",
@@ -10879,14 +10879,14 @@
     "id": "harvard-04-06",
     "body": "male",
     "text": "The wrist was badly strained and hung limp.",
-    "heard": "The rest was badly strained and hung limp.",
+    "heard": "The wrist was barely strained and hung limp.",
     "errors": 1
    },
    {
     "id": "harvard-04-06",
     "body": "female",
     "text": "The wrist was badly strained and hung limp.",
-    "heard": "The rest was barely strained and hung limp.",
+    "heard": "The rest was veggie strained and hung limp.",
     "errors": 2
    },
    {
@@ -10935,15 +10935,15 @@
     "id": "harvard-04-10",
     "body": "male",
     "text": "What joy there is in living.",
-    "heard": "What driver isn't living?",
+    "heard": "To a joy there isn't living.",
     "errors": 4
    },
    {
     "id": "harvard-04-10",
     "body": "female",
     "text": "What joy there is in living.",
-    "heard": "What driver isn't living?",
-    "errors": 4
+    "heard": "What joy there is in living?",
+    "errors": 0
    },
    {
     "id": "harvard-05-01",
@@ -10963,15 +10963,15 @@
     "id": "harvard-05-02",
     "body": "male",
     "text": "The ship was torn apart on the sharp reef.",
-    "heard": "The ship was torn apart in the sharp race",
-    "errors": 2
+    "heard": "The ship was torn apart on the sharp reef.",
+    "errors": 0
    },
    {
     "id": "harvard-05-02",
     "body": "female",
     "text": "The ship was torn apart on the sharp reef.",
-    "heard": "The ship was torn apart in the sharp race",
-    "errors": 2
+    "heard": "The ship was torn apart on the sharp earth",
+    "errors": 1
    },
    {
     "id": "harvard-05-03",
@@ -11033,15 +11033,15 @@
     "id": "harvard-05-07",
     "body": "male",
     "text": "The rope will bind the seven books at once.",
-    "heard": "The rope will bind the seven books once.",
-    "errors": 1
+    "heard": "The rope will bind the seven books at once.",
+    "errors": 0
    },
    {
     "id": "harvard-05-07",
     "body": "female",
     "text": "The rope will bind the seven books at once.",
-    "heard": "The rope will bind the seven books to once.",
-    "errors": 1
+    "heard": "The rope will bind the seven books at once.",
+    "errors": 0
    },
    {
     "id": "harvard-05-08",
@@ -11054,8 +11054,8 @@
     "id": "harvard-05-08",
     "body": "female",
     "text": "Hop over the fence and plunge in.",
-    "heard": "Ha, poor attention, Blondin.",
-    "errors": 7
+    "heard": "Ah poor thanks and blunden",
+    "errors": 6
    },
    {
     "id": "harvard-05-09",
@@ -11145,29 +11145,29 @@
     "id": "harvard-06-05",
     "body": "male",
     "text": "A saw is a tool used for making boards.",
-    "heard": "a size 2 root for making boards.",
-    "errors": 5
+    "heard": "a size 2 root for making bards.",
+    "errors": 6
    },
    {
     "id": "harvard-06-05",
     "body": "female",
     "text": "A saw is a tool used for making boards.",
-    "heard": "The saw is too rude for making bars.",
-    "errors": 5
+    "heard": "A size to rule for making bars.",
+    "errors": 6
    },
    {
     "id": "harvard-06-06",
     "body": "male",
     "text": "The wagon moved on well oiled wheels.",
-    "heard": "The weapon moved in well oiled wheels.",
-    "errors": 2
+    "heard": "The wagon moved on well oiled wheels.",
+    "errors": 0
    },
    {
     "id": "harvard-06-06",
     "body": "female",
     "text": "The wagon moved on well oiled wheels.",
-    "heard": "The way I can move the new oil wheel.",
-    "errors": 8
+    "heard": "The way I can move down well all the wheels.",
+    "errors": 7
    },
    {
     "id": "harvard-06-07",
@@ -11194,7 +11194,7 @@
     "id": "harvard-06-08",
     "body": "female",
     "text": "A cup of sugar makes sweet fudge.",
-    "heard": "A cup of sugar makes sweet fud.",
+    "heard": "A cup of sugar makes sweet food.",
     "errors": 1
    },
    {
@@ -11215,15 +11215,15 @@
     "id": "harvard-06-10",
     "body": "male",
     "text": "Both lost their lives in the raging storm.",
-    "heard": "Both lost their lives in their edging storm.",
-    "errors": 2
+    "heard": "Both lost their lives in the Reddink storm.",
+    "errors": 1
    },
    {
     "id": "harvard-06-10",
     "body": "female",
     "text": "Both lost their lives in the raging storm.",
-    "heard": "Both lost their lives in their egging storm.",
-    "errors": 2
+    "heard": "Both lost their lives in the Redding Storm.",
+    "errors": 1
    },
    {
     "id": "sus-dev-001",
@@ -11257,15 +11257,15 @@
     "id": "sus-dev-003",
     "body": "male",
     "text": "Touch the kettle and the silver pillow.",
-    "heard": "to touch the casual into the silver pillow.",
-    "errors": 3
+    "heard": "touch the kettle and the silver pillow",
+    "errors": 0
    },
    {
     "id": "sus-dev-003",
     "body": "female",
     "text": "Touch the kettle and the silver pillow.",
-    "heard": "to touch the cajons with the silver pigeon.",
-    "errors": 4
+    "heard": "Toss the cuddle and the silver pigeon",
+    "errors": 3
    },
    {
     "id": "sus-dev-004",
@@ -11285,15 +11285,15 @@
     "id": "sus-dev-005",
     "body": "male",
     "text": "Measure the bridge and the young rope.",
-    "heard": "Measure the bridge and the young rope.",
-    "errors": 0
+    "heard": "Measure the bread and the young rope.",
+    "errors": 1
    },
    {
     "id": "sus-dev-005",
     "body": "female",
     "text": "Measure the bridge and the young rope.",
-    "heard": "Measure the burden of the young rope.",
-    "errors": 2
+    "heard": "Measure the bird and the young rope.",
+    "errors": 1
    },
    {
     "id": "sus-dev-006",
@@ -11320,22 +11320,22 @@
     "id": "sus-dev-007",
     "body": "female",
     "text": "Where does the kitchen chase the shallow letter?",
-    "heard": "Where does the kitchen chase the shadow letter?",
-    "errors": 1
+    "heard": "Where does the kitchen chase the schedule later?",
+    "errors": 2
    },
    {
     "id": "sus-dev-008",
     "body": "male",
     "text": "Lift the page and the smooth bottle.",
-    "heard": "Lift the pig into the smooth bottle.",
-    "errors": 2
+    "heard": "Lift the pig and the smooth bottle.",
+    "errors": 1
    },
    {
     "id": "sus-dev-008",
     "body": "female",
     "text": "Lift the page and the smooth bottle.",
-    "heard": "Lift the pigeon to the small bottle.",
-    "errors": 3
+    "heard": "Lift the pig and the small bottle.",
+    "errors": 2
    },
    {
     "id": "sus-dev-009",
@@ -11369,22 +11369,22 @@
     "id": "sus-dev-011",
     "body": "male",
     "text": "Catch the voice and the huge table.",
-    "heard": "Cut the rice into the huge table.",
+    "heard": "Cut the rice and the food table",
     "errors": 3
    },
    {
     "id": "sus-dev-011",
     "body": "female",
     "text": "Catch the voice and the huge table.",
-    "heard": "Tell the rice and the whole table.",
-    "errors": 3
+    "heard": "Care to the rice and the food table.",
+    "errors": 4
    },
    {
     "id": "sus-dev-012",
     "body": "male",
     "text": "The coin that the mirror followed slept.",
-    "heard": "The kind that the mayor of Hazard slept.",
-    "errors": 4
+    "heard": "The kind that the mayor of Hazard slipped.",
+    "errors": 5
    },
    {
     "id": "sus-dev-012",
@@ -11411,29 +11411,29 @@
     "id": "sus-dev-014",
     "body": "male",
     "text": "When does the wedge judge the young ladder?",
-    "heard": "When does the wedge out of the young ladder?",
+    "heard": "When does the wedge utter the young letter?",
     "errors": 2
    },
    {
     "id": "sus-dev-014",
     "body": "female",
     "text": "When does the wedge judge the young ladder?",
-    "heard": "When does the wedge order the young letter?",
+    "heard": "When does the wedge run the young letter?",
     "errors": 2
    },
    {
     "id": "sus-dev-015",
     "body": "male",
     "text": "The kitchen that the truth tasted vanished.",
-    "heard": "The kitchen of the trolls just vanished.",
-    "errors": 3
+    "heard": "The kitchen that the drove stays vanished.",
+    "errors": 2
    },
    {
     "id": "sus-dev-015",
     "body": "female",
     "text": "The kitchen that the truth tasted vanished.",
-    "heard": "In the kitchen, the trolls taste danished.",
-    "errors": 5
+    "heard": "The kitchen let the trolls taste vanished.",
+    "errors": 3
    },
    {
     "id": "sus-dev-016",
@@ -11453,15 +11453,15 @@
     "id": "sus-dev-017",
     "body": "male",
     "text": "The fish that the wheel washed wandered.",
-    "heard": "The fish that the wheel rushed wondered.",
-    "errors": 2
+    "heard": "The fish that the wheel washed wandered.",
+    "errors": 0
    },
    {
     "id": "sus-dev-017",
     "body": "female",
     "text": "The fish that the wheel washed wandered.",
-    "heard": "The fish at the wheel last laundered.",
-    "errors": 3
+    "heard": "The fish that the wheel lost wandered.",
+    "errors": 1
    },
    {
     "id": "sus-dev-018",
@@ -11481,29 +11481,29 @@
     "id": "sus-dev-019",
     "body": "male",
     "text": "How does the engine measure the crooked month?",
-    "heard": "How does the engine measure the correct month?",
-    "errors": 1
+    "heard": "How does the engine measure the crooked month?",
+    "errors": 0
    },
    {
     "id": "sus-dev-019",
     "body": "female",
     "text": "How does the engine measure the crooked month?",
-    "heard": "How does the engine measure the crook in month?",
-    "errors": 2
+    "heard": "How does the engine measure the group in months?",
+    "errors": 3
    },
    {
     "id": "sus-dev-020",
     "body": "male",
     "text": "Watch the monkey and the silver market.",
-    "heard": "who are the monk in the silver market?",
-    "errors": 4
+    "heard": "Who are the monkey and the silver market?",
+    "errors": 2
    },
    {
     "id": "sus-dev-020",
     "body": "female",
     "text": "Watch the monkey and the silver market.",
-    "heard": "Who art the monk into the silver market?",
-    "errors": 4
+    "heard": "Who art the monk and the silver market?",
+    "errors": 3
    },
    {
     "id": "sus-dev-021",
@@ -11516,8 +11516,8 @@
     "id": "sus-dev-021",
     "body": "female",
     "text": "The thumb that the ribbon measured wandered.",
-    "heard": "The thumbs to the ribbon measured wondered.",
-    "errors": 3
+    "heard": "The thumb that the ribbon measured rendered.",
+    "errors": 1
    },
    {
     "id": "sus-dev-022",
@@ -11551,15 +11551,15 @@
     "id": "sus-dev-024",
     "body": "male",
     "text": "The nail that the wedge washed whispered.",
-    "heard": "The nails to the red rost whispered.",
-    "errors": 4
+    "heard": "The nail that the red lost whispered.",
+    "errors": 2
    },
    {
     "id": "sus-dev-024",
     "body": "female",
     "text": "The nail that the wedge washed whispered.",
-    "heard": "The nails, the red lost, whispered.",
-    "errors": 4
+    "heard": "The nail that the red lost whispered.",
+    "errors": 2
    },
    {
     "id": "sus-dev-025",
@@ -11579,42 +11579,42 @@
     "id": "sus-dev-026",
     "body": "male",
     "text": "The pencil that the goat fetched sneezed.",
-    "heard": "the pencil that the goat fed needs.",
+    "heard": "the pencil that the goat feds need.",
     "errors": 2
    },
    {
     "id": "sus-dev-026",
     "body": "female",
     "text": "The pencil that the goat fetched sneezed.",
-    "heard": "the pencil that the goat had sneezed",
-    "errors": 1
+    "heard": "The pencil that the godfetch made.",
+    "errors": 3
    },
    {
     "id": "sus-dev-027",
     "body": "male",
     "text": "Push the basket and the smooth orange.",
-    "heard": "Push the best cut into the smooth orange.",
-    "errors": 3
+    "heard": "Push the biscuit and the smooth orange.",
+    "errors": 1
    },
    {
     "id": "sus-dev-027",
     "body": "female",
     "text": "Push the basket and the smooth orange.",
-    "heard": "Push the basket into the small orange.",
+    "heard": "Push the biscuit into the smooth orange.",
     "errors": 2
    },
    {
     "id": "sus-dev-028",
     "body": "male",
     "text": "The judge that the fence touched whispered.",
-    "heard": "The drudges to the fence start to whispered.",
-    "errors": 4
+    "heard": "The drudder that the fence start whispered",
+    "errors": 2
    },
    {
     "id": "sus-dev-028",
     "body": "female",
     "text": "The judge that the fence touched whispered.",
-    "heard": "The dog was the fence-touch whispered.",
+    "heard": "The door let the fence start whispered.",
     "errors": 3
    },
    {
@@ -11663,14 +11663,14 @@
     "id": "sus-dev-032",
     "body": "male",
     "text": "How does the ship catch the huge cheese?",
-    "heard": "How does the ship tell to the huge cheese?",
+    "heard": "How does the ship tear to the huge cheese?",
     "errors": 2
    },
    {
     "id": "sus-dev-032",
     "body": "female",
     "text": "How does the ship catch the huge cheese?",
-    "heard": "How does the ship turn to the fuel cheese?",
+    "heard": "How does the ship tear to the fuel cheese?",
     "errors": 3
    },
    {
@@ -11691,14 +11691,14 @@
     "id": "sus-dev-034",
     "body": "male",
     "text": "Measure the kitchen and the brave badge.",
-    "heard": "Measure the kitchen into the brave edge.",
-    "errors": 2
+    "heard": "Measure the kitchen and the brave edge.",
+    "errors": 1
    },
    {
     "id": "sus-dev-034",
     "body": "female",
     "text": "Measure the kitchen and the brave badge.",
-    "heard": "Measure the kitchen into the braving edge.",
+    "heard": "Measure the kitchen end to the brave edge.",
     "errors": 3
    },
    {
@@ -11733,28 +11733,28 @@
     "id": "sus-dev-037",
     "body": "male",
     "text": "Push the stone and the shallow river.",
-    "heard": "Push the stone into the Shazoo River",
+    "heard": "Push the stone and the shadow raver.",
     "errors": 2
    },
    {
     "id": "sus-dev-037",
     "body": "female",
     "text": "Push the stone and the shallow river.",
-    "heard": "Push the stone into the shed or whatever",
-    "errors": 4
+    "heard": "Push the stone into the shadow river.",
+    "errors": 2
    },
    {
     "id": "sus-dev-038",
     "body": "male",
     "text": "The horse that the market broke slept.",
-    "heard": "The arse that the mark broke slipped.",
-    "errors": 3
+    "heard": "The horse that the marked broke slipped.",
+    "errors": 2
    },
    {
     "id": "sus-dev-038",
     "body": "female",
     "text": "The horse that the market broke slept.",
-    "heard": "The horse that the masked broke slept.",
+    "heard": "The horse that the marked broke slept.",
     "errors": 1
    },
    {
@@ -11789,8 +11789,8 @@
     "id": "sus-dev-041",
     "body": "male",
     "text": "Break the sugar and the silver mirror.",
-    "heard": "Break the sugar into the silver mirror.",
-    "errors": 1
+    "heard": "Break the sugar and the silver mirror.",
+    "errors": 0
    },
    {
     "id": "sus-dev-041",
@@ -11845,8 +11845,8 @@
     "id": "sus-dev-045",
     "body": "male",
     "text": "How does the river touch the sudden wedge?",
-    "heard": "How does the raven touch the sudden wedge?",
-    "errors": 1
+    "heard": "How does the raver touch the sudden ledge?",
+    "errors": 2
    },
    {
     "id": "sus-dev-045",
@@ -11859,8 +11859,8 @@
     "id": "sus-dev-046",
     "body": "male",
     "text": "The month that the hammer visited laughed.",
-    "heard": "The month of the hammer is left.",
-    "errors": 3
+    "heard": "the month that the hammer is left.",
+    "errors": 2
    },
    {
     "id": "sus-dev-046",
@@ -11873,29 +11873,29 @@
     "id": "sus-dev-047",
     "body": "male",
     "text": "The table that the village borrowed jumped.",
-    "heard": "The tables to the village barrow jumped.",
-    "errors": 3
+    "heard": "The table that the video baro jumped.",
+    "errors": 2
    },
    {
     "id": "sus-dev-047",
     "body": "female",
     "text": "The table that the village borrowed jumped.",
-    "heard": "The table at the village barrel jumped.",
+    "heard": "The table that the village barrow dumped.",
     "errors": 2
    },
    {
     "id": "sus-dev-048",
     "body": "male",
     "text": "The page that the orange judged vanished.",
-    "heard": "The pages to the orange are vanished.",
-    "errors": 3
+    "heard": "The page that's the orange rock vanished.",
+    "errors": 2
    },
    {
     "id": "sus-dev-048",
     "body": "female",
     "text": "The page that the orange judged vanished.",
-    "heard": "The pages to the orange are vanished.",
-    "errors": 3
+    "heard": "The page that's the orange are vanished.",
+    "errors": 2
    },
    {
     "id": "sus-dev-049",
@@ -11943,15 +11943,15 @@
     "id": "sus-dev-052",
     "body": "male",
     "text": "The monkey that the mirror fetched fell.",
-    "heard": "The monkeys to the mirror felt fell.",
-    "errors": 3
+    "heard": "The monkey that the mayor felt fell.",
+    "errors": 2
    },
    {
     "id": "sus-dev-052",
     "body": "female",
     "text": "The monkey that the mirror fetched fell.",
-    "heard": "The monkeys to the mirror felt fell.",
-    "errors": 3
+    "heard": "The monk let the mere foot fell.",
+    "errors": 4
    },
    {
     "id": "sus-dev-053",
@@ -11971,8 +11971,8 @@
     "id": "sus-dev-054",
     "body": "male",
     "text": "How does the wheel touch the golden tunnel?",
-    "heard": "How does the wheel start the golden tunnel?",
-    "errors": 1
+    "heard": "How does the wheel start of the golden tunnel?",
+    "errors": 2
    },
    {
     "id": "sus-dev-054",
@@ -11992,8 +11992,8 @@
     "id": "sus-dev-055",
     "body": "female",
     "text": "How does the month break the smooth leaf?",
-    "heard": "How does the month break the smoothies?",
-    "errors": 2
+    "heard": "How does the month break this movie?",
+    "errors": 3
    },
    {
     "id": "sus-dev-056",

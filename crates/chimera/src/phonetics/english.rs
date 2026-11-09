@@ -69,16 +69,20 @@ fn homograph(w: &str) -> Option<&'static str> {
     })
 }
 
+/// CMUdict's own entry for these is already the reduced running-speech form (its "and" is
+/// `AH0 N D`, i.e. /ʌnd/, not citation-form /ænd/), so even an unreduced function word stays a
+/// weak vowel and is heard as "into". Give the citation form here instead.
+fn full_form(w: &str) -> Option<&'static str> {
+    Some(match w {
+        "and" => "AE1 N D",
+        _ => return None,
+    })
+}
+
 /// monosyllabic function words are unstressed in running speech (and reduce)
 const FUNCTION_WORDS: &str = "a an the of to in on at by for from with as and or but nor so if is am are was were be been do does did has have had will would can could should shall may might must it its i you he she we they me him her us them my your his our their this that than then there not no";
 fn is_function_word(w: &str) -> bool {
     FUNCTION_WORDS.split(' ').any(|f| f == w)
-}
-fn reduce_vowel(ipa: &str) -> Option<&'static str> {
-    Some(match ipa {
-        "ʌ" | "æ" | "ɑ" | "ɛ" | "ɔ" | "u" | "ʊ" => "ə",
-        _ => return None,
-    })
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -180,20 +184,15 @@ impl EnglishG2P {
     pub fn word(&self, w: &str, reduce: bool) -> Vec<Segment> {
         let lower = w.to_lowercase();
         let clean = lower.trim_matches('\'');
-        let entry = homograph(clean).or_else(|| self.dict.as_ref().and_then(|d| d.get(clean)).map(String::as_str));
+        let entry = homograph(clean).or_else(|| full_form(clean)).or_else(|| self.dict.as_ref().and_then(|d| d.get(clean)).map(String::as_str));
         if let Some(entry) = entry.filter(|e| !e.is_empty()) {
             let mut segs = arpabet_to_segments(entry);
             if reduce && is_function_word(clean) {
-                let nv = segs.iter().filter(|s| is_vowel(&s.ipa)).count();
+                // unstressed for timing and pitch; the dictionary's vowel quality is kept
+                // (rewriting monosyllables toward schwa made "and" -> "into", "that" -> "to" on
+                // both recognizers; see docs/upstream-patches.md)
                 for s in segs.iter_mut() {
                     s.stress = Some(0);
-                    // short function words reduce toward schwa ("of" → əv, "and" → ənd), except /i ɪ eɪ aɪ oʊ/
-                    if nv == 1
-                        && let Some(r) = reduce_vowel(&s.ipa)
-                        && !["you", "do", "to", "who", "not", "no"].contains(&clean)
-                    {
-                        s.ipa = r.to_string();
-                    }
                 }
             }
             return segs;
