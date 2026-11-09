@@ -239,6 +239,15 @@ class Studio {
     return this.audio();
   }
 
+  /**
+   * Something played through `route()` is sounding: the monitor shows its spectrum for the next
+   * `ms`. Called again while it lasts.
+   */
+  hold(label: string, ms = 900) {
+    this.scopeUntil = performance.now() + ms;
+    if (this.snapshot.label !== label) this.set({ label });
+  }
+
   /** A first sample measured outside this class, shown on the monitor all the same. */
   note(ms: number) {
     this.set({ firstSampleMs: ms });

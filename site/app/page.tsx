@@ -8,6 +8,7 @@ import { Consonants } from "@/components/Consonants";
 import { Crowd } from "@/components/Crowd";
 import { Direct } from "@/components/Direct";
 import { Engines } from "@/components/Engines";
+import { Instrument } from "@/components/Instrument";
 import { Layers } from "@/components/Layers";
 import { Live } from "@/components/Live";
 import { Monitor } from "@/components/Monitor";
@@ -40,6 +41,7 @@ export default function Page() {
         <Speed />
         <Anyone />
         <Sing />
+        <Instrument />
         <Consonants />
         <Crowd />
         <Beasts />

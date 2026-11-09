@@ -362,6 +362,41 @@ p {
   overflow-wrap: anywhere;
 }
 
+.pad {
+  position: relative;
+  height: 220px;
+  margin: 8px 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  touch-action: none;
+  cursor: crosshair;
+  user-select: none;
+  background:
+    linear-gradient(to right, var(--line) 1px, transparent 1px) 0 0 / calc(100% / 24) 100%,
+    linear-gradient(to top, rgba(244, 239, 232, 0.04), transparent);
+}
+
+.pad-dot {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  background: var(--heat);
+  box-shadow: 0 0 24px var(--heat);
+  pointer-events: none;
+}
+
+.pad-hint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
 .phones {
   display: grid;
   grid-template-columns: 96px 1fr;
