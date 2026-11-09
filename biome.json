@@ -8,6 +8,8 @@
       "!target",
       "!eval/out",
       "!eval/baselines",
+      "!e2e/out",
+      "!e2e/tmp",
       "!site/.next",
       "!site/out",
       "!site/node_modules",

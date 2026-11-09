@@ -30,3 +30,6 @@ jobs:
       - run: bun scripts/browser-check.ts chromium
         env:
           BROWSER_CHANNEL: chrome
+      - run: bun run e2e:smoke -- --json e2e/out/report.json
+        env:
+          BROWSER_CHANNEL: chrome

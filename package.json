@@ -69,6 +69,8 @@
     "lint": "biome check . && cargo fmt -p intone-chimera -p intone-creatures --check && cargo clippy -p intone-chimera -p intone-creatures --no-deps --all-targets -- -D warnings",
     "budget": "bun eval/budget.ts",
     "eval": "bun eval/run.ts",
+    "e2e": "bun e2e/run.ts",
+    "e2e:smoke": "bun e2e/run.ts --smoke",
     "sync-upstream": "scripts/sync-upstream.sh"
   },
   "peerDependencies": {
