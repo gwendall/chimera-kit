@@ -4,7 +4,8 @@
  * environments, polyphony to the breaking point, and the browser matrix, for the Next.js site in
  * `site/` and the library behind it.
  *
- *   bun e2e/run.ts [--scenario <glob>] [--browser chromium,firefox,webkit] [--smoke] [--json <path>]
+ *   bun e2e/run.ts [--scenario <glob>] [--browser chromium,firefox,webkit] [--smoke] [--no-speed]
+ *     [--json <path>]
  *
  * Prints a compact table and writes `e2e/out/report.json` and `e2e/out/report.md` (or the path
  * given with --json, whose .md sibling gets the Markdown report).
@@ -24,10 +25,10 @@ setTimeout(() => {
 }, GLOBAL_BUDGET_MS).unref();
 
 // Playwright does not reject a pending page.evaluate() when the renderer crashes or the browser
-// otherwise dies mid-call -- it just hangs forever (seen live: a reliability run's create/free
+// otherwise dies mid-call - it just hangs forever (seen live: a reliability run's create/free
 // loop left no chrome-headless-shell process running at all, yet `await s.run(ctx)` never
 // returned). One scenario's own GUARD_MS races inside it, but a hang before ever reaching a race
-// -- or one the race itself can't see, like the browser dying -- would otherwise eat the whole
+// - or one the race itself can't see, like the browser dying - would otherwise eat the whole
 // global budget silently. Each scenario gets its own ceiling instead: tight for --smoke (it must
 // stay well under 3 minutes total), generous for a full run (polyphony alone budgets 90s per mode
 // across up to 3 modes, plus install/build scenarios that shell out to real package managers).
@@ -79,7 +80,7 @@ async function runWithBudget(
     // the next scenario launches fresh instead of reusing a handle that will hang forever too.
     forgetAllBrowsers();
     throw new Error(
-      `scenario exceeded its ${budgetMs / 60_000}-minute budget (hung, not just slow -- ` +
+      `scenario exceeded its ${budgetMs / 60_000}-minute budget (hung, not just slow - ` +
         `a Playwright page.evaluate() does not reject on its own when the browser dies mid-call). ` +
         (killed.length > 0
           ? `Killed leaked browser process(es): ${killed.join(", ")}.`
@@ -98,16 +99,29 @@ function parseArgs(argv: string[]) {
   let scenario: string | undefined;
   let browsers: BrowserName[] = ["chromium", "firefox", "webkit"];
   let smoke = false;
+  let noSpeed = false;
   let json: string | undefined;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--scenario") scenario = argv[++i];
     else if (a === "--browser") browsers = (argv[++i] ?? "").split(",").filter(Boolean) as BrowserName[];
     else if (a === "--smoke") smoke = true;
+    else if (a === "--no-speed") noSpeed = true;
     else if (a === "--json") json = argv[++i];
   }
-  return { scenario, browsers, smoke, json };
+  return { scenario, browsers, smoke, noSpeed, json };
 }
+
+/** A time, a ratio of times, or audio that arrived late: what a shared CI runner can't judge. */
+const isSpeed = (m: Measurement) => m.unit === "ms" || m.unit === "x" || m.name.endsWith(".underruns");
+
+/** With --no-speed, as `eval/budget.ts --no-speed`: speed is still measured and shown, not judged. */
+const unjudged = (m: Measurement): Measurement => ({
+  ...m,
+  threshold: undefined,
+  pass: undefined,
+  note: [m.note, "speed, not judged (--no-speed)"].filter(Boolean).join("; "),
+});
 
 function matches(id: string, glob: string | undefined): boolean {
   if (!glob) return true;
@@ -116,7 +130,7 @@ function matches(id: string, glob: string | undefined): boolean {
 }
 
 async function main() {
-  const { scenario: scenarioGlob, browsers, smoke, json } = parseArgs(process.argv.slice(2));
+  const { scenario: scenarioGlob, browsers, smoke, noSpeed, json } = parseArgs(process.argv.slice(2));
   const dist = join(ROOT, "dist");
   if (!(await Bun.file(join(dist, "index.js")).exists())) {
     console.error("e2e: no dist/index.js. Run `bun run build` at the repository's root first.");
@@ -162,7 +176,8 @@ async function main() {
     console.log(`\n=== ${s.id} ===`);
     const started = performance.now();
     try {
-      const measurements = await runWithBudget(s, ctx, partial);
+      const measured = await runWithBudget(s, ctx, partial);
+      const measurements = noSpeed ? measured.map((m) => (isSpeed(m) ? unjudged(m) : m)) : measured;
       const ok = measurements.every((m: Measurement) => m.pass !== false);
       reports.push({
         id: s.id,
@@ -189,6 +204,7 @@ async function main() {
     calibration,
     browsers,
     smoke,
+    noSpeed,
     scenarios: reports,
     totalDurationMs: performance.now() - runStarted,
     ok: reports.every((r) => r.ok),

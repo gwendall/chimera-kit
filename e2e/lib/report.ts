@@ -18,6 +18,7 @@ export interface RunReport {
   calibration: Calibration;
   browsers: string[];
   smoke: boolean;
+  noSpeed: boolean;
   scenarios: ScenarioReport[];
   totalDurationMs: number;
   ok: boolean;
@@ -46,9 +47,7 @@ export function printTable(report: RunReport): void {
     for (const m of s.measurements) {
       const mark = m.pass === undefined ? "  " : m.pass ? "ok" : "!!";
       const against = m.threshold === undefined ? "" : ` (threshold ${m.threshold} ${m.unit})`;
-      console.log(
-        `     ${mark} ${pad(m.name, 48)} ${fmtValue(m)}${against}${m.note ? `  -- ${m.note}` : ""}`,
-      );
+      console.log(`     ${mark} ${pad(m.name, 48)} ${fmtValue(m)}${against}${m.note ? `  - ${m.note}` : ""}`);
     }
   }
   const failed = report.scenarios.filter((s) => !s.ok && !s.skipped);
@@ -68,7 +67,9 @@ export async function writeMarkdown(path: string, report: RunReport): Promise<vo
   lines.push("# intone e2e report");
   lines.push("");
   lines.push(`Started: ${report.startedAt}`);
-  lines.push(`Browsers: ${report.browsers.join(", ")}${report.smoke ? " (smoke)" : ""}`);
+  lines.push(
+    `Browsers: ${report.browsers.join(", ")}${report.smoke ? " (smoke)" : ""}${report.noSpeed ? " (speed not judged)" : ""}`,
+  );
   lines.push(`Machine: ${report.calibration.uptimeLine}`);
   lines.push(`CPU yardstick (fixed busy-work loop): ${report.calibration.busyWorkMs.toFixed(0)} ms`);
   lines.push("");

@@ -26,7 +26,7 @@ export const THRESHOLDS = {
     // cmudict.txt.gz (868,793 B) alone already sum to 1,424,835 B, before a single byte of JS; the
     // full cold load measured 1,450,672 B, stable across three separate runs. The previous
     // 1,400,000 B threshold was below that unavoidable wasm+dictionary floor and could never pass
-    // here -- not a regression, a miscalculated threshold. Set with real headroom above the floor.
+    // here - not a regression, a miscalculated threshold. Set with real headroom above the floor.
     bytesTransferred: 1_600_000,
   },
   reliability: {

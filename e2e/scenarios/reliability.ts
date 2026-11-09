@@ -9,15 +9,17 @@ import type { Measurement, Scenario, ScenarioContext } from "../lib/types.ts";
 import { THRESHOLDS } from "../thresholds.ts";
 
 const ORIGIN = "https://intone.e2e";
-// Measured 2026-11-09 on this machine, no CPU throttle: voice.render("Hello there.") -- about 1s
-// of audio -- takes ~280-320ms wall (RTF ~0.3, well under polyphony's 1.15 ceiling; this is
+// Measured 2026-11-09 on this machine, no CPU throttle: voice.render("Hello there.") - about 1s
+// of audio - takes ~280-320ms wall (RTF ~0.3, well under polyphony's 1.15 ceiling; this is
 // correct render() cost, not a hang or a leak: confirmed flat across 150 consecutive calls, no
 // growth). At 3000 calls that is ~850-960s, over the 600s (10-minute) full-run scenario budget by
-// itself -- this is what timed out the whole scenario with zero measurements kept, not a hang (see
+// itself - this is what timed out the whole scenario with zero measurements kept, not a hang (see
 // also `ctx.report` above, which now keeps whatever finished before a timeout). 1000 calls
 // (~280-320s) leaves real margin for the rest of this scenario's steps and for a loaded machine.
 const SERIES_N = 1000;
-const SERIES_N_SMOKE = 150;
+// Smoke: 150 renders took over its 2-minute budget at load average 15 (2026-11-10), with no hang;
+// 50 keeps it near 15 s on an idle machine and under a minute on a loaded or slow one.
+const SERIES_N_SMOKE = 50;
 // Each cycle reloads the whole engine (wasm compile + the ~870 KB dictionary, gunzipped fresh
 // every time): genuinely heavy, unlike a plain function call. 300 of those does not fit smoke's
 // under-3-minutes budget on a shared machine, so smoke runs a much shorter loop.
@@ -54,7 +56,7 @@ export const scenario: Scenario = {
           const mem = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
           const before = mem?.usedJSHeapSize ?? -1;
           let errors = 0;
-          // An empty string is deliberately unspeakable (the engine throws "nothing to say") --
+          // An empty string is deliberately unspeakable (the engine throws "nothing to say") -
           // hostile.ts already covers that input and checks it settles clearly, not hangs. This
           // series watches for leaks and errors over legitimate repeated use, so every text here
           // must be one the engine is expected to render without error.
@@ -184,7 +186,7 @@ export const scenario: Scenario = {
             }
           }
           // Measured ~21s to settle on its own (40 real-time worker.say() calls, several stopped
-          // mid-flight) -- the previous 10s race ceiling reported a false "hang" on a healthy run.
+          // mid-flight) - the previous 10s race ceiling reported a false "hang" on a healthy run.
           const settled = await Promise.race([
             Promise.allSettled(playbacks.map((p) => p.done)).then(() => "settled"),
             new Promise((resolve) => setTimeout(() => resolve("hang"), 45_000)),
@@ -241,7 +243,7 @@ export const scenario: Scenario = {
           const voice = await createVoice({ body: "female" });
           // play() through an AudioContext is real-time playback, not synthesis time: repeat(20)
           // (161 words) measured ~54s to resolve on its own, well past the 10s race ceiling below
-          // -- that was reporting a false "hang" on perfectly healthy playback, not a real one.
+          // - that was reporting a false "hang" on perfectly healthy playback, not a real one.
           // repeat(8) (64 words, ~22s at the same rate) still gives the suspend (at 60ms in) and
           // the 150ms pause plenty of in-flight stream to interrupt, for much less wall time.
           const longText = "The birch canoe slid on the smooth planks. ".repeat(8);

@@ -3,7 +3,7 @@
  * browser per run, `browser.close()` guaranteed even on failure, never `waitUntil: 'networkidle'`.
  *
  * "One browser per run" turned out to mean exactly that: `chromium.launch()`'d a second time in
- * the same process -- even cleanly closed first, even from a different scenario -- left the next
+ * the same process - even cleanly closed first, even from a different scenario - left the next
  * `createVoice()` call hanging forever (no crash, no error, `page.evaluate()` just never settles;
  * see e2e/run.ts's `runWithBudget` comment). Reproduced down to the minimal case: launch, one
  * `createVoice()`+`free()`, close; launch again; the very first `createVoice()` of the second
@@ -23,7 +23,7 @@ const ENGINES = { chromium, firefox, webkit } as const;
 // "chrome" channel; firefox/webkit ignore this and always use Playwright's own build.
 const CHANNEL = process.env.BROWSER_CHANNEL;
 
-// Tracks which engines were already checked, by name -- not a single flag. A single flag would
+// Tracks which engines were already checked, by name - not a single flag. A single flag would
 // flip true on the first `withBrowser("chromium", ...)` call and then skip the install check for
 // firefox/webkit forever, even though they are different engines with their own cache entries.
 const installedChecked = new Set<BrowserName>();

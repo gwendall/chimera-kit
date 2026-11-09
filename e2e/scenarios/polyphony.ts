@@ -48,7 +48,7 @@ async function stepInPage({
   const { createVoice, createWorkerVoice, play } = await import(/* @vite-ignore */ `${origin}/index.js`);
   const { createSpeaker } = await import(/* @vite-ignore */ `${origin}/speaker.js`);
   // Body only blends female/child (see src/engine.ts); a male percentage or a bare `{ female: 1 }`
-  // object is not a valid shape and the engine correctly rejects it (an untagged-enum mismatch) --
+  // object is not a valid shape and the engine correctly rejects it (an untagged-enum mismatch) -
   // this array used to carry both and crashed the very first render() call of every mode and N.
   const bodies: Body[] = [
     "female",
@@ -160,7 +160,7 @@ async function stepInPage({
 
     // worker and speaker modes: say() sends samples straight to the audio thread.
     // `createWorkerVoice`'s `say()` reports underruns through `done`; `intone/speaker`'s unified
-    // `say()` discards them (`done: Promise<void>`, see src/engines/chimera-speaker.ts) -- a real
+    // `say()` discards them (`done: Promise<void>`, see src/engines/chimera-speaker.ts) - a real
     // API gap this ramp surfaces, logged as a finding rather than worked around here.
     const underrunsObservable = mode === "worker";
 
@@ -352,7 +352,7 @@ export const scenario: Scenario = {
                 const kind = zoo.list[i % zoo.list.length];
                 const creature = zoo.create(kind.id);
                 // kind.calls holds CreatureCall objects ({ id, ... }); stream() takes the call's
-                // id string, not the object -- this crashed every "zoo" run with "has no call
+                // id string, not the object - this crashed every "zoo" run with "has no call
                 // '[object Object]'" before ever producing a measurement.
                 const call = kind.calls[i % kind.calls.length].id;
                 const playback = play(creature.stream(call), zoo.sampleRate, { context: audioCtx });

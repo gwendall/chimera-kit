@@ -57,7 +57,7 @@ export const scenario: Scenario = {
         if (m.type() === "error") consoleErrors.push(m.text());
       });
       const origin = "https://intone.site";
-      // serveDir's "/" default is a blank placeholder page (see its doc comment) -- a visitor of
+      // serveDir's "/" default is a blank placeholder page (see its doc comment) - a visitor of
       // the real production site gets the real exported index.html, so this scenario must hand
       // that in explicitly. Without it, `.go` never exists, the readiness wait always times out,
       // and (see below) it silently timed out at Playwright's 30s default instead of the 10s this
@@ -68,11 +68,11 @@ export const scenario: Scenario = {
       await page.goto(`${origin}/`, { waitUntil: "load" });
       let ready = false;
       try {
-        // page.waitForFunction(fn, arg, options) -- `arg` is passed INTO the page function, not
+        // page.waitForFunction(fn, arg, options) - `arg` is passed INTO the page function, not
         // "the options if you only gave two arguments". `waitForFunction(fn, { timeout })` was
         // silently sending `{ timeout: 10_000 }` as `arg` (ignored, the function takes none) and
         // falling back to Playwright's own default timeout (30s), not the 10s this line asked
-        // for -- measured live: a wait that should give up at 10s instead reported readyMs
+        // for - measured live: a wait that should give up at 10s instead reported readyMs
         // ~30021ms, which is exactly Playwright's 30000ms default plus overhead. The explicit
         // `undefined` below is the real `arg`; `options` is the third positional parameter.
         await page.waitForFunction(() => document.querySelector(".go")?.textContent === "Speak", undefined, {

@@ -42,8 +42,8 @@ async function readmeSnippets(root: string): Promise<string[]> {
  * every "Cannot find name" tsc reports *in that snippet* and declares just those names `any` in
  * that snippet's own preamble, the second is the real check, so a genuine API misuse still fails
  * it. (A single preamble applied to every snippet broke snippets that *do* declare a name
- * themselves -- e.g. one with its own `const voice = ...` got a conflicting `declare const
- * voice: any` from a sibling snippet's missing name -- so this must stay per snippet, not global.)
+ * themselves - e.g. one with its own `const voice = ...` got a conflicting `declare const
+ * voice: any` from a sibling snippet's missing name - so this must stay per snippet, not global.)
  */
 async function typecheckReadmeSnippets(
   tcDir: string,
@@ -62,7 +62,7 @@ async function typecheckReadmeSnippets(
         // instead; noImplicitAny is off because the names this scenario *does* fill in above are
         // deliberately untyped placeholders (`any`), and a callback parameter whose type would
         // normally flow from one of those (e.g. `voice.stream(text, { airway(state) {...} })`)
-        // loses that inference the same way a real but unimported variable would -- not a real
+        // loses that inference the same way a real but unimported variable would - not a real
         // README mistake. strictNullChecks and the rest still catch a genuine API misuse.
         noImplicitAny: false,
         target: "ES2022",
@@ -71,7 +71,7 @@ async function typecheckReadmeSnippets(
         noEmit: true,
         lib: ["ES2022", "DOM"],
         // Without this, tsc auto-includes every @types/* package found by walking up from tcDir
-        // -- which is nested inside e2e/tmp, inside this repo -- and picks up this repo's own
+        // - which is nested inside e2e/tmp, inside this repo - and picks up this repo's own
         // bun-types devDependency alongside the @types/node this scenario installs, two sets of
         // ambient globals (TLSSocket, KeyObject, ConnectionOptions, ...) redeclaring each other.
         // A real stranger's project is never nested inside this repo, so this is a harness
@@ -132,7 +132,7 @@ async function installWith(
           // `packageManager: bun@1.3.11`. Corepack's pnpm shim walks up from cwd looking for the
           // nearest package.json with a packageManager field and finds that one before it finds
           // this temp project's own (fieldless) one, then refuses: "Unsupported package manager
-          // specification (bun@1.3.11)" -- bun isn't a corepack-managed manager. A real stranger
+          // specification (bun@1.3.11)" - bun isn't a corepack-managed manager. A real stranger
           // installing intone is never nested inside this repo, so this is purely an artifact of
           // the harness's own scratch directory location, not a real pnpm/intone incompatibility.
           // COREPACK_ENABLE_PROJECT_SPEC=0 makes corepack ignore any ancestor packageManager field.

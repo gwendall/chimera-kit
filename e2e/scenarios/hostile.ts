@@ -1,6 +1,6 @@
 /**
  * Hostile inputs and hostile environments. Every case must settle (no hang) and, when it fails,
- * fail with a clear Error the caller can catch -- never a silent stall and never an unhandled
+ * fail with a clear Error the caller can catch - never a silent stall and never an unhandled
  * page crash. This is also the regression test for the `playback.queued` hang fixed in
  * `src/player.ts` (see "no AudioWorklet support" and "strict CSP, no blob:" below).
  */

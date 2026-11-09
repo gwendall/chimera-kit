@@ -44,6 +44,10 @@ the voice stutter. `stream` and `render` are there too, asynchronous.
 The worker script is `intone/worker.js`, found next to the module with
 `new URL("./worker.js", import.meta.url)`; pass `worker` to start it some other way.
 
+The engine (`intone_chimera.wasm`) and the dictionary (`cmudict.txt.gz`) are found next to the
+module the same way. Vite and Next.js copy these files into the app's build; `bun build` does
+not, so with it, serve them yourself and pass their URLs as `wasm` and `dictionary`.
+
 Text that is still being written, such as a language model's answer, is spoken clause by clause
 as it arrives. `speech` reads it as Markdown (code blocks are skipped, links read as their text)
 and cuts it at punctuation and line ends:

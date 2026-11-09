@@ -26,7 +26,7 @@ export interface ScenarioContext {
   /**
    * Records a measurement as soon as it's known, in addition to returning it in the scenario's
    * final array. If the scenario later exceeds its budget (see run.ts's runWithBudget), whatever
-   * was already reported here is kept in the report instead of being discarded -- a step that
+   * was already reported here is kept in the report instead of being discarded - a step that
    * finished before a later step hung, or ran long, should still show its numbers.
    */
   report(m: Measurement): void;
