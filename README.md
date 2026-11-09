@@ -130,11 +130,11 @@ A `Speaker` describes itself (`accepts` the layer it reads, `supports`, `output`
 `render`/`stream`/`say` call reports `lost`, so a caller never has to know an engine's name to
 degrade gracefully:
 
-|              | accepts    | output     | honors                      | typical `lost`                   |
-| ------------ | ---------- | ---------- | ---------------------------- | --------------------------------- |
-| `chimera`    | gestures   | samples    | everything (f0, accent, body) | nothing                           |
-| `kokoro`     | phrasing   | samples    | rate                          | `f0`, `accent`, `body`, chunk size |
-| `web-speech` | intent     | playback   | rate                          | `f0`, `accent`, `body`             |
+|              | accepts  | output   | honors                        | typical `lost`                     |
+| ------------ | -------- | -------- | ----------------------------- | ---------------------------------- |
+| `chimera`    | gestures | samples  | everything (f0, accent, body) | nothing                            |
+| `kokoro`     | phrasing | samples  | rate                          | `f0`, `accent`, `body`, chunk size |
+| `web-speech` | intent   | playback | rate                          | `f0`, `accent`, `body`             |
 
 `createSpeaker("chimera", ...)` is a thin wrapper over `createWorkerVoice` and keeps its
 guarantees (samples straight to the audio thread, `stop()` before anything plays gives silence).
