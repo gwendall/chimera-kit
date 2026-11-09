@@ -1,4 +1,5 @@
 import type { Engine, EngineUtterance, SpeakOptions } from "./engine.js";
+import type { Score } from "./layers.js";
 
 /** One audio-worklet quantum: 2.7 ms of audio, so that the first sound leaves as soon as it exists. */
 const DEFAULT_CHUNK = 128;
@@ -14,12 +15,17 @@ export interface Rendered {
   sampleRate: number;
 }
 
+/** Text, or a score whose timing and pitch are honored exactly instead of planned afresh. */
+export type Speakable = string | Score;
+
 export interface Voice {
   readonly sampleRate: number;
+  /** Plans text into a score (layer 2 of `docs/design.md`) without rendering it. */
+  plan(text: string, options?: SpeakOptions): Score;
   /** Renders the whole utterance at once. */
-  render(text: string, options?: SpeakOptions): Rendered;
+  render(input: Speakable, options?: SpeakOptions): Rendered;
   /** Renders chunk by chunk. Each chunk is a fresh array the caller owns. */
-  stream(text: string, options?: StreamOptions): Generator<Float32Array, void, undefined>;
+  stream(input: Speakable, options?: StreamOptions): Generator<Float32Array, void, undefined>;
   /** Releases the voice's memory. It can't be used afterwards. */
   free(): void;
 }
@@ -41,9 +47,15 @@ class EngineVoice implements Voice {
     return this.engine.sampleRate;
   }
 
-  render(text: string, options?: SpeakOptions): Rendered {
+  plan(text: string, options?: SpeakOptions): Score {
+    if (this.freed) throw new Error("intone: this voice has been freed");
+    if (!this.engine.plan) throw new Error("intone: this engine cannot plan a score");
+    return this.engine.plan({ ...this.defaults, ...options, text });
+  }
+
+  render(input: Speakable, options?: SpeakOptions): Rendered {
     const { maxChunk } = this.engine;
-    const utterance = this.begin(text, options);
+    const utterance = this.begin(input, options);
     try {
       const audio = new Float32Array(utterance.samples);
       let at = 0;
@@ -57,13 +69,13 @@ class EngineVoice implements Voice {
     }
   }
 
-  *stream(text: string, options: StreamOptions = {}): Generator<Float32Array, void, undefined> {
+  *stream(input: Speakable, options: StreamOptions = {}): Generator<Float32Array, void, undefined> {
     const { maxChunk } = this.engine;
     const { chunkSize = DEFAULT_CHUNK, ...speak } = options;
     if (!Number.isInteger(chunkSize) || chunkSize < 1 || chunkSize > maxChunk) {
       throw new RangeError(`intone: chunkSize must be from 1 to ${maxChunk}, got ${chunkSize}`);
     }
-    const utterance = this.begin(text, speak);
+    const utterance = this.begin(input, speak);
     try {
       for (let chunk = utterance.next(chunkSize); chunk; chunk = utterance.next(chunkSize)) {
         yield chunk.slice();
@@ -79,8 +91,13 @@ class EngineVoice implements Voice {
     this.engine.free();
   }
 
-  private begin(text: string, options?: SpeakOptions): EngineUtterance {
+  private begin(input: Speakable, options?: SpeakOptions): EngineUtterance {
     if (this.freed) throw new Error("intone: this voice has been freed");
-    return this.engine.begin({ ...this.defaults, ...options, text });
+    if (typeof input === "string") {
+      return this.engine.begin({ ...this.defaults, ...options, text: input });
+    }
+    if (!this.engine.beginScore) throw new Error("intone: this engine cannot render a score");
+    const body = options?.body ?? this.defaults.body;
+    return this.engine.beginScore(body === undefined ? { score: input } : { score: input, body });
   }
 }

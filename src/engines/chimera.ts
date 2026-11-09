@@ -1,8 +1,9 @@
 /** The CHIMERA engine, compiled to WebAssembly. This file only loads it and moves bytes. */
-import type { Engine, EngineRequest, EngineUtterance } from "../engine.js";
+import type { Engine, EngineRequest, EngineUtterance, ScoreRequest } from "../engine.js";
+import type { Score } from "../layers.js";
 
 /** Must match `ABI_VERSION` in `crates/intone-chimera/src/abi.rs`. */
-const ABI_VERSION = 2;
+const ABI_VERSION = 3;
 /** Must match `CHUNK` in `abi.rs`. */
 const MAX_CHUNK = 4096;
 
@@ -32,6 +33,10 @@ interface Exports {
   ic_speaker_error_ptr(s: number): number;
   ic_speaker_error_len(s: number): number;
   ic_utterance_new(s: number, json: number, len: number): number;
+  ic_speaker_plan(s: number, json: number, len: number): number;
+  ic_speaker_plan_ptr(s: number): number;
+  ic_speaker_plan_len(s: number): number;
+  ic_utterance_new_from_score(s: number, json: number, len: number): number;
   ic_utterance_free(u: number): void;
   ic_utterance_samples(u: number): number;
   ic_utterance_render(u: number, max: number): number;
@@ -113,6 +118,29 @@ class ChimeraEngine implements Engine {
     const json = new TextEncoder().encode(JSON.stringify(request));
     const pointer = copyIn(x, json);
     const utterance = x.ic_utterance_new(this.speaker, pointer, json.length);
+    x.ic_free(pointer, json.length);
+    if (utterance === 0) throw new Error(this.lastError());
+    return new ChimeraUtterance(x, utterance);
+  }
+
+  plan(request: EngineRequest): Score {
+    const { x } = this;
+    const json = new TextEncoder().encode(JSON.stringify(request));
+    const pointer = copyIn(x, json);
+    const ok = x.ic_speaker_plan(this.speaker, pointer, json.length);
+    x.ic_free(pointer, json.length);
+    if (!ok) throw new Error(this.lastError());
+    const ptr = x.ic_speaker_plan_ptr(this.speaker);
+    const len = x.ic_speaker_plan_len(this.speaker);
+    const bytes = new Uint8Array(x.memory.buffer, ptr, len);
+    return JSON.parse(new TextDecoder().decode(bytes)) as Score;
+  }
+
+  beginScore(request: ScoreRequest): EngineUtterance {
+    const { x } = this;
+    const json = new TextEncoder().encode(JSON.stringify(request));
+    const pointer = copyIn(x, json);
+    const utterance = x.ic_utterance_new_from_score(this.speaker, pointer, json.length);
     x.ic_free(pointer, json.length);
     if (utterance === 0) throw new Error(this.lastError());
     return new ChimeraUtterance(x, utterance);

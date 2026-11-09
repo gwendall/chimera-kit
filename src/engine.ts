@@ -3,6 +3,7 @@
  * engine can be replaced; `engines/` holds the implementations. Internal until a second engine
  * shows which parts of this are really common.
  */
+import type { Score } from "./layers.js";
 
 /** Who speaks: a named body, or a blend (each weight from 0 to 1). */
 export type Body = "male" | "female" | "child" | { female: number; child: number };
@@ -21,6 +22,12 @@ export interface EngineRequest extends SpeakOptions {
   text: string;
 }
 
+/** A score to render as an utterance (layer 2: exact timing and pitch, see `layers.ts`). */
+export interface ScoreRequest {
+  score: Score;
+  body?: Body;
+}
+
 export interface EngineUtterance {
   /** The utterance's length in samples. */
   readonly samples: number;
@@ -35,5 +42,15 @@ export interface Engine {
   readonly maxChunk: number;
   /** Plans an utterance. Throws an error with a readable message when it can't be spoken. */
   begin(request: EngineRequest): EngineUtterance;
+  /**
+   * Plans a request into a score instead of rendering it (layer 2 of `docs/design.md`). Only an
+   * engine that computes a score internally implements this; others leave it undefined.
+   */
+  plan?(request: EngineRequest): Score;
+  /**
+   * Begins an utterance from a score, its timing and pitch honored exactly. Only an engine that
+   * accepts a score implements this; others leave it undefined.
+   */
+  beginScore?(request: ScoreRequest): EngineUtterance;
   free(): void;
 }
