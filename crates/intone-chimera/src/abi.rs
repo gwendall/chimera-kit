@@ -3,19 +3,20 @@
 //! Every pointer argument must come from the matching `ic_*` constructor or from `ic_alloc`, and
 //! must not be used after its `ic_*_free`. `src/engines/chimera.ts` is the only intended caller.
 
-use crate::{Request, SAMPLE_RATE, Speaker, Utterance};
+use crate::{Request, SAMPLE_RATE, ScoreRequest, Speaker, Utterance};
 use std::alloc::{Layout, alloc, dealloc};
 use std::slice;
 
 /// Bump when a signature below changes, along with `ABI_VERSION` in `src/engines/chimera.ts`.
-const ABI_VERSION: u32 = 2;
+const ABI_VERSION: u32 = 3;
 /// The most samples one `ic_utterance_render` call can hand over.
 const CHUNK: usize = 4096;
 
-/// A speaker and the text of its last error.
+/// A speaker, the text of its last error, and its last planned score's JSON.
 pub struct SpeakerHandle {
     speaker: Speaker,
     error: String,
+    plan: String,
 }
 
 pub struct UtteranceHandle {
@@ -52,6 +53,7 @@ pub extern "C" fn ic_speaker_new() -> *mut SpeakerHandle {
     Box::into_raw(Box::new(SpeakerHandle {
         speaker: Speaker::new(),
         error: String::new(),
+        plan: String::new(),
     }))
 }
 
@@ -124,8 +126,78 @@ pub unsafe extern "C" fn ic_utterance_new(
     }
 }
 
+/// Plans a JSON [`Request`] into a score instead of rendering it. 0 on error (the speaker then
+/// holds the message); 1 on success (`ic_speaker_plan_ptr`/`_len` then hold the score's JSON).
+///
 /// # Safety
-/// `u` must come from `ic_utterance_new` and not have been freed.
+/// `s` must be live and `json` must point to `len` readable bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_speaker_plan(
+    s: *mut SpeakerHandle,
+    json: *const u8,
+    len: usize,
+) -> u32 {
+    let s = unsafe { &mut *s };
+    let bytes = unsafe { slice::from_raw_parts(json, len) };
+    let result = serde_json::from_slice::<Request>(bytes)
+        .map_err(|e| format!("invalid request: {e}"))
+        .and_then(|request| s.speaker.plan(&request));
+    match result {
+        Ok(score) => {
+            s.plan = serde_json::to_string(&score).expect("a score always serializes");
+            1
+        }
+        Err(message) => {
+            s.error = message;
+            0
+        }
+    }
+}
+
+/// # Safety
+/// `s` must be live, and the pointer is valid only until the next `ic_speaker_plan` call.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_speaker_plan_ptr(s: *const SpeakerHandle) -> *const u8 {
+    unsafe { &*s }.plan.as_ptr()
+}
+
+/// # Safety
+/// `s` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_speaker_plan_len(s: *const SpeakerHandle) -> usize {
+    unsafe { &*s }.plan.len()
+}
+
+/// Starts an utterance from a JSON [`ScoreRequest`] (its timing and pitch honored exactly). Null
+/// on error; the speaker then holds the message.
+///
+/// # Safety
+/// `s` must be live and `json` must point to `len` readable bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_utterance_new_from_score(
+    s: *mut SpeakerHandle,
+    json: *const u8,
+    len: usize,
+) -> *mut UtteranceHandle {
+    let s = unsafe { &mut *s };
+    let bytes = unsafe { slice::from_raw_parts(json, len) };
+    let result = serde_json::from_slice::<ScoreRequest>(bytes)
+        .map_err(|e| format!("invalid score request: {e}"))
+        .and_then(|request| s.speaker.utterance_from_score(&request));
+    match result {
+        Ok(utterance) => Box::into_raw(Box::new(UtteranceHandle {
+            utterance,
+            buffer: Box::new([0.0; CHUNK]),
+        })),
+        Err(message) => {
+            s.error = message;
+            std::ptr::null_mut()
+        }
+    }
+}
+
+/// # Safety
+/// `u` must come from `ic_utterance_new` or `ic_utterance_new_from_score`, and not have been freed.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ic_utterance_free(u: *mut UtteranceHandle) {
     drop(unsafe { Box::from_raw(u) });
