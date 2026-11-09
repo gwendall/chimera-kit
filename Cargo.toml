@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/chimera", "crates/intone-chimera"]
+members = ["crates/chimera", "crates/intone-chimera", "crates/intone-creatures"]
 
 [workspace.package]
 version = "0.1.0"
