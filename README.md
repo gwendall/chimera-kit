@@ -21,7 +21,18 @@ await play(voice.stream("The birch canoe slid on the smooth planks."), voice.sam
 `play` starts with the first 128 samples and keeps a quarter of a second computed ahead of the
 speakers; `stop()` or an `AbortSignal` cuts it short. Browsers keep audio suspended until the
 page gets a click or a key press, so call it from one. The samples are computed on the calling
-thread, about a third of one core while it speaks.
+thread, about a third of one core while it speaks. To leave that thread free, run the voice in a
+Worker: the same samples, the same calls, but `render` and `stream` are asynchronous.
+
+```ts
+import { createWorkerVoice, play } from "intone";
+
+const voice = await createWorkerVoice({ body: "female" });
+await play(voice.stream("Hello there."), voice.sampleRate, { ahead: 1 }).done;
+```
+
+The worker script is `intone/worker.js`, found next to the module with
+`new URL("./worker.js", import.meta.url)`; pass `worker` to start it some other way.
 
 Text that is still being written, such as a language model's answer, is spoken clause by clause
 as it arrives. `clauses` reads it as Markdown (code blocks are skipped, links read as their text)
@@ -77,14 +88,15 @@ await speech.done;
 
 ## Cost
 
-|                                           | gzipped |
-| ----------------------------------------- | ------- |
-| Engine (`intone_chimera.wasm`)            | 188 KB  |
-| JavaScript: `createVoice` alone           | 1.4 KB  |
-| JavaScript: a chat (`clauses`, `play`)    | 4.1 KB  |
-| JavaScript: everything                    | 7.2 KB  |
-| JavaScript: the device's voices only      | 2.8 KB  |
-| Pronouncing dictionary (CMUdict, English) | 869 KB  |
+|                                              | gzipped |
+| -------------------------------------------- | ------- |
+| Engine (`intone_chimera.wasm`)               | 188 KB  |
+| JavaScript: `createVoice` alone              | 1.4 KB  |
+| JavaScript: a chat (`clauses`, `play`)       | 4.1 KB  |
+| JavaScript: everything                       | 7.8 KB  |
+| JavaScript: a voice in a Worker (both sides) | 4.0 KB  |
+| JavaScript: the device's voices only         | 2.8 KB  |
+| Pronouncing dictionary (CMUdict, English)    | 869 KB  |
 
 On an Apple M2, loading takes about 70 ms once per page, the first audible sample comes about
 10 ms after asking, and one voice takes about a third of one core in real time. Phones have not

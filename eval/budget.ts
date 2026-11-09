@@ -21,6 +21,11 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
   "speaking (createVoice)": { imports: ["createVoice"], limit: 2_000 },
   "a chat (createVoice, clauses, play)": { imports: ["createVoice", "clauses", "play"], limit: 5_000 },
   "everything (index.js)": { imports: [], limit: 9_000 },
+  "a voice in a Worker, page side (createWorkerVoice, play)": {
+    imports: ["createWorkerVoice", "play"],
+    limit: 3_000,
+  },
+  "a voice in a Worker, worker side (worker.js)": { imports: [], from: "worker.js", limit: 2_500 },
   "the device's voices (web-speech.js)": {
     imports: ["createSystemVoice"],
     from: "web-speech.js",
@@ -48,7 +53,7 @@ for (const [file, limit] of Object.entries(SIZE_LIMITS)) {
 
 const BUNDLES = join(import.meta.dir, "out/bundles");
 for (const [label, { imports, from: file = "index.js", limit }] of Object.entries(BUNDLE_LIMITS)) {
-  const entry = join(BUNDLES, `${label.split(" ").slice(0, 2).join("-")}.js`);
+  const entry = join(BUNDLES, `${label.replace(/\W+/g, "-")}.js`);
   const from = JSON.stringify(join(DIST, file));
   await Bun.write(
     entry,

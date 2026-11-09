@@ -37,6 +37,8 @@ interface Result {
   resampled: { rate: number; lengthRatio: number; rmsRatio: number; underruns: number };
   /** The device-voice entry loads next to the main one, and how many voices the browser lists. */
   systemVoices: number;
+  /** A voice in the default Worker: its samples against render's, and its first chunk's delay. */
+  worker: { maxError: number; length: number; firstChunkMs: number };
 }
 
 let failed = false;
@@ -60,7 +62,7 @@ for (const name of wanted) {
     });
     await page.goto(`${ORIGIN}/`, { waitUntil: "load" });
     const result: Result = await page.evaluate(async (origin) => {
-      const { createVoice, play } = await import(`${origin}/index.js`);
+      const { createVoice, createWorkerVoice, play } = await import(`${origin}/index.js`);
       const started = performance.now();
       const voice = await createVoice({ body: "female" });
       const loadMs = performance.now() - started;
@@ -93,6 +95,24 @@ for (const name of wanted) {
         return Math.sqrt(sum / n);
       };
       voice.free();
+
+      const remote = await createWorkerVoice({ body: "female" });
+      const asked = performance.now();
+      let firstChunkMs = -1;
+      const parts: Float32Array[] = [];
+      for await (const chunk of remote.stream(text)) {
+        if (firstChunkMs < 0) firstChunkMs = performance.now() - asked;
+        parts.push(chunk);
+      }
+      remote.free();
+      let workerError = 0;
+      let at = 0;
+      for (const part of parts) {
+        for (let i = 0; i < part.length; i++)
+          workerError = Math.max(workerError, Math.abs(part[i] - audio[at + i]));
+        at += part.length;
+      }
+
       const { systemVoices } = await import(`${origin}/web-speech.js`);
       const listed = await systemVoices(speechSynthesis, 500);
       return {
@@ -106,6 +126,7 @@ for (const name of wanted) {
           underruns: resampledEnd.underruns,
         },
         systemVoices: listed.length,
+        worker: { maxError: workerError, length: at, firstChunkMs },
       };
     }, ORIGIN);
     const problems = [
@@ -116,6 +137,9 @@ for (const name of wanted) {
       Math.abs(result.resampled.lengthRatio - 1) > 0.01 &&
         `resampled length ratio ${result.resampled.lengthRatio}`,
       Math.abs(result.resampled.rmsRatio - 1) > 0.05 && `resampled level ratio ${result.resampled.rmsRatio}`,
+      result.worker.maxError > 0 && `the worker's samples differ from render by ${result.worker.maxError}`,
+      result.worker.length !== Math.round(result.renderedSeconds * 48_000) &&
+        `the worker gave ${result.worker.length} samples`,
     ].filter(Boolean);
     console.log(
       `${problems.length === 0 ? "ok  " : "FAIL"} ${name} ${await browser.version()} ${JSON.stringify(result)}`,

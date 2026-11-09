@@ -55,3 +55,4 @@ export {
   tenser,
   valueAt,
 } from "./transforms.js";
+export { type AsyncVoice, createWorkerVoice, type WorkerVoiceOptions } from "./worker-voice.js";
