@@ -107,6 +107,41 @@ speech.lost; // ["pitch range", "breath", "tension", "pause length"]
 await speech.done;
 ```
 
+## One interface, three backends
+
+`intone/speaker` is one asynchronous interface that CHIMERA, Kokoro (a neural TTS model, run
+locally through `kokoro-js`) and the device's own voices (Web Speech) all speak through, so an
+app can switch backends without changing its call sites. Every call reports what that backend
+could not honor in `lost`.
+
+```ts
+import { createSpeaker } from "intone/speaker";
+
+const speaker = await createSpeaker("kokoro", { body: "female" });
+speaker.id; // "kokoro"
+speaker.supports; // { pitchCurve: false, soundTiming: false, breath: false, phones: true, ... }
+const spoken = speaker.say("Hello there.");
+spoken.lost; // what this call asked for that Kokoro could not do
+await spoken.done;
+speaker.free();
+```
+
+A `Speaker` describes itself (`accepts` the layer it reads, `supports`, `output`) and every
+`render`/`stream`/`say` call reports `lost`, so a caller never has to know an engine's name to
+degrade gracefully:
+
+|              | accepts    | output     | honors                      | typical `lost`                   |
+| ------------ | ---------- | ---------- | ---------------------------- | --------------------------------- |
+| `chimera`    | gestures   | samples    | everything (f0, accent, body) | nothing                           |
+| `kokoro`     | phrasing   | samples    | rate                          | `f0`, `accent`, `body`, chunk size |
+| `web-speech` | intent     | playback   | rate                          | `f0`, `accent`, `body`             |
+
+`createSpeaker("chimera", ...)` is a thin wrapper over `createWorkerVoice` and keeps its
+guarantees (samples straight to the audio thread, `stop()` before anything plays gives silence).
+`createSpeaker("kokoro", ...)` downloads the model on first use (about 88 MB) through `kokoro-js`,
+which is an optional peer dependency: only code that imports `intone/speaker` and asks for
+`"kokoro"` pulls it in.
+
 ## Cost
 
 |                                              | gzipped |
