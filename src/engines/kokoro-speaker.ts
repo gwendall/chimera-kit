@@ -12,8 +12,14 @@
 import { clauses } from "../clauses.js";
 import type { Body, SpeakOptions } from "../engine.js";
 import { type PlayOptions, play } from "../player.js";
-import type { Speaker, SpeakerSayOptions, SpokenPlayback, SpokenRendered, Supports } from "../speaker.js";
-import type { StreamOptions } from "../voice.js";
+import type {
+  Speaker,
+  SpeakerSayOptions,
+  SpeakerStreamOptions,
+  SpokenPlayback,
+  SpokenRendered,
+  Supports,
+} from "../speaker.js";
 import {
   createKokoroVoice,
   KOKORO_SAMPLE_RATE,
@@ -55,7 +61,7 @@ export function voiceFor(options: KokoroSpeakerOptions): string | undefined {
 
 /** What a call's options ask for that Kokoro cannot do: `f0` and `accent` have no input at all,
  * `body` cannot change after the speaker was opened, and `chunkSize` has no meaning here. */
-export function lostFor(options?: StreamOptions): string[] {
+export function lostFor(options?: SpeakerStreamOptions): string[] {
   const lost: string[] = [];
   if (options?.f0 !== undefined) lost.push("f0");
   if (options?.accent !== undefined) lost.push("accent");
@@ -85,12 +91,12 @@ export function speakerFromKokoro(voice: KokoroVoice): Speaker {
     supports: SUPPORTS,
     sampleRate: voice.sampleRate,
 
-    async render(text: string, speakOptions?: StreamOptions): Promise<SpokenRendered> {
+    async render(text: string, speakOptions?: SpeakerStreamOptions): Promise<SpokenRendered> {
       const rendered = await voice.render(text, speakOptions);
       return { ...rendered, lost: lostFor(speakOptions) };
     },
 
-    async *stream(text: string, speakOptions?: StreamOptions) {
+    async *stream(text: string, speakOptions?: SpeakerStreamOptions) {
       for await (const chunk of voice.stream(text, speakOptions)) yield chunk;
       return lostFor(speakOptions);
     },

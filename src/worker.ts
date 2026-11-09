@@ -3,15 +3,16 @@
  * samples sent as they are computed, back to the page or straight to the audio thread. Not meant
  * to be imported.
  */
-import { type CreateVoiceOptions, createVoice } from "./index.js";
+import { createVoice } from "./index.js";
 import { pacedClause } from "./pace.js";
-import type { StreamOptions, Voice } from "./voice.js";
+import type { Voice } from "./voice.js";
+import type { WorkerStreamOptions, WorkerVoiceOptions } from "./worker-voice.js";
 
 export type ToWorker =
-  | { type: "open"; options: CreateVoiceOptions }
-  | { type: "render" | "stream"; id: number; text: string; options: StreamOptions }
+  | { type: "open"; options: Omit<WorkerVoiceOptions, "worker"> }
+  | { type: "render" | "stream"; id: number; text: string; options: WorkerStreamOptions }
   /** Starts speaking into `port`, an AudioWorklet player's, the clauses that follow. */
-  | { type: "say"; id: number; options: StreamOptions; port: MessagePort }
+  | { type: "say"; id: number; options: WorkerStreamOptions; port: MessagePort }
   | { type: "clause"; id: number; text: string }
   /** No more clauses for this `say`. */
   | { type: "said"; id: number }
@@ -127,7 +128,7 @@ async function serve(request: ToWorker): Promise<void> {
 async function speak(
   voice: Voice,
   state: Pending,
-  options: StreamOptions,
+  options: WorkerStreamOptions,
   send: (chunk: Float32Array) => void,
   paced: boolean,
 ): Promise<boolean> {

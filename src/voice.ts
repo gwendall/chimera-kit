@@ -1,10 +1,21 @@
 import type { Engine, EngineUtterance, SpeakOptions } from "./engine.js";
 import type { Score } from "./layers.js";
+import type { ScoreTransform } from "./transforms.js";
 
 /** One audio-worklet quantum: 2.7 ms of audio, so that the first sound leaves as soon as it exists. */
 const DEFAULT_CHUNK = 128;
 
-export interface StreamOptions extends SpeakOptions {
+export interface VoiceOptions extends SpeakOptions {
+  /**
+   * Applied to every score planned from text, such as `deliver("calm")` or a `compose` of
+   * transforms. Text with a style is planned, transformed and rendered as a score; a score passed
+   * in takes only the style given with that call, as the voice's own is already in it when it came
+   * from `plan`.
+   */
+  style?: ScoreTransform;
+}
+
+export interface StreamOptions extends VoiceOptions {
   /** Samples per chunk, from 1 to 4096. Defaults to 128 (2.7 ms of audio). */
   chunkSize?: number;
 }
@@ -21,9 +32,9 @@ export type Speakable = string | Score;
 export interface Voice {
   readonly sampleRate: number;
   /** Plans text into a score (layer 2 of `docs/design.md`) without rendering it. */
-  plan(text: string, options?: SpeakOptions): Score;
+  plan(text: string, options?: VoiceOptions): Score;
   /** Renders the whole utterance at once. */
-  render(input: Speakable, options?: SpeakOptions): Rendered;
+  render(input: Speakable, options?: VoiceOptions): Rendered;
   /** Renders chunk by chunk. Each chunk is a fresh array the caller owns. */
   stream(input: Speakable, options?: StreamOptions): Generator<Float32Array, void, undefined>;
   /** Releases the voice's memory. It can't be used afterwards. */
@@ -31,7 +42,7 @@ export interface Voice {
 }
 
 /** A voice speaking through an engine. Owns the engine from here on. */
-export function voiceFrom(engine: Engine, defaults: SpeakOptions = {}): Voice {
+export function voiceFrom(engine: Engine, defaults: VoiceOptions = {}): Voice {
   return new EngineVoice(engine, defaults);
 }
 
@@ -40,20 +51,22 @@ class EngineVoice implements Voice {
 
   constructor(
     private readonly engine: Engine,
-    private readonly defaults: SpeakOptions,
+    private readonly defaults: VoiceOptions,
   ) {}
 
   get sampleRate(): number {
     return this.engine.sampleRate;
   }
 
-  plan(text: string, options?: SpeakOptions): Score {
+  plan(text: string, options?: VoiceOptions): Score {
     if (this.freed) throw new Error("intone: this voice has been freed");
     if (!this.engine.plan) throw new Error("intone: this engine cannot plan a score");
-    return this.engine.plan({ ...this.defaults, ...options, text });
+    const { style, ...speak } = { ...this.defaults, ...options };
+    const score = this.engine.plan({ ...speak, text });
+    return style ? style(score) : score;
   }
 
-  render(input: Speakable, options?: SpeakOptions): Rendered {
+  render(input: Speakable, options?: VoiceOptions): Rendered {
     const { maxChunk } = this.engine;
     const utterance = this.begin(input, options);
     try {
@@ -91,10 +104,15 @@ class EngineVoice implements Voice {
     this.engine.free();
   }
 
-  private begin(input: Speakable, options?: SpeakOptions): EngineUtterance {
+  private begin(input: Speakable, options?: VoiceOptions): EngineUtterance {
     if (this.freed) throw new Error("intone: this voice has been freed");
     if (typeof input === "string") {
-      return this.engine.begin({ ...this.defaults, ...options, text: input });
+      const { style, ...speak } = { ...this.defaults, ...options };
+      // Without a style, text goes straight to the engine, sample for sample as before.
+      if (!style) return this.engine.begin({ ...speak, text: input });
+      if (!this.engine.beginScore) throw new Error("intone: this engine cannot render a score");
+      const score = this.plan(input, options);
+      return this.engine.beginScore(speak.body === undefined ? { score } : { score, body: speak.body });
     }
     if (!this.engine.beginScore) throw new Error("intone: this engine cannot render a score");
     // A score already holds its timing and pitch: changing them is a transform, not an option.
@@ -105,6 +123,7 @@ class EngineVoice implements Voice {
       );
     }
     const body = options?.body ?? this.defaults.body;
-    return this.engine.beginScore(body === undefined ? { score: input } : { score: input, body });
+    const score = options?.style ? options.style(input) : input;
+    return this.engine.beginScore(body === undefined ? { score } : { score, body });
   }
 }

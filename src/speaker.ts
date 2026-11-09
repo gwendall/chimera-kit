@@ -56,7 +56,13 @@ export interface SpokenPlayback {
   stop(): void;
 }
 
-export interface SpeakerSayOptions extends StreamOptions, Omit<PlayOptions, "ahead"> {}
+/**
+ * A speaker's options are data, which every backend can read and a worker can receive. A `style`
+ * is a function: give it to a page-thread voice (`createVoice`) instead.
+ */
+export type SpeakerStreamOptions = Omit<StreamOptions, "style">;
+
+export interface SpeakerSayOptions extends SpeakerStreamOptions, Omit<PlayOptions, "ahead"> {}
 
 /** The unified shape every backend's open voice presents. */
 export interface Speaker {
@@ -68,13 +74,13 @@ export interface Speaker {
   /** Only set when `output` is `"samples"`. */
   readonly sampleRate?: number;
   /** Renders the whole utterance at once. Only present when `output` is `"samples"`. */
-  render?(text: string, options?: StreamOptions): Promise<SpokenRendered>;
+  render?(text: string, options?: SpeakerStreamOptions): Promise<SpokenRendered>;
   /**
    * Renders chunk by chunk. Only present when `output` is `"samples"`. The generator's return
    * value is `lost`; a `for await` loop drops it, so read it from a manual `.next()` call when it
    * matters.
    */
-  stream?(text: string, options?: StreamOptions): AsyncGenerator<Float32Array, string[], undefined>;
+  stream?(text: string, options?: SpeakerStreamOptions): AsyncGenerator<Float32Array, string[], undefined>;
   /**
    * Speaks aloud. A string is one utterance; pieces of text that are still arriving (a language
    * model's tokens) are spoken clause by clause, Markdown read as words.

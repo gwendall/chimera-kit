@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { createVoice, type Voice } from "./index.ts";
+import { createVoice, deliver, type Voice } from "./index.ts";
 
 const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
 const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
@@ -113,6 +113,29 @@ describe("a score", () => {
     expect(() => voice.render({ ...score, duration: -1 })).toThrow("intone");
     expect(() => voice.render({ ...score, duration: -1 })).toThrow("duration");
     expect(() => voice.render({ ...score, sounds: [] })).toThrow("sounds");
+  });
+
+  test("a style shapes text as it shapes the score planned from it", () => {
+    const sad = deliver("sad");
+    const shaped = sad(voice.plan(TEXT));
+    expect(voice.plan(TEXT, { style: sad })).toEqual(shaped);
+    const { audio } = voice.render(TEXT, { style: sad });
+    expect(audio).toEqual(voice.render(shaped).audio);
+    expect(audio.length).toBeGreaterThan(voice.render(TEXT).audio.length);
+    expect(voice.render(voice.plan(TEXT), { style: sad }).audio).toEqual(audio);
+  });
+
+  test("a voice's style is in its plans, and not applied a second time to them", async () => {
+    const sad = await createVoice({ wasm, dictionary, style: deliver("sad") });
+    try {
+      const { audio } = sad.render(TEXT);
+      expect(audio).toEqual(sad.render(sad.plan(TEXT)).audio);
+      expect(audio).toEqual(voice.render(TEXT, { style: deliver("sad") }).audio);
+      const chunks = [...sad.stream(TEXT, { chunkSize: 4096 })];
+      expect(chunks.reduce((n, chunk) => n + chunk.length, 0)).toBe(audio.length);
+    } finally {
+      sad.free();
+    }
   });
 
   test("refuses timing and pitch options, which a score already holds", () => {

@@ -8,7 +8,10 @@ import { type Playback, type PlayOptions, playThrough } from "./player.js";
 import type { Rendered, StreamOptions } from "./voice.js";
 import type { FromWorker, ToWorker } from "./worker.js";
 
-export interface WorkerVoiceOptions extends CreateVoiceOptions {
+/** A worker gets its options through postMessage, which cannot carry a function such as `style`. */
+export type WorkerStreamOptions = Omit<StreamOptions, "style">;
+
+export interface WorkerVoiceOptions extends Omit<CreateVoiceOptions, "style"> {
   /**
    * The worker to use, running intone's `worker.js`. Defaults to a new module worker next to this
    * file, which bundlers that follow `new URL(..., import.meta.url)` pick up.
@@ -16,7 +19,7 @@ export interface WorkerVoiceOptions extends CreateVoiceOptions {
   worker?: Worker;
 }
 
-export interface SayOptions extends StreamOptions, Omit<PlayOptions, "ahead"> {
+export interface SayOptions extends WorkerStreamOptions, Omit<PlayOptions, "ahead"> {
   /** How text that arrives in pieces is cut into clauses. */
   clauses?: ClauseOptions;
 }
@@ -24,9 +27,9 @@ export interface SayOptions extends StreamOptions, Omit<PlayOptions, "ahead"> {
 /** A voice whose samples arrive asynchronously. */
 export interface AsyncVoice {
   readonly sampleRate: number;
-  render(text: string, options?: StreamOptions): Promise<Rendered>;
+  render(text: string, options?: WorkerStreamOptions): Promise<Rendered>;
   /** Chunks as the worker computes them. Ending the loop early cancels the rest. */
-  stream(text: string, options?: StreamOptions): AsyncGenerator<Float32Array, void, undefined>;
+  stream(text: string, options?: WorkerStreamOptions): AsyncGenerator<Float32Array, void, undefined>;
   /**
    * Speaks aloud. A string is one utterance; pieces of text that are still arriving (a language
    * model's tokens) are spoken clause by clause, Markdown read as words.

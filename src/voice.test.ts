@@ -49,6 +49,14 @@ describe("a voice over any engine", () => {
     expect(log.requests).toEqual([{ rate: 2, f0: 150, text: "hi" }]);
   });
 
+  test("text without a style reaches the engine as text; with one, it needs an engine that renders scores", () => {
+    const { engine, log } = fakeEngine();
+    const voice = voiceFrom(engine, { rate: 1.2 });
+    voice.render("hi");
+    expect(log.requests).toEqual([{ rate: 1.2, text: "hi" }]);
+    expect(() => voice.render("hi", { style: (score) => score })).toThrow("cannot render a score");
+  });
+
   test("chunkSize stays out of the engine's request", () => {
     const { engine, log } = fakeEngine();
     [...voiceFrom(engine).stream("hi", { chunkSize: 50, rate: 2 })];

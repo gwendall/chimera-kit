@@ -3,9 +3,8 @@
  *
  * The API speaks of voices and utterances. The engine behind it is an implementation detail.
  */
-import type { SpeakOptions } from "./engine.js";
 import { type ChimeraSources, loadChimera } from "./engines/chimera.js";
-import { type Voice, voiceFrom } from "./voice.js";
+import { type Voice, type VoiceOptions, voiceFrom } from "./voice.js";
 
 export type { Body, SpeakOptions } from "./engine.js";
 export type { Source } from "./engines/chimera.js";
@@ -20,9 +19,9 @@ export type {
   Word,
   WordSpan,
 } from "./layers.js";
-export type { Rendered, StreamOptions, Voice } from "./voice.js";
+export type { Rendered, StreamOptions, Voice, VoiceOptions } from "./voice.js";
 
-export interface CreateVoiceOptions extends SpeakOptions, ChimeraSources {}
+export interface CreateVoiceOptions extends VoiceOptions, ChimeraSources {}
 
 /** Loads the engine and returns a voice. */
 export async function createVoice(options: CreateVoiceOptions = {}): Promise<Voice> {
@@ -60,5 +59,6 @@ export {
   type AsyncVoice,
   createWorkerVoice,
   type SayOptions,
+  type WorkerStreamOptions,
   type WorkerVoiceOptions,
 } from "./worker-voice.js";

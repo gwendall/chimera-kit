@@ -4,8 +4,14 @@
  * silence, `queued` confirmed by the audio thread) are `createWorkerVoice`'s own, unchanged here.
  * CHIMERA honors a text request's body, rate, f0 and accent exactly, so nothing is ever lost.
  */
-import type { Speaker, SpeakerSayOptions, SpokenPlayback, SpokenRendered, Supports } from "../speaker.js";
-import type { StreamOptions } from "../voice.js";
+import type {
+  Speaker,
+  SpeakerSayOptions,
+  SpeakerStreamOptions,
+  SpokenPlayback,
+  SpokenRendered,
+  Supports,
+} from "../speaker.js";
 import { createWorkerVoice, type WorkerVoiceOptions } from "../worker-voice.js";
 
 export interface ChimeraSpeakerOptions extends WorkerVoiceOptions {}
@@ -31,12 +37,12 @@ export async function createChimeraSpeaker(options: ChimeraSpeakerOptions = {}):
     supports: SUPPORTS,
     sampleRate: voice.sampleRate,
 
-    async render(text: string, speakOptions?: StreamOptions): Promise<SpokenRendered> {
+    async render(text: string, speakOptions?: SpeakerStreamOptions): Promise<SpokenRendered> {
       const rendered = await voice.render(text, speakOptions);
       return { ...rendered, lost: NOTHING_LOST };
     },
 
-    async *stream(text: string, speakOptions?: StreamOptions) {
+    async *stream(text: string, speakOptions?: SpeakerStreamOptions) {
       for await (const chunk of voice.stream(text, speakOptions)) yield chunk;
       return NOTHING_LOST;
     },

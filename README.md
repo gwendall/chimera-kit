@@ -71,6 +71,7 @@ the first sample.
 | `rate`   | speaking-rate multiplier                                                  |
 | `f0`     | baseline pitch in Hz                                                      |
 | `accent` | pitch excursion on stressed syllables                                     |
+| `style`  | a score transform for everything planned from text: `deliver("calm")`     |
 
 `createVoice({ dictionary: false })` skips the pronouncing dictionary and uses spelling rules
 alone: 189 KB in all, at a cost in pronunciation.
@@ -91,6 +92,22 @@ const { audio } = voice.render(t.score);
 
 A score already holds its timing and pitch, so `rate`, `f0` and `accent` are refused with one:
 `stretch`, `shift` and `deliver` change them instead.
+
+The same transforms can shape every reading. A `style` is applied to each score the voice plans
+from text, whether it is given to `createVoice` or to one call:
+
+```ts
+import { deliver, speech } from "intone";
+
+const calm = await createVoice({ body: "female", style: deliver("calm") });
+await play(calm.stream("Take a breath."), calm.sampleRate).done;
+await play(speech(voice, answer, { style: deliver("sad", 0.5) }), voice.sampleRate).done; // one call
+```
+
+Text with a style goes through its score, which sounds like the text read directly but differs
+sample by sample. `plan` includes the voice's style, so a score it returned is not styled twice.
+The pause between clauses follows `rate`, not a style's own pacing. A worker voice takes no style
+yet: a function cannot be posted to a worker.
 
 ## The device's voices
 
