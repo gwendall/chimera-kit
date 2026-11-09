@@ -23,11 +23,11 @@ dictionary vowel; `reduce_vowel` is gone. "and" takes its citation form, `AE1 N 
 
 **Measured** (word errors, `eval/run.ts`, two voices, judge 1):
 
-| Step                              | Parakeet dev | Whisper dev |
-| --------------------------------- | ------------ | ----------- |
-| Before                            | 46.22 %      | 26.38 %     |
-| No rewrite toward schwa           | 44.64 %      | 24.18 %     |
-| And "and" in its citation form    | 42.62 %      | 22.83 %     |
+| Step                           | Parakeet dev | Whisper dev |
+| ------------------------------ | ------------ | ----------- |
+| Before                         | 46.22 %      | 26.38 %     |
+| No rewrite toward schwa        | 44.64 %      | 24.18 %     |
+| And "and" in its citation form | 42.62 %      | 22.83 %     |
 
 Held-out sentences, same change: Parakeet 46.94 % to 42.81 %, Whisper 26.50 % to 23.71 %. No split
 of either recognizer got worse.
