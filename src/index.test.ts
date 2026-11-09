@@ -65,6 +65,66 @@ describe("a voice", () => {
   });
 });
 
+describe("a score", () => {
+  let voice: Voice;
+
+  beforeAll(async () => {
+    voice = await createVoice({ wasm, dictionary });
+  });
+
+  test("plans text into a score whose sounds cover its duration", () => {
+    const score = voice.plan(TEXT);
+    expect(score.duration).toBeGreaterThan(0);
+    expect(score.sounds.length).toBeGreaterThan(0);
+    expect(score.pitch.length).toBeGreaterThan(0);
+    let end = 0;
+    for (const s of score.sounds) {
+      expect(s.t0).toBeGreaterThanOrEqual(end - 1e-9);
+      expect(s.t1).toBeGreaterThan(s.t0);
+      end = s.t1;
+    }
+    expect(end).toBeCloseTo(score.duration, 5);
+  });
+
+  test("renders a planned score back, honoring its own duration", () => {
+    const score = voice.plan(TEXT);
+    const { audio, sampleRate } = voice.render(score);
+    expect(audio.length / sampleRate).toBeCloseTo(score.duration, 1);
+    expect(audio.every((x) => Number.isFinite(x) && Math.abs(x) < 4)).toBe(true);
+    expect(rms(audio)).toBeGreaterThan(0.001);
+  });
+
+  test("streams a score the same way it streams text", () => {
+    const score = voice.plan(TEXT);
+    const whole = voice.render(score).audio;
+    const chunks = [...voice.stream(score)];
+    expect(chunks.length).toBeGreaterThan(1);
+    const joined = new Float32Array(chunks.reduce((n, chunk) => n + chunk.length, 0));
+    let at = 0;
+    for (const chunk of chunks) {
+      joined.set(chunk, at);
+      at += chunk.length;
+    }
+    expect(joined as Float32Array).toEqual(whole);
+  });
+
+  test("reports a bad score with a readable, prefixed message", () => {
+    const score = voice.plan(TEXT);
+    expect(() => voice.render({ ...score, duration: -1 })).toThrow("intone");
+    expect(() => voice.render({ ...score, duration: -1 })).toThrow("duration");
+    expect(() => voice.render({ ...score, sounds: [] })).toThrow("sounds");
+  });
+
+  test("a tension curve that changes over time is refused", () => {
+    const score = voice.plan(TEXT);
+    const tension: [number, number][] = [
+      [0, 0.2],
+      [score.duration, 0.8],
+    ];
+    expect(() => voice.render({ ...score, tension })).toThrow("tension");
+  });
+});
+
 describe("createVoice", () => {
   test("applies the options given at creation", async () => {
     const fast = await createVoice({ wasm, dictionary: false, rate: 1.5 });
