@@ -345,6 +345,40 @@ play([bird.call("flute")], zoo.sampleRate);
 | `alligator`           | `bellow`, `growl`, `hiss`, `dance` |
 | `elephant`            | `rumble`, `trumpet`, `squeak`      |
 
+## A played voice
+
+`intone/live` holds a note instead of speaking a sentence: press it on, move the mouth and the
+source while it sounds, bend its pitch, release it. It runs inside an AudioWorklet, so a control
+call reaches the audio thread without a hop through the page's own event loop. The beatbox CHIMERA
+already models (kick, snare, hats, clicks, a hummed bass) comes along as `live.beat`.
+
+```ts
+import { createInstrument } from "intone/live";
+
+const context = new AudioContext();
+const live = await createInstrument({ body: "female", context });
+
+live.vowel("a");
+live.noteOn(60); // sounds within a render quantum or two
+live.shape({ jaw: 0.4, lipAp: 0.2 }); // the engine's own articulator names
+live.source({ breathiness: 0.3, tension: 0.6 });
+live.bend(62); // glides without retriggering
+live.noteOff();
+
+live.beat.steps("kick . snare ."); // names or pattern symbols ("B . Pf .") both work
+live.beat.start({ bpm: 96 });
+live.beat.hit("kick"); // one hit, outside the sequencer
+live.beat.stop();
+
+live.telemetry(); // the worklet's last snapshot: f0, gate, the airway's areas, ...
+live.free();
+```
+
+A call the engine rejects (an unknown vowel, a non-finite value, an unknown beat sound) cannot
+throw back at the caller the way a direct function call would, since it crosses to the audio
+thread as a message: pass `onError` to `createInstrument` to hear about it. The engine itself is
+left exactly as it was.
+
 ## Intelligibility
 
 Word errors made by two speech recognizers on sentences not used for tuning, over two voices. The
