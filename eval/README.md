@@ -40,3 +40,10 @@ The defenses against fooling ourselves:
    to them bumps `JUDGE_VERSION` and needs new baselines.
 4. Don't run `--splits locked` during a tuning loop.
 5. Record a kept change as a new baseline in `eval/baselines/` with what it changed.
+6. Record a reverted one below, so that nobody runs it again without a new reason.
+
+## Tried, not kept
+
+- **Presence boost** (2026-11-09, run `presence3`): a +3 dB peaking filter at 1.6 kHz (Q 0.7)
+  on the rendered audio. NO CLEAR CHANGE: Parakeet dev 42.62 -> 43.35 % (interval -0.96 to
+  2.33), Whisper dev 22.83 -> 22.94 %. The recognizers don't miss loudness in that band.
