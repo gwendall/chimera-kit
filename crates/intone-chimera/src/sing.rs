@@ -46,9 +46,10 @@ pub struct SingRequest {
     /// Vibrato depth in cents on held vowels (0 for none); blooms a quarter second into the hold.
     #[serde(default)]
     pub vibrato: f64,
-    /// Plan time of the first note's beat; its onset consonants sound before it.
+    /// Plan time of the first note's beat; its onset consonants sound before it. Left out, the
+    /// first beat comes just late enough for them to start at time 0 (to the next millisecond).
     #[serde(default)]
-    pub t0: f64,
+    pub t0: Option<f64>,
 }
 
 impl SingRequest {
@@ -62,8 +63,10 @@ impl SingRequest {
                 self.vibrato
             ));
         }
-        if !(self.t0.is_finite() && self.t0 >= 0.0) {
-            return Err(format!("t0 must be finite and >= 0, got {}", self.t0));
+        if let Some(t0) = self.t0
+            && !(t0.is_finite() && t0 >= 0.0)
+        {
+            return Err(format!("t0 must be finite and >= 0, got {t0}"));
         }
         if self.notes.is_empty() {
             return Err("notes must not be empty".into());
@@ -246,15 +249,22 @@ pub fn sing(g2p: &EnglishG2P, request: &SingRequest) -> Result<Score, String> {
             syl,
         })
         .collect();
-    let plan = plan_song(
-        &notes,
-        &SongOptions {
-            body: mix,
-            bpm: request.bpm,
-            t0: request.t0,
-            vibrato: request.vibrato,
-        },
-    );
+    let options = |t0| SongOptions {
+        body: mix,
+        bpm: request.bpm,
+        t0,
+        vibrato: request.vibrato,
+    };
+    let t0 = request.t0.unwrap_or(0.0);
+    let mut plan = plan_song(&notes, &options(t0));
+    // Without a t0, a song that starts on a consonant ("twinkle") would be refused below: move its
+    // first beat later by the onset's lead, rounded up to a millisecond so that it starts at >= 0.
+    if request.t0.is_none()
+        && let Some(first) = plan.segments.first()
+        && first.t0 < 0.0
+    {
+        plan = plan_song(&notes, &options((-first.t0 * 1000.0).ceil() / 1000.0));
+    }
     if plan.gestures.len() > GestureScore::CAPACITY {
         return Err("melody too long for one utterance: split it into phrases".into());
     }
@@ -267,7 +277,7 @@ pub fn sing(g2p: &EnglishG2P, request: &SingRequest) -> Result<Score, String> {
     {
         return Err(format!(
             "t0 ({:.3}) is too small: the first syllable's onset needs to start at {:.3}s; raise t0 by at least {:.3}s",
-            request.t0, first.t0, -first.t0
+            t0, first.t0, -first.t0
         ));
     }
     let f0 = midi_to_hz(notes[0].midi);

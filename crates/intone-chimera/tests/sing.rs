@@ -128,6 +128,20 @@ fn t0_too_small_for_the_first_onset_is_refused_with_a_usable_message() {
 }
 
 #[test]
+fn without_a_t0_a_song_that_starts_on_a_consonant_starts_at_time_zero() {
+    // With t0 defaulting to 0, every song starting on a consonant was refused: "Twinkle" included.
+    let g = consonant_g2p();
+    let req: SingRequest = serde_json::from_value(serde_json::json!({
+        "lyrics": "bah", "notes": [{"midi": 60, "beats": 1}], "bpm": 120,
+    }))
+    .unwrap();
+    let score = sing(&g, &req).unwrap();
+    let first = score.sounds.iter().find(|s| s.sound != "_").unwrap();
+    assert_eq!(first.sound, "b");
+    assert!((0.0..0.001).contains(&first.t0), "{:?}", &score.sounds[..2]);
+}
+
+#[test]
 fn word_spans_name_the_lyric_words_and_cover_their_notes() {
     let g = consonant_g2p();
     let req = request("bah dee bop", &[60.0, 62.0, 64.0], 1.0, 120.0, 0.0, 0.2);
