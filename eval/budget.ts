@@ -12,8 +12,11 @@ const DIST = join(import.meta.dir, "../dist");
 const SIZE_LIMITS: Record<string, number> = {
   // 188,032 before planning to a score and rendering one back (layer 2), 206,897 after, 221,182
   // with singing (plan_song and lyrics_to_syllables, +14.3 KB): 1.3 % of a first load with the
-  // dictionary, and a separate singing build would carry the whole speech engine again.
-  "intone_chimera.wasm": 225_000,
+  // dictionary, and a separate singing build would carry the whole speech engine again. 273,867
+  // with `intone/live` (`ic_live_*`/`ic_beat_*`, +52.7 KB): the held voice's own render path plus
+  // the beatbox's `BeatSound` table, both newly linker-reachable, measured on the one wasm the
+  // utterance and live APIs share (`bun eval/budget.ts --no-speed`, 2026-11-09).
+  "intone_chimera.wasm": 280_000,
   "cmudict.txt.gz": 880_000,
   // The 4 creatures (songbird, seal, alligator, elephant) and their airways: 108,935 measured.
   "intone_creatures.wasm": 115_000,
@@ -64,6 +67,21 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
     imports: ["melody", "harmony", "keyOf", "scoop", "fall"],
     from: "singing.js",
     limit: 2_200,
+  },
+  // 1,516 bytes measured: createInstrument alone (the worklet's own code ships separately, loaded
+  // by `context.audioWorklet.addModule`, so the page only carries the small main-thread half:
+  // compiling the wasm, the worklet node, and the Safari DataCloneError fallback).
+  "a played voice, page side (createInstrument)": {
+    imports: ["createInstrument"],
+    from: "live.js",
+    limit: 2_000,
+  },
+  // 1,673 bytes measured: the AudioWorkletProcessor itself (the held voice's engine wrapper and
+  // the message-handling switch), never loaded by the page's own bundle.
+  "a played voice, worklet side (worklet-live.js)": {
+    imports: [],
+    from: "worklet-live.js",
+    limit: 2_000,
   },
 };
 /** Share of one core a voice may use in real time, measured in Bun. */
