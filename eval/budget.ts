@@ -10,7 +10,8 @@ import { createVoice } from "../dist/index.js";
 const DIST = join(import.meta.dir, "../dist");
 /** Limits in bytes, gzipped. */
 const SIZE_LIMITS: Record<string, number> = {
-  "intone_chimera.wasm": 200_000,
+  // 188,032 before planning to a score and rendering one back (layer 2), 206,897 after.
+  "intone_chimera.wasm": 210_000,
   "cmudict.txt.gz": 880_000,
 };
 /**

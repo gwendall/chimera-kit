@@ -76,6 +76,23 @@ the first sample.
 `createVoice({ dictionary: false })` skips the pronouncing dictionary and uses spelling rules
 alone: 189 KB in all, at a cost in pronunciation.
 
+### Shaping one reading
+
+`plan` gives the score the voice would speak: every sound with its timing, the pitch, and where
+each word lies. Change it, then render the score itself, timing and pitch kept to the sample:
+
+```ts
+import { take } from "intone";
+
+const t = take(voice.plan("I never said she stole my money."));
+t.word("never").emphasize();
+t.word("money").pitch("+2st").stretch(1.3);
+const { audio } = voice.render(t.score);
+```
+
+A score already holds its timing and pitch, so `rate`, `f0` and `accent` are refused with one:
+`stretch`, `shift` and `deliver` change them instead.
+
 ## The device's voices
 
 The same calls can speak through the voices the device already has (Web Speech): nothing to

@@ -97,6 +97,13 @@ class EngineVoice implements Voice {
       return this.engine.begin({ ...this.defaults, ...options, text: input });
     }
     if (!this.engine.beginScore) throw new Error("intone: this engine cannot render a score");
+    // A score already holds its timing and pitch: changing them is a transform, not an option.
+    const refused = (["rate", "f0", "accent"] as const).filter((key) => options?.[key] !== undefined);
+    if (refused.length > 0) {
+      throw new RangeError(
+        `intone: a score ignores ${refused.join(", ")}; transform it instead (stretch, shift, deliver)`,
+      );
+    }
     const body = options?.body ?? this.defaults.body;
     return this.engine.beginScore(body === undefined ? { score: input } : { score: input, body });
   }

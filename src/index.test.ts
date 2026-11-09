@@ -115,6 +115,13 @@ describe("a score", () => {
     expect(() => voice.render({ ...score, sounds: [] })).toThrow("sounds");
   });
 
+  test("refuses timing and pitch options, which a score already holds", () => {
+    const score = voice.plan(TEXT);
+    expect(() => voice.render(score, { rate: 1.5 })).toThrow("stretch");
+    expect(() => voice.render(score, { f0: 200, accent: 0.3 })).toThrow("f0, accent");
+    expect(voice.render(score, { body: "female" }).audio.length).toBeGreaterThan(0);
+  });
+
   test("a tension curve that changes over time is refused", () => {
     const score = voice.plan(TEXT);
     const tension: [number, number][] = [
