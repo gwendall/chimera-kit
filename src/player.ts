@@ -148,7 +148,14 @@ function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?:
   // an external close the same as `stop()` and settle both promises ourselves; the real underrun
   // count is unknowable once the audio thread has stopped running, so this reports 0.
   let onContextClosed: (() => void) | undefined;
-  if (!owned && context instanceof AudioContext) {
+  // `instanceof AudioContext` alone isn't enough: a caller-supplied `options.context` only has to
+  // satisfy BaseAudioContext, and a test double can pass `instanceof` (by swapping the global
+  // AudioContext it's checked against) without implementing EventTarget at all -- found live by
+  // player.test.ts's "wakes the context ... while still inside the tap" case, which crashed with
+  // "context.addEventListener is not a function" once this guard was added. Real AudioContexts
+  // always have it; this just stops a partial double from crashing a caller that never asked for
+  // the new behavior.
+  if (!owned && context instanceof AudioContext && typeof context.addEventListener === "function") {
     onContextClosed = () => {
       if (context.state !== "closed") return;
       stopped = true;
