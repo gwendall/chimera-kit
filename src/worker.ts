@@ -3,10 +3,11 @@
  * samples sent as they are computed, back to the page or straight to the audio thread. Not meant
  * to be imported.
  */
+import { deliver } from "./delivery.js";
 import { createVoice } from "./index.js";
 import { pacedClause } from "./pace.js";
-import type { Voice } from "./voice.js";
-import type { WorkerStreamOptions, WorkerVoiceOptions } from "./worker-voice.js";
+import type { StreamOptions, Voice } from "./voice.js";
+import type { DeliveryOptions, WorkerStreamOptions, WorkerVoiceOptions } from "./worker-voice.js";
 
 export type ToWorker =
   | { type: "open"; options: Omit<WorkerVoiceOptions, "worker"> }
@@ -55,6 +56,14 @@ interface Pending {
 }
 
 let voice: Voice | undefined;
+/** The voice's own delivery, which each request's may replace. */
+let delivering: DeliveryOptions = {};
+
+/** A request's options for the voice: its delivery, or the voice's, as a style. */
+function voiceOptions(options: WorkerStreamOptions): StreamOptions {
+  const { delivery = delivering.delivery, intensity = delivering.intensity, ...rest } = options;
+  return delivery === undefined ? rest : { ...rest, style: deliver(delivery, intensity) };
+}
 const pending = new Map<number, Pending>();
 let queue: Promise<void> = Promise.resolve();
 
@@ -79,7 +88,11 @@ async function serve(request: ToWorker): Promise<void> {
   switch (request.type) {
     case "open":
       try {
-        voice = await createVoice(request.options);
+        const { delivery, intensity, ...rest } = request.options;
+        delivering = {};
+        if (delivery !== undefined) delivering.delivery = delivery;
+        if (intensity !== undefined) delivering.intensity = intensity;
+        voice = await createVoice(rest);
         post({ type: "ready", sampleRate: voice.sampleRate });
       } catch (error) {
         post({ type: "error", message: message(error) });
@@ -95,14 +108,14 @@ async function serve(request: ToWorker): Promise<void> {
         if (!voice) throw new Error("intone: the worker has no voice");
         if (request.type === "render") {
           if (state.cancelled) return;
-          const { audio } = voice.render(request.text, request.options);
+          const { audio } = voice.render(request.text, voiceOptions(request.options));
           post({ type: "rendered", id, audio }, [audio.buffer]);
           return;
         }
         const send = port
           ? (chunk: Float32Array) => port.postMessage(chunk, [chunk.buffer])
           : (chunk: Float32Array) => post({ type: "chunk", id, chunk }, [chunk.buffer]);
-        if (await speak(voice, state, request.options, send, request.type === "say")) {
+        if (await speak(voice, state, voiceOptions(request.options), send, request.type === "say")) {
           if (port) port.postMessage("end");
           else post({ type: "end", id });
         }
@@ -128,7 +141,7 @@ async function serve(request: ToWorker): Promise<void> {
 async function speak(
   voice: Voice,
   state: Pending,
-  options: WorkerStreamOptions,
+  options: StreamOptions,
   send: (chunk: Float32Array) => void,
   paced: boolean,
 ): Promise<boolean> {

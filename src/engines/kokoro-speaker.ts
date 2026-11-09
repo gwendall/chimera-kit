@@ -10,7 +10,8 @@
  * `speed`), and a `chunkSize` is ignored (Kokoro's only granularity is a whole clause).
  */
 import { clauses } from "../clauses.js";
-import type { Body, SpeakOptions } from "../engine.js";
+import { atIntensity, departures } from "../delivery.js";
+import type { Body } from "../engine.js";
 import { type PlayOptions, play } from "../player.js";
 import type {
   Speaker,
@@ -23,6 +24,7 @@ import type {
 import {
   createKokoroVoice,
   KOKORO_SAMPLE_RATE,
+  type KokoroSpeakOptions,
   type KokoroVoice,
   type KokoroVoiceOptions,
 } from "./kokoro.js";
@@ -70,10 +72,28 @@ export function lostFor(options?: SpeakerStreamOptions): string[] {
   return lost;
 }
 
+/**
+ * A call's options as Kokoro takes them, and what it loses of them. A delivery's rate multiplies the
+ * call's rate, or else the voice's own (`voiceRate`), as CHIMERA's does; the rest of it is lost.
+ */
+export function forKokoro(
+  options: SpeakerStreamOptions = {},
+  voiceRate?: number,
+): { speak: KokoroSpeakOptions; lost: string[] } {
+  const { delivery, intensity, ...rest } = options;
+  const lost = lostFor(rest);
+  const speak: KokoroSpeakOptions = {};
+  if (rest.rate !== undefined) speak.rate = rest.rate;
+  if (delivery === undefined) return { speak, lost };
+  const d = atIntensity(delivery, intensity);
+  if (d.rate !== undefined) speak.rate = (rest.rate ?? voiceRate ?? 1) * d.rate;
+  return { speak, lost: [...lost, ...departures(d, ["rate"])] };
+}
+
 async function* chunksOf(
   voice: KokoroVoice,
   text: string | Iterable<string> | AsyncIterable<string>,
-  options?: SpeakOptions,
+  options?: KokoroSpeakOptions,
 ): AsyncGenerator<Float32Array, void, undefined> {
   const pieces = typeof text === "string" ? [text] : clauses(text);
   for await (const clause of pieces) {
@@ -92,13 +112,15 @@ export function speakerFromKokoro(voice: KokoroVoice): Speaker {
     sampleRate: voice.sampleRate,
 
     async render(text: string, speakOptions?: SpeakerStreamOptions): Promise<SpokenRendered> {
-      const rendered = await voice.render(text, speakOptions);
-      return { ...rendered, lost: lostFor(speakOptions) };
+      const { speak, lost } = forKokoro(speakOptions, voice.rate);
+      const rendered = await voice.render(text, speak);
+      return { ...rendered, lost };
     },
 
     async *stream(text: string, speakOptions?: SpeakerStreamOptions) {
-      for await (const chunk of voice.stream(text, speakOptions)) yield chunk;
-      return lostFor(speakOptions);
+      const { speak, lost } = forKokoro(speakOptions, voice.rate);
+      for await (const chunk of voice.stream(text, speak)) yield chunk;
+      return lost;
     },
 
     say(text, speakOptions: SpeakerSayOptions = {}): SpokenPlayback {
@@ -107,11 +129,12 @@ export function speakerFromKokoro(voice: KokoroVoice): Speaker {
       if (context) playOptions.context = context;
       if (destination) playOptions.destination = destination;
       if (signal) playOptions.signal = signal;
-      const playback = play(chunksOf(voice, text, rest), KOKORO_SAMPLE_RATE, playOptions);
+      const { speak, lost } = forKokoro(rest, voice.rate);
+      const playback = play(chunksOf(voice, text, speak), KOKORO_SAMPLE_RATE, playOptions);
       return {
         queued: playback.queued,
         done: playback.done.then(() => undefined),
-        lost: lostFor(rest),
+        lost,
         stop: playback.stop,
       };
     },

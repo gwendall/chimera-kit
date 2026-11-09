@@ -3,15 +3,27 @@
  * `say`, the samples go from the worker to the audio thread without passing through the page.
  */
 import { type ClauseOptions, clauses } from "./clauses.js";
+import type { Delivery, Mood } from "./delivery.js";
 import type { CreateVoiceOptions } from "./index.js";
 import { type Playback, type PlayOptions, playThrough } from "./player.js";
 import type { Rendered, StreamOptions } from "./voice.js";
 import type { FromWorker, ToWorker } from "./worker.js";
 
-/** A worker gets its options through postMessage, which cannot carry a function such as `style`. */
-export type WorkerStreamOptions = Omit<StreamOptions, "style">;
+/** A delivery as data, for a worker or any engine: what `style: deliver(delivery, intensity)` does. */
+export interface DeliveryOptions {
+  /** A mood's name or plain numbers, applied to everything planned from text. */
+  delivery?: Delivery | Mood;
+  /** How far to take it: 0 is neutral, 1 as written (the default). */
+  intensity?: number;
+}
 
-export interface WorkerVoiceOptions extends Omit<CreateVoiceOptions, "style"> {
+/**
+ * A worker gets its options through postMessage, which cannot carry a function such as `style`:
+ * a delivery comes as data instead.
+ */
+export type WorkerStreamOptions = Omit<StreamOptions, "style"> & DeliveryOptions;
+
+export interface WorkerVoiceOptions extends Omit<CreateVoiceOptions, "style">, DeliveryOptions {
   /**
    * The worker to use, running intone's `worker.js`. Defaults to a new module worker next to this
    * file, which bundlers that follow `new URL(..., import.meta.url)` pick up.

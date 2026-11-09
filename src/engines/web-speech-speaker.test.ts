@@ -112,6 +112,20 @@ describe("createWebSpeechSpeaker", () => {
     expect(spoken.lost).toEqual(["f0"]);
   });
 
+  test("say hands a delivery to the system voice at its intensity, its rate times the call's", async () => {
+    const { synth, options } = setup();
+    const speaker = await createWebSpeechSpeaker(options);
+    const spoken = speaker.say("Hello there.", {
+      delivery: { rate: 0.64, pitch: 12, breath: 0.4 },
+      intensity: 0.5,
+      rate: 1.5,
+    });
+    await spoken.done;
+    expect(synth.spoken[0]?.rate).toBeCloseTo(1.2, 9);
+    expect(synth.spoken[0]?.pitch).toBeCloseTo(1.5, 9);
+    expect(spoken.lost).toEqual(["breath"]);
+  });
+
   test("stop cuts speech short", async () => {
     const { synth, options } = setup();
     const speaker = await createWebSpeechSpeaker(options);

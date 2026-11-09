@@ -27,8 +27,10 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
     imports: ["createWorkerVoice", "play"],
     limit: 5_000,
   },
-  // 2,362 before each clause's end was paced (withPause), 2,674 after.
-  "a voice in a Worker, worker side (worker.js)": { imports: [], from: "worker.js", limit: 3_000 },
+  // 2,362 before each clause's end was paced (withPause), 2,674 after, 2,747 with styles. 4,624 with
+  // deliveries as data (`deliver` and the transforms it applies), which a worker must carry since a
+  // style cannot be posted to it. The worker loads 207 KB of wasm and 869 KB of dictionary besides.
+  "a voice in a Worker, worker side (worker.js)": { imports: [], from: "worker.js", limit: 5_000 },
   "the device's voices (web-speech.js)": {
     imports: ["createSystemVoice"],
     from: "web-speech.js",

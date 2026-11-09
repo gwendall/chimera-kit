@@ -19,6 +19,7 @@ import type { KokoroSpeakerOptions } from "./engines/kokoro-speaker.js";
 import type { WebSpeechSpeakerOptions } from "./engines/web-speech-speaker.js";
 import type { PlayOptions } from "./player.js";
 import type { Rendered, StreamOptions } from "./voice.js";
+import type { DeliveryOptions } from "./worker-voice.js";
 
 export type { Body, SpeakOptions } from "./engine.js";
 
@@ -57,10 +58,11 @@ export interface SpokenPlayback {
 }
 
 /**
- * A speaker's options are data, which every backend can read and a worker can receive. A `style`
+ * A speaker's options are data, which every backend can read and a worker can receive: a delivery
+ * comes as a mood or numbers, and each backend says in `lost` what of it it could not do. A `style`
  * is a function: give it to a page-thread voice (`createVoice`) instead.
  */
-export type SpeakerStreamOptions = Omit<StreamOptions, "style">;
+export type SpeakerStreamOptions = Omit<StreamOptions, "style"> & DeliveryOptions;
 
 export interface SpeakerSayOptions extends SpeakerStreamOptions, Omit<PlayOptions, "ahead"> {}
 

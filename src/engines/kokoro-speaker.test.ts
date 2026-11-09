@@ -7,12 +7,13 @@ import {
   type KokoroSpeakOptions,
   type KokoroVoice,
 } from "./kokoro.js";
-import { BODY_VOICES, lostFor, speakerFromKokoro, voiceFor } from "./kokoro-speaker.js";
+import { BODY_VOICES, forKokoro, lostFor, speakerFromKokoro, voiceFor } from "./kokoro-speaker.js";
 
 /** A `KokoroVoice` that needs no model: records what it was asked and returns deterministic,
  * cheap audio, so `speakerFromKokoro` can be tested without `kokoro-js` or a download. */
 class FakeKokoroVoice implements KokoroVoice {
   readonly sampleRate = KOKORO_SAMPLE_RATE;
+  rate: number | undefined;
   freed = false;
   calls: { text: string; options: KokoroSpeakOptions | undefined }[] = [];
 
@@ -67,6 +68,30 @@ describe("lostFor", () => {
   });
 });
 
+describe("forKokoro", () => {
+  test("a delivery's rate multiplies the call's rate, or else the voice's own", () => {
+    expect(forKokoro({ delivery: { rate: 0.8 }, rate: 1.5 }, 2).speak.rate).toBeCloseTo(1.2, 9);
+    expect(forKokoro({ delivery: { rate: 0.8 } }, 1.25).speak.rate).toBeCloseTo(1, 9);
+    expect(forKokoro({ delivery: { rate: 0.8 } }).speak.rate).toBeCloseTo(0.8, 9);
+    expect(forKokoro({ delivery: { rate: 0.64 }, intensity: 0.5 }).speak.rate).toBeCloseTo(0.8, 9);
+    expect(forKokoro({ rate: 1.5 }, 2).speak).toEqual({ rate: 1.5 });
+    expect(forKokoro({}, 2).speak).toEqual({});
+  });
+
+  test("the rest of a delivery is lost, by name, and none of it at intensity 0", () => {
+    expect(forKokoro({ delivery: "sad" }).lost).toEqual([
+      "pitch",
+      "pitch range",
+      "level",
+      "breath",
+      "tension",
+      "pause length",
+    ]);
+    expect(forKokoro({ delivery: "sad", intensity: 0 }).lost).toEqual([]);
+    expect(forKokoro({ delivery: { rate: 1.1, gain: 3 }, f0: 200 }).lost).toEqual(["f0", "level"]);
+  });
+});
+
 describe("speakerFromKokoro", () => {
   test("describes the backend", () => {
     const speaker = speakerFromKokoro(new FakeKokoroVoice());
@@ -85,6 +110,15 @@ describe("speakerFromKokoro", () => {
     const withF0 = await speaker.render?.("hello", { f0: 200 });
     expect(withF0?.lost).toEqual(["f0"]);
     expect(withF0?.sampleRate).toBe(KOKORO_SAMPLE_RATE);
+  });
+
+  test("a delivery reaches Kokoro as its rate, and the rest is reported lost", async () => {
+    const voice = new FakeKokoroVoice();
+    voice.rate = 1.25;
+    const speaker = speakerFromKokoro(voice);
+    const slow = await speaker.render?.("hello", { delivery: { rate: 0.8, pitch: 2 } });
+    expect(voice.calls[0]?.options?.rate).toBeCloseTo(1, 9);
+    expect(slow?.lost).toEqual(["pitch"]);
   });
 
   test("stream's return value is this call's lost, after every chunk", async () => {

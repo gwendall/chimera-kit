@@ -2,7 +2,8 @@
  * CHIMERA behind the shared `Speaker` interface (`../speaker.ts`). A thin wrapper: the worker and
  * its guarantees (samples straight to the audio thread, `stop()` before anything plays gives
  * silence, `queued` confirmed by the audio thread) are `createWorkerVoice`'s own, unchanged here.
- * CHIMERA honors a text request's body, rate, f0 and accent exactly, so nothing is ever lost.
+ * CHIMERA honors a text request's body, rate, f0, accent and delivery exactly, so nothing is ever
+ * lost.
  */
 import type {
   Speaker,

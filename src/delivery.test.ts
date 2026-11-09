@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { blend, deliver, MOODS } from "./delivery.ts";
+import { atIntensity, blend, deliver, departures, MOODS } from "./delivery.ts";
 import type { Score } from "./layers.ts";
 import { take } from "./take.ts";
 import { pauses, valueAt } from "./transforms.ts";
@@ -93,5 +93,32 @@ describe("blend", () => {
     const end = blend("sad", "happy", 1);
     expect(end.range).toBeCloseTo(MOODS.happy.range, 9);
     expect(blend({ range: 0 }, { range: 1 }, 0.5).range).toBeCloseTo(0.5, 9);
+  });
+});
+
+describe("atIntensity", () => {
+  test("scales multipliers as powers and the rest as products, so 0 is neutral", () => {
+    expect(atIntensity("sad", 1)).toEqual(MOODS.sad);
+    const half = atIntensity({ rate: 0.64, range: 0.25, pitch: -2, gain: 4, pauses: 1.44 }, 0.5);
+    expect(half.rate).toBeCloseTo(0.8, 9);
+    expect(half.range).toBeCloseTo(0.5, 9);
+    expect(half.pauses).toBeCloseTo(1.2, 9);
+    expect(half.pitch).toBe(-1);
+    expect(half.gain).toBe(2);
+    expect(departures(atIntensity("happy", 0))).toEqual([]);
+  });
+
+  test("refuses an intensity deliver refuses, and a mood it does not know", () => {
+    expect(() => atIntensity("sad", -1)).toThrow(RangeError);
+    expect(() => deliver("sad", -1)).toThrow(RangeError);
+    expect(() => atIntensity("grumpy" as never)).toThrow("Moods:");
+  });
+});
+
+describe("departures", () => {
+  test("names what a delivery changes, leaving out what a backend honors", () => {
+    expect(departures({ rate: 1, pitch: 0, gain: -3, breath: 0.2 })).toEqual(["level", "breath"]);
+    expect(departures({ rate: 0.9, pauses: 1.2 }, ["rate"])).toEqual(["pause length"]);
+    expect(departures({})).toEqual([]);
   });
 });

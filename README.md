@@ -106,8 +106,16 @@ await play(speech(voice, answer, { style: deliver("sad", 0.5) }), voice.sampleRa
 
 Text with a style goes through its score, which sounds like the text read directly but differs
 sample by sample. `plan` includes the voice's style, so a score it returned is not styled twice.
-The pause between clauses follows `rate`, not a style's own pacing. A worker voice takes no style
-yet: a function cannot be posted to a worker.
+The pause between clauses follows `rate`, not a style's own pacing.
+
+A function cannot be posted to a worker, so a worker voice and a speaker take a delivery as data
+instead: `delivery`, a mood or numbers, and its `intensity`, when the voice is opened or for one
+call. A worker voice speaks it exactly as a voice here speaks `style: deliver(...)`.
+
+```ts
+const voice = await createWorkerVoice({ body: "female", delivery: "calm" });
+voice.say(answer, { delivery: "sad", intensity: 0.5 }); // this call only
+```
 
 ## The device's voices
 
@@ -147,11 +155,14 @@ A `Speaker` describes itself (`accepts` the layer it reads, `supports`, `output`
 `render`/`stream`/`say` call reports `lost`, so a caller never has to know an engine's name to
 degrade gracefully:
 
-|              | accepts  | output   | honors                        | typical `lost`                     |
-| ------------ | -------- | -------- | ----------------------------- | ---------------------------------- |
-| `chimera`    | gestures | samples  | everything (f0, accent, body) | nothing                            |
-| `kokoro`     | phrasing | samples  | rate                          | `f0`, `accent`, `body`, chunk size |
-| `web-speech` | intent   | playback | rate                          | `f0`, `accent`, `body`             |
+|              | accepts  | output   | honors                                  | typical `lost`                                 |
+| ------------ | -------- | -------- | --------------------------------------- | ---------------------------------------------- |
+| `chimera`    | gestures | samples  | everything (f0, accent, body, delivery) | nothing                                        |
+| `kokoro`     | phrasing | samples  | rate, a delivery's rate                 | `f0`, `accent`, `body`, chunk size, the rest   |
+| `web-speech` | intent   | playback | rate, a delivery's rate, pitch, level   | `f0`, `accent`, `body`, range, breath, tension |
+
+A delivery's parts a backend cannot apply are named in `lost` ("pitch range", "breath"...), and
+its rate multiplies the call's `rate`, or else the voice's own.
 
 `createSpeaker("chimera", ...)` is a thin wrapper over `createWorkerVoice` and keeps its
 guarantees (samples straight to the audio thread, `stop()` before anything plays gives silence).

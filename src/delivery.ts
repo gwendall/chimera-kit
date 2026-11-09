@@ -62,20 +62,53 @@ export type Mood = keyof typeof MOODS;
  * as written, 2 doubles it (multipliers are raised to the power, the rest are scaled).
  */
 export function deliver(delivery: Delivery | Mood, intensity = 1): ScoreTransform {
+  const d = atIntensity(delivery, intensity);
+  const steps: ScoreTransform[] = [];
+  if (d.pitch !== undefined) steps.push(shift(d.pitch));
+  if (d.range !== undefined) steps.push(range(d.range));
+  if (d.gain !== undefined) steps.push(gain(d.gain));
+  if (d.breath !== undefined) steps.push(breathier(d.breath));
+  if (d.tension !== undefined) steps.push(tenser(d.tension));
+  if (d.pauses !== undefined) steps.push(pauses(d.pauses));
+  if (d.rate !== undefined) steps.push(rate(d.rate));
+  return steps.length > 0 ? compose(...steps) : (score: Score) => score;
+}
+
+/** A delivery's numbers at an intensity: multipliers raised to its power, the rest scaled by it. */
+export function atIntensity(delivery: Delivery | Mood, intensity = 1): Delivery {
   if (!(Number.isFinite(intensity) && intensity >= 0)) {
     throw new RangeError(`intone: intensity must be zero or more, got ${intensity}`);
   }
   const d: Delivery = typeof delivery === "string" ? lookup(delivery) : delivery;
   const k = intensity;
-  const steps: ScoreTransform[] = [];
-  if (d.pitch !== undefined) steps.push(shift(d.pitch * k));
-  if (d.range !== undefined) steps.push(range(d.range ** k));
-  if (d.gain !== undefined) steps.push(gain(d.gain * k));
-  if (d.breath !== undefined) steps.push(breathier(d.breath * k));
-  if (d.tension !== undefined) steps.push(tenser(d.tension * k));
-  if (d.pauses !== undefined) steps.push(pauses(d.pauses ** k));
-  if (d.rate !== undefined) steps.push(rate(d.rate ** k));
-  return steps.length > 0 ? compose(...steps) : (score: Score) => score;
+  const out: Delivery = {};
+  if (d.rate !== undefined) out.rate = d.rate ** k;
+  if (d.pitch !== undefined) out.pitch = d.pitch * k;
+  if (d.range !== undefined) out.range = d.range ** k;
+  if (d.gain !== undefined) out.gain = d.gain * k;
+  if (d.breath !== undefined) out.breath = d.breath * k;
+  if (d.tension !== undefined) out.tension = d.tension * k;
+  if (d.pauses !== undefined) out.pauses = d.pauses ** k;
+  return out;
+}
+
+/** How each part of a delivery is named when an engine reports it `lost`. */
+export const DELIVERY_PARTS: Readonly<Record<keyof Delivery, string>> = {
+  rate: "rate",
+  pitch: "pitch",
+  range: "pitch range",
+  gain: "level",
+  breath: "breath",
+  tension: "tension",
+  pauses: "pause length",
+};
+
+/** The parts of a delivery that depart from neutral, other than those an engine honors, by name. */
+export function departures(delivery: Delivery, honored: readonly (keyof Delivery)[] = []): string[] {
+  const neutral: Delivery = { rate: 1, pitch: 0, range: 1, gain: 0, breath: 0, tension: 0, pauses: 1 };
+  return (Object.keys(DELIVERY_PARTS) as (keyof Delivery)[])
+    .filter((key) => delivery[key] !== undefined && delivery[key] !== neutral[key] && !honored.includes(key))
+    .map((key) => DELIVERY_PARTS[key]);
 }
 
 /** A delivery between two others: `t` 0 is `a`, 1 is `b`. Multipliers blend geometrically. */

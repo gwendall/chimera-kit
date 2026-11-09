@@ -8,6 +8,7 @@
  * `accent` are always lost too; `rate` is honored exactly (one multiplier per utterance, same as
  * `SpeakOptions`' own).
  */
+import { atIntensity } from "../delivery.js";
 import type { SpeakOptions } from "../engine.js";
 import type { Speaker, SpeakerSayOptions, SpokenPlayback, Supports } from "../speaker.js";
 import { createSystemVoice, type SayOptions, type SystemVoiceOptions } from "../web-speech.js";
@@ -41,9 +42,13 @@ export async function createWebSpeechSpeaker(options: WebSpeechSpeakerOptions = 
     supports,
 
     say(text, speakOptions: SpeakerSayOptions = {}): SpokenPlayback {
-      const { signal, rate } = speakOptions;
+      const { signal, rate, delivery, intensity } = speakOptions;
       const sayOptions: SayOptions = {};
-      if (rate !== undefined) sayOptions.delivery = { rate };
+      // One delivery for the system voice: the call's own, at its intensity, its rate times `rate`.
+      if (delivery !== undefined || rate !== undefined) {
+        const d = delivery === undefined ? {} : atIntensity(delivery, intensity);
+        sayOptions.delivery = rate === undefined ? d : { ...d, rate: (d.rate ?? 1) * rate };
+      }
       if (signal) sayOptions.signal = signal;
       const speech = system.say(text, sayOptions);
       return {

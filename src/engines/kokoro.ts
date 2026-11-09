@@ -60,6 +60,8 @@ export interface KokoroRenderedScore extends KokoroRendered {
 
 export interface KokoroVoice {
   readonly sampleRate: number;
+  /** The default speaking-rate multiplier this voice was opened with, if any. */
+  readonly rate?: number | undefined;
   /** Renders the whole utterance at once, through Kokoro's own text-to-phoneme step. */
   render(text: string, options?: KokoroSpeakOptions): Promise<KokoroRendered>;
   /** One chunk per sentence: Kokoro has no finer granularity than that. */
@@ -104,17 +106,17 @@ class KokoroVoiceImpl implements KokoroVoice {
   constructor(
     private readonly tts: KokoroTTS,
     private readonly voice: string,
-    private readonly defaultRate: number | undefined,
+    readonly rate: number | undefined,
   ) {}
 
   async render(text: string, options?: KokoroSpeakOptions): Promise<KokoroRendered> {
-    const speed = resolveSpeed(options?.rate ?? this.defaultRate);
+    const speed = resolveSpeed(options?.rate ?? this.rate);
     const raw = await this.tts.generate(text, { voice: this.voice as VoiceId, speed });
     return { audio: raw.audio, sampleRate: raw.sampling_rate };
   }
 
   async *stream(text: string, options?: KokoroSpeakOptions): AsyncGenerator<Float32Array, void, undefined> {
-    const speed = resolveSpeed(options?.rate ?? this.defaultRate);
+    const speed = resolveSpeed(options?.rate ?? this.rate);
     // kokoro-js's own `stream(text)` (plain string) pushes into an internal `TextSplitterStream`
     // but never closes it: the splitter withholds whatever sentence it last saw until it is sure
     // more text isn't coming right after it, which for a single complete sentence (the common
@@ -131,7 +133,7 @@ class KokoroVoiceImpl implements KokoroVoice {
   }
 
   async renderScore(score: Score, options?: KokoroSpeakOptions): Promise<KokoroRenderedScore> {
-    const speed = resolveSpeed(options?.rate ?? this.defaultRate);
+    const speed = resolveSpeed(options?.rate ?? this.rate);
     const encoded = encodeSoundsForKokoro(score.sounds, score.words);
     const inputIds = new Tensor("int64", toBigInts(encoded.ids), [1, encoded.ids.length]);
     const raw = await this.tts.generate_from_ids(inputIds, { voice: this.voice as VoiceId, speed });
