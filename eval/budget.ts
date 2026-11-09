@@ -15,6 +15,8 @@ const SIZE_LIMITS: Record<string, number> = {
   // dictionary, and a separate singing build would carry the whole speech engine again.
   "intone_chimera.wasm": 225_000,
   "cmudict.txt.gz": 880_000,
+  // The 4 creatures (songbird, seal, alligator, elephant) and their airways: 108,028 measured.
+  "intone_creatures.wasm": 115_000,
 };
 /**
  * What an app's bundler keeps of the JavaScript for a given import, gzipped. The package has no
@@ -40,6 +42,8 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
     from: "web-speech.js",
     limit: 3_500,
   },
+  // 1,504 bytes measured: loadCreatures alone, nothing speech-related pulled in.
+  "the creatures (loadCreatures)": { imports: ["loadCreatures"], from: "creatures.js", limit: 2_000 },
 };
 /** Share of one core a voice may use in real time, measured in Bun. */
 const CORE_LIMIT = 0.45;

@@ -210,6 +210,32 @@ On an Apple M2, loading takes about 70 ms once per page, the first audible sampl
 been measured yet. The rendering is deterministic: the same text and options always give the
 same samples.
 
+## Creatures
+
+CHIMERA also models a few non-human airways: a songbird's two-voice syrinx, a seal's laryngeal
+trill, an alligator's roar and an elephant's infrasonic rumble and trumpet. They render through a
+second, smaller engine, `intone/creatures`, with no dependency on speech.
+
+```ts
+import { loadCreatures } from "intone/creatures";
+import { play } from "intone";
+
+const zoo = await loadCreatures();
+const bird = zoo.create("songbird");
+play([bird.call("flute")], zoo.sampleRate);
+```
+
+`call(id, { pitch, amp })` renders a whole call as a `Float32Array`, past its release tail;
+`stream` gives the same samples as a generator, in chunks. `set({ ... })`, `gate(level)` and
+`render(samples)` play a creature live, like an instrument.
+
+| Creature                | Calls                               |
+| ------------------------ | ------------------------------------ |
+| `songbird`               | `flute`, `trill`, `chirps`, `buzz`   |
+| `seal` (Weddell seal)    | `trill`, `zap`, `whistle`, `chug`    |
+| `alligator`              | `bellow`, `growl`, `hiss`, `dance`   |
+| `elephant`               | `rumble`, `trumpet`, `squeak`        |
+
 ## Intelligibility
 
 Word errors made by two speech recognizers on sentences not used for tuning, over two voices. The
