@@ -28,7 +28,12 @@
     "./kokoro": {
       "types": "./dist/kokoro.d.ts",
       "import": "./dist/kokoro.js"
-    }
+    },
+    "./creatures": {
+      "types": "./dist/creatures.d.ts",
+      "import": "./dist/creatures.js"
+    },
+    "./intone_creatures.wasm": "./dist/intone_creatures.wasm"
   },
   "files": [
     "dist",
@@ -38,13 +43,13 @@
     "node": ">=18"
   },
   "scripts": {
-    "build:wasm": "cargo build -p intone-chimera --release --target wasm32-unknown-unknown && mkdir -p dist && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_chimera.wasm -o dist/intone_chimera.wasm",
-    "build:js": "bun scripts/clean-dist.ts && bun build src/index.ts src/web-speech.ts src/worker.ts src/speaker.ts src/kokoro.ts --outdir dist --format esm --target browser --minify --splitting --external kokoro-js --external @huggingface/transformers && tsc -p tsconfig.build.json",
+    "build:wasm": "cargo build -p intone-chimera -p intone-creatures --release --target wasm32-unknown-unknown && mkdir -p dist && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_chimera.wasm -o dist/intone_chimera.wasm && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_creatures.wasm -o dist/intone_creatures.wasm",
+    "build:js": "bun scripts/clean-dist.ts && bun build src/index.ts src/web-speech.ts src/worker.ts src/speaker.ts src/kokoro.ts src/creatures.ts --outdir dist --format esm --target browser --minify --splitting --external kokoro-js --external @huggingface/transformers && tsc -p tsconfig.build.json",
     "build": "bun run build:wasm && bun run build:js && cp public/data/cmudict.txt.gz dist/",
     "test": "bun run build && cargo test --workspace && bun test --timeout 30000 src eval",
     "check:browser": "bun scripts/browser-check.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check . && cargo fmt -p intone-chimera --check && cargo clippy -p intone-chimera --no-deps --all-targets -- -D warnings",
+    "lint": "biome check . && cargo fmt -p intone-chimera -p intone-creatures --check && cargo clippy -p intone-chimera -p intone-creatures --no-deps --all-targets -- -D warnings",
     "budget": "bun eval/budget.ts",
     "eval": "bun eval/run.ts",
     "sync-upstream": "scripts/sync-upstream.sh"
