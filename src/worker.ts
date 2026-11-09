@@ -4,6 +4,7 @@
  * to be imported.
  */
 import { type CreateVoiceOptions, createVoice } from "./index.js";
+import { pacedClause } from "./pace.js";
 import type { StreamOptions, Voice } from "./voice.js";
 
 export type ToWorker =
@@ -100,7 +101,7 @@ async function serve(request: ToWorker): Promise<void> {
         const send = port
           ? (chunk: Float32Array) => port.postMessage(chunk, [chunk.buffer])
           : (chunk: Float32Array) => post({ type: "chunk", id, chunk }, [chunk.buffer]);
-        if (await speak(voice, state, request.options, send)) {
+        if (await speak(voice, state, request.options, send, request.type === "say")) {
           if (port) port.postMessage("end");
           else post({ type: "end", id });
         }
@@ -128,6 +129,7 @@ async function speak(
   state: Pending,
   options: StreamOptions,
   send: (chunk: Float32Array) => void,
+  paced: boolean,
 ): Promise<boolean> {
   let since = performance.now();
   for (;;) {
@@ -142,7 +144,8 @@ async function speak(
       since = performance.now();
       continue;
     }
-    for (const chunk of voice.stream(text, options)) {
+    // `say` gives each clause the pause its last mark asks; `stream` is the engine's samples as is.
+    for (const chunk of paced ? pacedClause(voice, text, options) : voice.stream(text, options)) {
       send(chunk);
       if (performance.now() - since > SLICE_MS) {
         await breathe();

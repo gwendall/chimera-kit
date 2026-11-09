@@ -20,14 +20,15 @@ const SIZE_LIMITS: Record<string, number> = {
  */
 const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: number }> = {
   "speaking (createVoice)": { imports: ["createVoice"], limit: 2_000 },
-  "a chat (createVoice, clauses, play)": { imports: ["createVoice", "clauses", "play"], limit: 5_000 },
+  "a chat (createVoice, speech, play)": { imports: ["createVoice", "speech", "play"], limit: 5_000 },
   "everything (index.js)": { imports: [], limit: 9_000 },
   // `say` is a method, so its clause cutter stays in: this is a chat's page side.
   "a voice in a Worker, page side (createWorkerVoice, play)": {
     imports: ["createWorkerVoice", "play"],
     limit: 5_000,
   },
-  "a voice in a Worker, worker side (worker.js)": { imports: [], from: "worker.js", limit: 2_500 },
+  // 2,362 before each clause's end was paced (withPause), 2,674 after.
+  "a voice in a Worker, worker side (worker.js)": { imports: [], from: "worker.js", limit: 3_000 },
   "the device's voices (web-speech.js)": {
     imports: ["createSystemVoice"],
     from: "web-speech.js",

@@ -40,22 +40,21 @@ The worker script is `intone/worker.js`, found next to the module with
 `new URL("./worker.js", import.meta.url)`; pass `worker` to start it some other way.
 
 Text that is still being written, such as a language model's answer, is spoken clause by clause
-as it arrives. `clauses` reads it as Markdown (code blocks are skipped, links read as their text)
+as it arrives. `speech` reads it as Markdown (code blocks are skipped, links read as their text)
 and cuts it at punctuation and line ends:
 
 ```ts
-import { clauses } from "intone";
+import { play, speech } from "intone";
 
-async function* speech(tokens: AsyncIterable<string>) {
-  for await (const clause of clauses(tokens)) yield* voice.stream(clause);
-}
-await play(speech(answer), voice.sampleRate).done;
+await play(speech(voice, answer), voice.sampleRate).done;
 ```
 
 The first clause leaves at its first punctuation, and a run of more than eight words without any
 is cut before a conjunction. With tokens arriving at 40 a second, the first sound came 0.13 s
 after the answer started (three tokens, then the engine's start), and each clause is computed
-while the one before it plays.
+while the one before it plays. Each clause ends on the pause the whole text would have had there:
+0.14 s after a comma, 0.3 s after a sentence. `clauses`, `withPause` and `pauseAfter` are the parts,
+for a pipeline of your own.
 
 For a file, or to mix the voice yourself, `render` returns every sample at once:
 

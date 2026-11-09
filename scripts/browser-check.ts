@@ -64,7 +64,18 @@ for (const name of wanted) {
     });
     await page.goto(`${ORIGIN}/`, { waitUntil: "load" });
     const result: Result = await page.evaluate(async (origin) => {
-      const { createVoice, createWorkerVoice, play } = await import(`${origin}/index.js`);
+      const { createVoice, createWorkerVoice, play, speech } = await import(`${origin}/index.js`);
+      const collect = async (chunks: AsyncIterable<Float32Array>) => {
+        const list: Float32Array[] = [];
+        for await (const chunk of chunks) list.push(chunk);
+        const out = new Float32Array(list.reduce((n, c) => n + c.length, 0));
+        let at = 0;
+        for (const c of list) {
+          out.set(c, at);
+          at += c.length;
+        }
+        return out;
+      };
       const started = performance.now();
       const voice = await createVoice({ body: "female" });
       const loadMs = performance.now() - started;
@@ -96,6 +107,8 @@ for (const name of wanted) {
         for (let i = 0; i < n; i++) sum += x[i] * x[i];
         return Math.sqrt(sum / n);
       };
+      // What `say` should give, computed before this voice goes: `speech` paces each clause's end.
+      const sayExpected: Float32Array = await collect(speech(voice, text));
       voice.free();
 
       const remote = await createWorkerVoice({ body: "female" });
@@ -107,22 +120,24 @@ for (const name of wanted) {
         parts.push(chunk);
       }
       // A string, then tokens: the worker writes into the player's port, the page never sees a sample.
-      const sayContext = new OfflineAudioContext(1, audio.length + 4096, sampleRate);
+      const sayContext = new OfflineAudioContext(1, sayExpected.length + 4096, sampleRate);
       const said = remote.say(text, { context: sayContext });
       await said.queued;
       const sayOut = (await sayContext.startRendering()).getChannelData(0);
       const sayEnd = await said.done;
       let sayError = 0;
-      for (let i = 0; i < audio.length; i++) sayError = Math.max(sayError, Math.abs(sayOut[i] - audio[i]));
-      for (let i = audio.length; i < sayOut.length; i++) sayError = Math.max(sayError, Math.abs(sayOut[i]));
+      for (let i = 0; i < sayExpected.length; i++)
+        sayError = Math.max(sayError, Math.abs(sayOut[i] - sayExpected[i]));
+      for (let i = sayExpected.length; i < sayOut.length; i++)
+        sayError = Math.max(sayError, Math.abs(sayOut[i]));
 
       const answer = "Sure, the canoe slid. It was *smooth*.";
       const { clauses } = await import(`${origin}/index.js`);
       const parts2: string[] = await Array.fromAsync(clauses(answer));
       const here = await createVoice({ body: "female" });
-      const clauseAudio = parts2.map((part: string) => here.render(part).audio);
+      const tokensExpected: Float32Array = await collect(speech(here, answer.match(/.{1,3}/gs) ?? []));
       here.free();
-      const total = clauseAudio.reduce((n: number, a: Float32Array) => n + a.length, 0);
+      const total = tokensExpected.length;
       async function* tokens() {
         for (const piece of answer.match(/.{1,3}/gs) ?? []) {
           await new Promise((resolve) => setTimeout(resolve, 2));
@@ -135,10 +150,8 @@ for (const name of wanted) {
       const tokensOut = (await tokensContext.startRendering()).getChannelData(0);
       await saidTokens.done;
       let tokensError = 0;
-      let k = 0;
-      for (const part of clauseAudio)
-        for (let i = 0; i < part.length; i++, k++)
-          tokensError = Math.max(tokensError, Math.abs(tokensOut[k] - part[i]));
+      for (let i = 0; i < total; i++)
+        tokensError = Math.max(tokensError, Math.abs(tokensOut[i] - tokensExpected[i]));
       // Stopped before it plays: nothing is heard, and `done` still settles.
       const stopContext = new OfflineAudioContext(1, sampleRate, sampleRate);
       const interrupted = remote.say(`${text} ${text} ${text}`, { context: stopContext });
@@ -189,9 +202,10 @@ for (const name of wanted) {
         `resampled length ratio ${result.resampled.lengthRatio}`,
       Math.abs(result.resampled.rmsRatio - 1) > 0.05 && `resampled level ratio ${result.resampled.rmsRatio}`,
       result.worker.maxError > 0 && `the worker's samples differ from render by ${result.worker.maxError}`,
-      result.say.maxError > 0 && `say from the worker differs from render by ${result.say.maxError}`,
+      result.say.maxError > 0 &&
+        `say from the worker differs from speech() on the page by ${result.say.maxError}`,
       result.say.tokensMaxError > 0 &&
-        `say with tokens differs from the clauses' renders by ${result.say.tokensMaxError}`,
+        `say with tokens differs from speech() on the page by ${result.say.tokensMaxError}`,
       result.say.underruns > 0 && `${result.say.underruns} underruns saying from the worker`,
       result.say.stoppedPeak > 0 && `a stopped say still sounded (peak ${result.say.stoppedPeak})`,
       result.worker.length !== Math.round(result.renderedSeconds * 48_000) &&
