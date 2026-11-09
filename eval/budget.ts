@@ -52,6 +52,13 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
   // are erased), so it carries nothing of the rest of the package: measured 2,587 bytes gzipped
   // (`bun eval/budget.ts --no-speed`, 2026-11-09).
   "imitating a voice (imitate.js)": { imports: ["profile"], from: "imitate.js", limit: 2_800 },
+  // A new entry, so it costs nothing to an app that doesn't import it: measured 2,730 bytes gzipped
+  // (`bun eval/budget.ts --no-speed`, 2026-11-09). The moods come with it, for the schema's list.
+  "tool calls from a language model (tools.js)": {
+    imports: ["createToolRunner", "forAnthropic", "forOpenAI"],
+    from: "tools.js",
+    limit: 3_000,
+  },
 };
 /** Share of one core a voice may use in real time, measured in Bun. */
 const CORE_LIMIT = 0.45;

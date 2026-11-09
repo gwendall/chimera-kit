@@ -249,6 +249,36 @@ read a short clip noisily; breathiness only distinguishes a clearly breathy voic
 one, not fine shades near clear. See the round-trip tests in `src/imitate.test.ts` for the
 measured numbers behind each of those claims.
 
+## Letting a language model use the voice
+
+`intone/tools` gives a model three tools: `say`, `sing` (lyrics on a melody written as text) and
+`set_voice`. The definitions are JSON Schema, the same schema checks each call, and a bad call
+comes back as a result the model can read and correct, never as an exception:
+
+```ts
+import { createSpeaker } from "intone/speaker";
+import { createToolRunner, forAnthropic } from "intone/tools";
+
+const speaker = await createSpeaker();
+const tools = createToolRunner(speaker, { body: "female" });
+
+const reply = await anthropic.messages.create({ model, messages, max_tokens, tools: forAnthropic() });
+for (const block of reply.content) {
+  if (block.type === "tool_use") {
+    const result = await tools.run(block.name, block.input); // { ok: true, lost: [] } when it has finished
+  }
+}
+tools.stop(); // the user interrupted: silence now, and drop the calls still waiting
+```
+
+`forOpenAI()` gives the same tools for Chat Completions, and `TOOLS` the neutral definitions. Calls
+made at once speak one after the other. `lost` says what the backend could not do, such as `notes`
+on one that cannot sing. It works on a `createWorkerVoice` too.
+
+A melody is `melody("C4:1 D#4:0.5 Bb3:2")`: pitch and beats, one beat when left out, a MIDI number
+accepted as a pitch, `|` ignored so it can be written in bars. A song has no silent notes, so a rest
+is refused rather than dropped, which would move every later syllable onto the wrong note.
+
 ## Cost
 
 |                                                | gzipped |
@@ -260,6 +290,7 @@ measured numbers behind each of those claims.
 | JavaScript: a voice in a Worker (both sides)   | 8.8 KB  |
 | JavaScript: the device's voices only           | 2.7 KB  |
 | JavaScript: `profile` (`intone/imitate`) alone | 2.6 KB  |
+| JavaScript: tool calls (`intone/tools`)        | 2.7 KB  |
 | Pronouncing dictionary (CMUdict, English)      | 869 KB  |
 
 On an Apple M2, loading takes about 70 ms once per page, the first audible sample comes about
