@@ -41,7 +41,34 @@ export interface Score {
   breath?: Curve;
   /** 0 lax, 1 pressed. */
   tension?: Curve;
+  /** Vibrato depth in cents, as a sung score has it. Absent, the voice adds none. */
+  vibrato?: Curve;
   words?: WordSpan[];
+}
+
+/** A note: a MIDI pitch (69 is A4, 440 Hz; a fraction bends it) and a length in beats. */
+export interface Note {
+  midi: number;
+  beats: number;
+}
+
+/**
+ * Layer 3 for singing: lyrics and the melody they are sung on, one note per syllable. Hyphens
+ * split a word's syllables as typed ("twin-kle"), and a lone "-" or "~" between spaces holds the
+ * previous vowel through one more note.
+ */
+export interface Song {
+  lyrics: string;
+  notes: Note[];
+  /** Beats per minute. */
+  bpm: number;
+  /** Vibrato depth on held vowels, in cents, blooming a quarter second into each hold. Default 0. */
+  vibrato?: number;
+  /**
+   * When the first note's beat falls, in seconds; its consonants come before it. Default: just
+   * late enough for them to start at 0. Set it to put the beat on an accompaniment's.
+   */
+  t0?: number;
 }
 
 /** A syllable: its phones in IPA, and its stress. */

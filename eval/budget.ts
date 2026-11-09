@@ -10,8 +10,10 @@ import { createVoice } from "../dist/index.js";
 const DIST = join(import.meta.dir, "../dist");
 /** Limits in bytes, gzipped. */
 const SIZE_LIMITS: Record<string, number> = {
-  // 188,032 before planning to a score and rendering one back (layer 2), 206,897 after.
-  "intone_chimera.wasm": 210_000,
+  // 188,032 before planning to a score and rendering one back (layer 2), 206,897 after, 221,182
+  // with singing (plan_song and lyrics_to_syllables, +14.3 KB): 1.3 % of a first load with the
+  // dictionary, and a separate singing build would carry the whole speech engine again.
+  "intone_chimera.wasm": 225_000,
   "cmudict.txt.gz": 880_000,
 };
 /**
@@ -20,8 +22,10 @@ const SIZE_LIMITS: Record<string, number> = {
  */
 const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: number }> = {
   "speaking (createVoice)": { imports: ["createVoice"], limit: 2_000 },
-  "a chat (createVoice, speech, play)": { imports: ["createVoice", "speech", "play"], limit: 5_000 },
-  "everything (index.js)": { imports: [], limit: 9_000 },
+  // Songs (a voice plans and renders a Song) took the chat from 4,954 to 5,090, everything from
+  // 8,979 to 9,123.
+  "a chat (createVoice, speech, play)": { imports: ["createVoice", "speech", "play"], limit: 5_200 },
+  "everything (index.js)": { imports: [], limit: 9_200 },
   // `say` is a method, so its clause cutter stays in: this is a chat's page side.
   "a voice in a Worker, page side (createWorkerVoice, play)": {
     imports: ["createWorkerVoice", "play"],

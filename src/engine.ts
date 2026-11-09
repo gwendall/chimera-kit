@@ -3,7 +3,7 @@
  * engine can be replaced; `engines/` holds the implementations. Internal until a second engine
  * shows which parts of this are really common.
  */
-import type { Score } from "./layers.js";
+import type { Score, Song } from "./layers.js";
 
 /** Who speaks: a named body, or a blend (each weight from 0 to 1). */
 export type Body = "male" | "female" | "child" | { female: number; child: number };
@@ -20,6 +20,11 @@ export interface SpeakOptions {
 
 export interface EngineRequest extends SpeakOptions {
   text: string;
+}
+
+/** A song to plan, sung by a body. */
+export interface SongRequest extends Song {
+  body?: Body;
 }
 
 /** A score to render as an utterance (layer 2: exact timing and pitch, see `layers.ts`). */
@@ -52,5 +57,7 @@ export interface Engine {
    * accepts a score implements this; others leave it undefined.
    */
   beginScore?(request: ScoreRequest): EngineUtterance;
+  /** Plans a song into a score. Only an engine that sings implements this. */
+  planSong?(request: SongRequest): Score;
   free(): void;
 }

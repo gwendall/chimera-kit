@@ -10,16 +10,18 @@ export type { Body, SpeakOptions } from "./engine.js";
 export type { Source } from "./engines/chimera.js";
 export type {
   Curve,
+  Note,
   Phrase,
   PhraseEnd,
   Phrasing,
   Score,
+  Song,
   Sound,
   Syllable,
   Word,
   WordSpan,
 } from "./layers.js";
-export type { Rendered, StreamOptions, Voice, VoiceOptions } from "./voice.js";
+export type { Rendered, Speakable, StreamOptions, Voice, VoiceOptions } from "./voice.js";
 
 export interface CreateVoiceOptions extends VoiceOptions, ChimeraSources {}
 

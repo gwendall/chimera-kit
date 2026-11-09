@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { createVoice, deliver, type Voice } from "./index.ts";
+import { createVoice, deliver, type Note, type Score, type Song, type Voice } from "./index.ts";
+import { valueAt } from "./transforms.ts";
 
 const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
 const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
@@ -152,6 +153,67 @@ describe("a score", () => {
       [score.duration, 0.8],
     ];
     expect(() => voice.render({ ...score, tension })).toThrow("tension");
+  });
+});
+
+describe("a song", () => {
+  let voice: Voice;
+  beforeAll(async () => {
+    voice = await createVoice({ wasm, dictionary, body: "female" });
+  });
+
+  const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
+  const notes = (...midis: number[]): Note[] => midis.map((midi) => ({ midi, beats: 1 }));
+  const SONG: Song = { lyrics: "la la la", notes: notes(60, 64, 67), bpm: 100 };
+
+  test("is planned on its notes: each word at its note's pitch", () => {
+    const score = voice.plan(SONG);
+    expect(score.words?.map((word) => word.text)).toEqual(["la", "la", "la"]);
+    for (const [i, word] of (score.words ?? []).entries()) {
+      const middle = valueAt(score.pitch, (word.t0 + word.t1) / 2) as number;
+      const cents = 1200 * Math.log2(middle / hz((SONG.notes[i] as Note).midi));
+      expect(Math.abs(cents)).toBeLessThan(25);
+    }
+  });
+
+  test("renders and streams as the score planned from it, with vibrato only when asked", () => {
+    const plain = voice.plan(SONG);
+    const depth = (score: Score) => Math.max(0, ...(score.vibrato ?? []).map(([, cents]) => cents));
+    expect(depth(plain)).toBe(0);
+    expect(depth(voice.plan({ ...SONG, vibrato: 50 }))).toBeGreaterThan(30);
+    const { audio } = voice.render(SONG);
+    expect(audio).toEqual(voice.render(plain).audio);
+    expect(rms(audio)).toBeGreaterThan(0.001);
+    const streamed = [...voice.stream(SONG, { chunkSize: 4096 })];
+    expect(streamed.reduce((n, chunk) => n + chunk.length, 0)).toBe(audio.length);
+  });
+
+  test("starts on a consonant without a t0, and puts its first beat on a given one", () => {
+    // t0 defaulted to 0 in the engine, which refused every song that starts on a consonant.
+    const twinkle: Song = { lyrics: "Twin-kle twin-kle", notes: notes(60, 60, 67, 67), bpm: 100 };
+    const first = voice.plan(twinkle).sounds.find((sound) => sound.sound !== "_");
+    expect(first?.t0).toBeLessThan(0.001);
+    const later = voice.plan({ ...twinkle, t0: 1 }).sounds.find((sound) => sound.sound !== "_");
+    expect(later?.t0).toBeGreaterThan(0.8);
+    expect(later?.t0).toBeLessThan(1);
+  });
+
+  test("takes only the style given with the call, and refuses rate, f0 and accent", async () => {
+    const sad = await createVoice({ wasm, dictionary, body: "female", style: deliver("sad") });
+    try {
+      expect(sad.plan(SONG)).toEqual(voice.plan(SONG));
+      expect(sad.plan(SONG, { style: deliver("sad") })).toEqual(deliver("sad")(voice.plan(SONG)));
+    } finally {
+      sad.free();
+    }
+    expect(() => voice.render(SONG, { rate: 1.5 })).toThrow("a song ignores rate");
+    expect(() => voice.plan(SONG, { f0: 200 })).toThrow("f0");
+  });
+
+  test("needs one note per syllable, and says how many of each", () => {
+    expect(() => voice.plan({ ...SONG, notes: notes(60, 64) })).toThrow(
+      "(2) must equal the lyrics' syllable count (3)",
+    );
   });
 });
 

@@ -74,7 +74,7 @@ the first sample.
 | `style`  | a score transform for everything planned from text: `deliver("calm")`     |
 
 `createVoice({ dictionary: false })` skips the pronouncing dictionary and uses spelling rules
-alone: 189 KB in all, at a cost in pronunciation.
+alone: 223 KB in all, at a cost in pronunciation.
 
 ### Shaping one reading
 
@@ -116,6 +116,27 @@ call. A worker voice speaks it exactly as a voice here speaks `style: deliver(..
 const voice = await createWorkerVoice({ body: "female", delivery: "calm" });
 voice.say(answer, { delivery: "sad", intensity: 0.5 }); // this call only
 ```
+
+## Singing
+
+A song is lyrics on a melody, one note per syllable. It is planned into a score as text is, and
+rendered the same way:
+
+```ts
+const song = {
+  lyrics: "Twin-kle twin-kle lit-tle star",
+  notes: [60, 60, 67, 67, 69, 69, 67].map((midi, i) => ({ midi, beats: i === 6 ? 2 : 1 })),
+  bpm: 100,
+  vibrato: 40, // cents, on held vowels
+};
+await play(voice.stream(song), voice.sampleRate).done;
+const score = voice.plan(song); // the same score, to transform or inspect
+```
+
+Hyphens split a word's syllables as typed, and a lone `-` or `~` holds the previous vowel through
+one more note. The first beat comes just after the first consonants, or at `t0` seconds to line
+it up with an accompaniment. A song, like a score, refuses `rate`, `f0` and `accent`, and takes
+only the style given with its call. Worker voices and speakers do not sing yet.
 
 ## The device's voices
 
@@ -174,12 +195,12 @@ which is an optional peer dependency: only code that imports `intone/speaker` an
 
 |                                              | gzipped |
 | -------------------------------------------- | ------- |
-| Engine (`intone_chimera.wasm`)               | 188 KB  |
-| JavaScript: `createVoice` alone              | 1.4 KB  |
-| JavaScript: a chat (`clauses`, `play`)       | 4.1 KB  |
-| JavaScript: everything                       | 7.8 KB  |
-| JavaScript: a voice in a Worker (both sides) | 6.3 KB  |
-| JavaScript: the device's voices only         | 2.8 KB  |
+| Engine (`intone_chimera.wasm`)               | 221 KB  |
+| JavaScript: `createVoice` alone              | 1.9 KB  |
+| JavaScript: a chat (`speech`, `play`)        | 5.1 KB  |
+| JavaScript: everything                       | 9.1 KB  |
+| JavaScript: a voice in a Worker (both sides) | 8.8 KB  |
+| JavaScript: the device's voices only         | 2.7 KB  |
 | Pronouncing dictionary (CMUdict, English)    | 869 KB  |
 
 On an Apple M2, loading takes about 70 ms once per page, the first audible sample comes about

@@ -1,5 +1,5 @@
 import type { Engine, EngineUtterance, SpeakOptions } from "./engine.js";
-import type { Score } from "./layers.js";
+import type { Score, Song } from "./layers.js";
 import type { ScoreTransform } from "./transforms.js";
 
 /** One audio-worklet quantum: 2.7 ms of audio, so that the first sound leaves as soon as it exists. */
@@ -26,13 +26,20 @@ export interface Rendered {
   sampleRate: number;
 }
 
-/** Text, or a score whose timing and pitch are honored exactly instead of planned afresh. */
-export type Speakable = string | Score;
+/**
+ * Text; a song, sung on its notes; or a score, whose timing and pitch are honored exactly instead
+ * of planned afresh.
+ */
+export type Speakable = string | Song | Score;
 
 export interface Voice {
   readonly sampleRate: number;
-  /** Plans text into a score (layer 2 of `docs/design.md`) without rendering it. */
-  plan(text: string, options?: VoiceOptions): Score;
+  /**
+   * Plans text or a song into a score (layer 2 of `docs/design.md`) without rendering it. A song,
+   * like a score, takes only the style given with that call, and refuses `rate`, `f0` and `accent`:
+   * its notes set them.
+   */
+  plan(input: string | Song, options?: VoiceOptions): Score;
   /** Renders the whole utterance at once. */
   render(input: Speakable, options?: VoiceOptions): Rendered;
   /** Renders chunk by chunk. Each chunk is a fresh array the caller owns. */
@@ -58,11 +65,18 @@ class EngineVoice implements Voice {
     return this.engine.sampleRate;
   }
 
-  plan(text: string, options?: VoiceOptions): Score {
+  plan(input: string | Song, options?: VoiceOptions): Score {
     if (this.freed) throw new Error("intone: this voice has been freed");
+    if (typeof input !== "string") {
+      if (!this.engine.planSong) throw new Error("intone: this engine cannot sing");
+      refuseTiming("a song", options);
+      const body = options?.body ?? this.defaults.body;
+      const score = this.engine.planSong(body === undefined ? input : { ...input, body });
+      return options?.style ? options.style(score) : score;
+    }
     if (!this.engine.plan) throw new Error("intone: this engine cannot plan a score");
     const { style, ...speak } = { ...this.defaults, ...options };
-    const score = this.engine.plan({ ...speak, text });
+    const score = this.engine.plan({ ...speak, text: input });
     return style ? style(score) : score;
   }
 
@@ -115,15 +129,23 @@ class EngineVoice implements Voice {
       return this.engine.beginScore(speak.body === undefined ? { score } : { score, body: speak.body });
     }
     if (!this.engine.beginScore) throw new Error("intone: this engine cannot render a score");
-    // A score already holds its timing and pitch: changing them is a transform, not an option.
-    const refused = (["rate", "f0", "accent"] as const).filter((key) => options?.[key] !== undefined);
-    if (refused.length > 0) {
-      throw new RangeError(
-        `intone: a score ignores ${refused.join(", ")}; transform it instead (stretch, shift, deliver)`,
-      );
+    let score: Score;
+    if ("notes" in input) score = this.plan(input, options);
+    else {
+      refuseTiming("a score", options);
+      score = options?.style ? options.style(input) : input;
     }
     const body = options?.body ?? this.defaults.body;
-    const score = options?.style ? options.style(input) : input;
     return this.engine.beginScore(body === undefined ? { score } : { score, body });
+  }
+}
+
+/** A score or a song already holds its timing and pitch: changing them is a transform. */
+function refuseTiming(what: string, options?: VoiceOptions): void {
+  const refused = (["rate", "f0", "accent"] as const).filter((key) => options?.[key] !== undefined);
+  if (refused.length > 0) {
+    throw new RangeError(
+      `intone: ${what} ignores ${refused.join(", ")}; transform it instead (stretch, shift, deliver)`,
+    );
   }
 }
