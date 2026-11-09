@@ -177,6 +177,63 @@ function copyIn(x: Exports, bytes: Uint8Array): number {
 }
 
 /**
+ * `TextEncoder`/`TextDecoder`, falling back to a plain UTF-8 codec by hand: Chromium's
+ * `AudioWorkletGlobalScope` has neither (confirmed: `new TextEncoder()` throws
+ * "TextEncoder is not defined" there, silently dropping every JSON-encoded setter and `vowel`,
+ * `beatSteps`, and the text of a thrown error, while WebKit's worklet scope has both). Every
+ * control call that carries text goes through these two, never the globals directly.
+ */
+function utf8Encode(text: string): Uint8Array {
+  if (typeof TextEncoder !== "undefined") return new TextEncoder().encode(text);
+  const bytes: number[] = [];
+  for (const char of text) {
+    const code = char.codePointAt(0) ?? 0;
+    if (code < 0x80) bytes.push(code);
+    else if (code < 0x800) bytes.push(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
+    else if (code < 0x10000)
+      bytes.push(0xe0 | (code >> 12), 0x80 | ((code >> 6) & 0x3f), 0x80 | (code & 0x3f));
+    else
+      bytes.push(
+        0xf0 | (code >> 18),
+        0x80 | ((code >> 12) & 0x3f),
+        0x80 | ((code >> 6) & 0x3f),
+        0x80 | (code & 0x3f),
+      );
+  }
+  return new Uint8Array(bytes);
+}
+
+function utf8Decode(bytes: Uint8Array): string {
+  if (typeof TextDecoder !== "undefined") return new TextDecoder().decode(bytes);
+  let out = "";
+  let i = 0;
+  while (i < bytes.length) {
+    const b0 = bytes[i] ?? 0;
+    if (b0 < 0x80) {
+      out += String.fromCharCode(b0);
+      i += 1;
+    } else if ((b0 & 0xe0) === 0xc0) {
+      out += String.fromCharCode(((b0 & 0x1f) << 6) | ((bytes[i + 1] ?? 0) & 0x3f));
+      i += 2;
+    } else if ((b0 & 0xf0) === 0xe0) {
+      out += String.fromCharCode(
+        ((b0 & 0x0f) << 12) | (((bytes[i + 1] ?? 0) & 0x3f) << 6) | ((bytes[i + 2] ?? 0) & 0x3f),
+      );
+      i += 3;
+    } else {
+      out += String.fromCodePoint(
+        ((b0 & 0x07) << 18) |
+          (((bytes[i + 1] ?? 0) & 0x3f) << 12) |
+          (((bytes[i + 2] ?? 0) & 0x3f) << 6) |
+          ((bytes[i + 3] ?? 0) & 0x3f),
+      );
+      i += 4;
+    }
+  }
+  return out;
+}
+
+/**
  * `Number.isFinite` for every number a patch carries. JSON itself cannot carry NaN or Infinity
  * (`JSON.stringify(NaN)` is `"null"`, same as Rust's `serde_json`), so a non-finite value here
  * would silently become a no-op field on the wasm side instead of the clear rejection a caller
@@ -233,7 +290,7 @@ export class ChimeraLiveEngine {
 
   vowel(ipa: string): void {
     const { x, handle } = this;
-    const bytes = new TextEncoder().encode(ipa);
+    const bytes = utf8Encode(ipa);
     const pointer = copyIn(x, bytes);
     const ok = x.ic_live_vowel(handle, pointer, bytes.length);
     x.ic_free(pointer, bytes.length);
@@ -280,7 +337,7 @@ export class ChimeraLiveEngine {
    * ("kick . snare ."), as `live::set_beat_steps` resolves either. */
   beatSteps(pattern: string): void {
     const { x, handle } = this;
-    const bytes = new TextEncoder().encode(pattern);
+    const bytes = utf8Encode(pattern);
     const pointer = copyIn(x, bytes);
     const ok = x.ic_beat_steps(handle, pointer, bytes.length);
     x.ic_free(pointer, bytes.length);
@@ -304,7 +361,7 @@ export class ChimeraLiveEngine {
    * rejected input (a 0 return) never reaches `Engine`. */
   private apply(call: (h: number, json: number, len: number) => number, value: unknown): void {
     const { x, handle } = this;
-    const json = new TextEncoder().encode(JSON.stringify(value));
+    const json = utf8Encode(JSON.stringify(value));
     const pointer = copyIn(x, json);
     const ok = call(handle, pointer, json.length);
     x.ic_free(pointer, json.length);
@@ -315,7 +372,7 @@ export class ChimeraLiveEngine {
     const { x, handle } = this;
     const pointer = x.ic_live_error_ptr(handle);
     const bytes = new Uint8Array(x.memory.buffer, pointer, x.ic_live_error_len(handle));
-    return `intone: ${new TextDecoder().decode(bytes)}`;
+    return `intone: ${utf8Decode(bytes)}`;
   }
 }
 

@@ -157,4 +157,35 @@ describe("ChimeraLiveEngine", () => {
 
     expect(a).toEqual(b);
   });
+
+  // Chromium's AudioWorkletGlobalScope has neither global, so every JSON-encoded setter and
+  // `vowel`/`beatSteps` used to throw there and be silently swallowed (the worklet's own
+  // try/catch posts an error nobody read): a held note still sounded (from `noteOn`'s default
+  // state), masking that `vowel`, `shape`, `source` and the whole beatbox never actually applied.
+  test("still works with no TextEncoder/TextDecoder in scope", async () => {
+    const realEncoder = globalThis.TextEncoder;
+    const realDecoder = globalThis.TextDecoder;
+    // @ts-expect-error -- simulating a global scope that has neither, on purpose.
+    delete globalThis.TextEncoder;
+    // @ts-expect-error
+    delete globalThis.TextDecoder;
+    try {
+      engine = await loadLiveEngine({ wasm }, SAMPLE_RATE);
+      engine.setBody("female");
+      engine.noteOn(60);
+      engine.vowel("a");
+      engine.beatSteps("kick . snare .");
+      engine.beatTempo({ bpm: 240 });
+      engine.beatPlaying(true);
+      const out = renderAll(engine, Math.round(SAMPLE_RATE * 0.4));
+      expect(out.every((x) => Number.isFinite(x))).toBe(true);
+      const peak = out.reduce((m, x) => Math.max(m, Math.abs(x)), 0);
+      expect(peak).toBeGreaterThan(0.1);
+      expect(() => engine?.vowel("ɑ")).not.toThrow();
+      expect(() => engine?.beatHit({ id: "nope" })).toThrow("unknown beat sound");
+    } finally {
+      globalThis.TextEncoder = realEncoder;
+      globalThis.TextDecoder = realDecoder;
+    }
+  });
 });
