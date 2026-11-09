@@ -36,6 +36,9 @@ export type {
 } from "./engines/chimera-live.js";
 
 export interface CreateInstrumentOptions extends ChimeraLiveSources {
+  /** Who speaks. Defaults to the engine's own default body; equivalent to calling `setBody`
+   * right after creation, but applied before anything renders. */
+  body?: Body;
   /** Where to play. Defaults to a new AudioContext, closed on `free()`. */
   context?: BaseAudioContext;
   /** Defaults to the context's destination. */
@@ -109,7 +112,7 @@ function createNode(
 
 /** Loads the engine into a worklet and returns a playable instrument. */
 export async function createInstrument(options: CreateInstrumentOptions = {}): Promise<Instrument> {
-  const { context: given, destination, worklet, onError, wasm } = options;
+  const { body, context: given, destination, worklet, onError, wasm } = options;
   const context = given ?? new AudioContext({ latencyHint: "interactive" });
   const owned = given === undefined;
   // Before anything is awaited: on iOS only code still inside the tap may start an AudioContext.
@@ -125,6 +128,9 @@ export async function createInstrument(options: CreateInstrumentOptions = {}): P
   const node = createNode(context, module, bytes);
   node.connect(destination ?? context.destination);
   const send = (message: ToLive) => node.port.postMessage(message);
+  // Queued on the worklet's own side until the engine is ready, same as any other control call
+  // made before `createInstrument` resolves: applied before the first real render either way.
+  if (body !== undefined) send({ type: "setBody", body });
 
   let lastTelemetry: LiveTelemetry | null = null;
   let onReady: (() => void) | undefined;
