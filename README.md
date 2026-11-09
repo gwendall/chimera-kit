@@ -214,17 +214,48 @@ guarantees (samples straight to the audio thread, `stop()` before anything plays
 which is an optional peer dependency: only code that imports `intone/speaker` and asks for
 `"kokoro"` pulls it in.
 
+## Imitating a voice
+
+`intone/imitate` reads a recording and returns a small, plain-data profile for CHIMERA to speak
+with: a caricature (pitch, its range, speaking rate, pauses, a formant-based body size, and a
+rough breathiness), not a neural clone of the speaker. It is pure TypeScript with no engine
+import, so it carries nothing of the rest of the package (see Cost, below).
+
+```ts
+import { profile } from "intone/imitate";
+
+const p = profile(samples /* Float32Array, mono */, sampleRate, { speakerAgreed: true });
+// p: { body, f0, rate, delivery: { range, breath, pauses }, measured: { ...raw numbers... } }
+const voice = await createVoice({ body: p.body, f0: p.f0, rate: p.rate, style: deliver(p.delivery) });
+```
+
+`speakerAgreed` must be the literal `true`: a statement that the speaker agreed to be imitated
+this way, not an audit. Getting that agreement, for whatever use the caller is putting it to, is
+the caller's own responsibility; `profile()` only checks that the flag was explicitly set. No
+recording of a real person is ever shipped in this repository; every test renders its own
+CHIMERA audio.
+
+`profile()` does not estimate timbre: it does not try to match a speaker's particular vocal
+texture or resonance, only five coarse, independently measured dials. The mappings are fit
+against CHIMERA's own renders (each constant in `src/imitate.ts` says how), and recovery degrades
+honestly by parameter: pitch, its range, and the body-size estimate hold up well; speaking rate
+and pauses need several seconds of actual speech to average out one sentence's own shape, and
+read a short clip noisily; breathiness only distinguishes a clearly breathy voice from a clear
+one, not fine shades near clear. See the round-trip tests in `src/imitate.test.ts` for the
+measured numbers behind each of those claims.
+
 ## Cost
 
-|                                              | gzipped |
-| -------------------------------------------- | ------- |
-| Engine (`intone_chimera.wasm`)               | 221 KB  |
-| JavaScript: `createVoice` alone              | 1.9 KB  |
-| JavaScript: a chat (`speech`, `play`)        | 5.1 KB  |
-| JavaScript: everything                       | 9.1 KB  |
-| JavaScript: a voice in a Worker (both sides) | 8.8 KB  |
-| JavaScript: the device's voices only         | 2.7 KB  |
-| Pronouncing dictionary (CMUdict, English)    | 869 KB  |
+|                                                | gzipped |
+| ---------------------------------------------- | ------- |
+| Engine (`intone_chimera.wasm`)                 | 221 KB  |
+| JavaScript: `createVoice` alone                | 1.9 KB  |
+| JavaScript: a chat (`speech`, `play`)          | 5.1 KB  |
+| JavaScript: everything                         | 9.1 KB  |
+| JavaScript: a voice in a Worker (both sides)   | 8.8 KB  |
+| JavaScript: the device's voices only           | 2.7 KB  |
+| JavaScript: `profile` (`intone/imitate`) alone | 2.6 KB  |
+| Pronouncing dictionary (CMUdict, English)      | 869 KB  |
 
 On an Apple M2, loading takes about 70 ms once per page, the first audible sample comes about
 10 ms after asking, and one voice takes about a third of one core in real time. Phones have not
