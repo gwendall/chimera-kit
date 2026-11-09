@@ -1,0 +1,16 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
+  "files": {
+    "includes": ["**", "!crates", "!dist", "!target", "!eval/out", "!eval/baselines", "!.claude"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 110
+  },
+  "linter": {
+    "rules": {
+      "preset": "recommended"
+    }
+  }
+}
