@@ -111,6 +111,15 @@ impl Request {
     }
 }
 
+/// A score to render, as an utterance of a given body.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ScoreRequest {
+    pub score: Score,
+    #[serde(default)]
+    pub body: Body,
+}
+
 /// Turns requests into utterances. Holds the pronouncing dictionary.
 #[derive(Default)]
 pub struct Speaker {
@@ -167,6 +176,7 @@ impl Speaker {
             voice,
             left: total,
             total,
+            loudness: None,
         })
     }
 
@@ -205,6 +215,34 @@ impl Speaker {
         }
         Ok(score::from_plan(&plan, &phrases, f0))
     }
+
+    /// Renders a score exactly: its sound boundaries, and its pitch and breath curves. Refuses a
+    /// `tension` curve that changes over time (CHIMERA sets tension once per utterance) and any
+    /// other invalid score, naming the offending field.
+    pub fn utterance_from_score(&self, request: &ScoreRequest) -> Result<Utterance, String> {
+        let mix = request.body.mix();
+        let (plan, tension) = score::plan_from_score(&request.score, mix)?;
+        if plan.gestures.len() > GestureScore::CAPACITY {
+            return Err("score too long for one utterance: split it into pieces".into());
+        }
+        let f0 = request
+            .score
+            .pitch
+            .first()
+            .map_or_else(|| default_f0(mix), |p| p[1]);
+        let mut voice = HumanVoice::new(SAMPLE_RATE, mix.body(), OVERSAMPLE);
+        let mut patch = SourcePatch::f0(f0);
+        patch.tension = tension;
+        voice.set_source(&patch);
+        voice.schedule(&plan.gestures);
+        let total = (request.score.duration * SAMPLE_RATE).round() as usize;
+        Ok(Utterance {
+            voice,
+            left: total,
+            total,
+            loudness: request.score.loudness.clone(),
+        })
+    }
 }
 
 /// Speech being rendered, a chunk at a time.
@@ -212,6 +250,9 @@ pub struct Utterance {
     voice: HumanVoice,
     left: usize,
     total: usize,
+    /// A score's `loudness` curve (dB), applied as a gain on the rendered samples: CHIMERA has no
+    /// per-time control for it, but any curve can be followed exactly this way.
+    loudness: Option<score::Curve>,
 }
 
 impl Utterance {
@@ -225,6 +266,14 @@ impl Utterance {
         let n = out.len().min(self.left);
         for block in out[..n].chunks_mut(BLOCK) {
             self.voice.render(block);
+        }
+        if let Some(curve) = &self.loudness {
+            let start = self.total - self.left;
+            for (i, x) in out[..n].iter_mut().enumerate() {
+                let t = (start + i) as f64 / SAMPLE_RATE;
+                let gain = chimera::math::db_to_gain(score::curve_value(curve, t));
+                *x = (f64::from(*x) * gain) as f32;
+            }
         }
         self.left -= n;
         n
