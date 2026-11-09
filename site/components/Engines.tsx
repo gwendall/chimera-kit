@@ -124,7 +124,13 @@ export function Engines() {
                 <span className="latency">{weight}</span>
               </div>
               <button type="button" className="chip" disabled={busy} onClick={() => void run(id)}>
-                {result?.state === "loading" ? "Loading" : result?.state === "speaking" ? "Speaking" : action}
+                {result?.state === "loading"
+                  ? "Loading"
+                  : result?.state === "speaking"
+                    ? "Speaking"
+                    : result?.readyMs
+                      ? "Play"
+                      : action}
               </button>
               <dl>
                 <dt>ready in</dt>

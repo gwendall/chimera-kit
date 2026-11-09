@@ -488,6 +488,7 @@ class Studio {
         ...(intensity === undefined ? {} : { intensity }),
       });
       // A crowd can spare a moment at the start, and it pays for the seconds when every core is busy.
+      const note = (ms: number) => this.note(ms);
       const stamped = async function* () {
         let first = true;
         let held: Float32Array[] | null = [];
@@ -495,7 +496,9 @@ class Studio {
         for await (const chunk of chunks) {
           if (first) {
             first = false;
-            report.firstMs.push(performance.now() - calledAt);
+            const taken = performance.now() - calledAt;
+            report.firstMs.push(taken);
+            note(taken);
             on({ ...report, firstMs: [...report.firstMs] });
           }
           report.audioSeconds += chunk.length / voice.sampleRate;

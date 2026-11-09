@@ -454,14 +454,8 @@ class Scope {
     }
   }
 
-  /** Draws one more column: from `column` when given, otherwise from what is sounding now. */
-  draw(
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    title: string,
-    column: Uint8Array | null,
-  ) {
+  /** Adds one more column: from `column` when given, otherwise from what is sounding now. */
+  advance(width: number, height: number, column: Uint8Array | null) {
     const analyser = studio.analyser;
     const off = this.context;
     if (!off || !(column || analyser)) return;
@@ -497,7 +491,9 @@ class Scope {
       }
     }
     off.putImageData(strip, w - step, 0);
+  }
 
+  paint(ctx: CanvasRenderingContext2D, width: number, height: number, title: string) {
     ctx.drawImage(this.canvas, 0, 0, width, height);
     if (!title) return;
     ctx.font = `italic ${width < 480 ? 22 : 34}px ${fonts.serif}`;
@@ -542,16 +538,11 @@ export function Throat() {
       const ink = reading.mode === "ghost" ? 0.78 : 1;
 
       absorb(heat, reading.recent);
+      const room = reading.score ? box.height - stripHeight - 26 : box.height;
+      // It keeps scrolling behind the throat, so scrolling back doesn't land on an empty monitor.
+      scope.advance(box.width, room, reading.mode === "ghost" ? studio.ghostColumn(reading.t) : null);
       if (reading.mode === "scope" || !studio.showThroat) {
-        const room = reading.score ? box.height - stripHeight - 26 : box.height;
-        const title = reading.mode === "scope" ? studio.getSnapshot().label : "";
-        scope.draw(
-          ctx,
-          box.width,
-          room,
-          title,
-          reading.mode === "ghost" ? studio.ghostColumn(reading.t) : null,
-        );
+        scope.paint(ctx, box.width, room, reading.mode === "scope" ? studio.getSnapshot().label : "");
         if (reading.score) {
           drawScore(ctx, reading, 20, box.height - stripHeight, box.width - 40, stripHeight - 24, ink);
         }
