@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "packageManager": "bun@1.3.11",
-  "description": "Text to speech from a simulated airway, in about a megabyte. Runs in the browser.",
+  "description": "Speech in the page that starts in milliseconds and follows your code, down to the syllable. Powered by CHIMERA.",
   "license": "MIT",
   "type": "module",
   "sideEffects": false,

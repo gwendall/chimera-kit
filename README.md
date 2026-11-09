@@ -1,11 +1,16 @@
 # intone
 
-Text to speech in the browser, with no model weights and no server. It speaks by simulating a
-human airway: vocal folds, a moving tongue and lips, air through a tube.
+Speech that runs in the page, starts in milliseconds and does what your code says, down to the
+syllable. No model weights, no server.
 
-It doesn't sound natural, and it isn't trying to. It sounds uncanny, it fits in a few hundred
-kilobytes, and because every sound comes from an articulation, the delivery can be controlled
-by a program.
+intone is how you use [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth), the physical
+voice model by [Jameson Hodge](https://github.com/jamesondh), in a real product: streaming, clause
+cutting for language models, direction, workers, and one interface that also drives other engines
+([`intone/speaker`](#one-interface-three-backends)).
+
+CHIMERA doesn't sound natural, and it isn't trying to. It sounds uncanny, it fits in a few hundred
+kilobytes, and because every sound comes from an articulation, the delivery can be controlled by a
+program. When you want a natural voice instead, change one line and keep the rest of your code.
 
 > **Status: private, pre-release.** Not on npm yet, and the API will change.
 
@@ -250,8 +255,8 @@ measured numbers behind each of those claims.
 | ---------------------------------------------- | ------- |
 | Engine (`intone_chimera.wasm`)                 | 221 KB  |
 | JavaScript: `createVoice` alone                | 1.9 KB  |
-| JavaScript: a chat (`speech`, `play`)          | 5.1 KB  |
-| JavaScript: everything                         | 9.1 KB  |
+| JavaScript: a chat (`speech`, `play`)          | 5.3 KB  |
+| JavaScript: everything                         | 9.3 KB  |
 | JavaScript: a voice in a Worker (both sides)   | 8.8 KB  |
 | JavaScript: the device's voices only           | 2.7 KB  |
 | JavaScript: `profile` (`intone/imitate`) alone | 2.6 KB  |
