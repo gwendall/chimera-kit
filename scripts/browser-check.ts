@@ -41,6 +41,9 @@ interface Result {
   worker: { maxError: number; length: number; firstChunkMs: number };
   /** `say` from the worker straight to the audio thread, a string then tokens, against renders. */
   say: { maxError: number; tokensMaxError: number; clauses: number; underruns: number; stoppedPeak: number };
+  /** `intone/speaker`'s `createSpeaker("chimera", ...)`, against the same renders: it only wraps
+   * `createWorkerVoice`, so it must keep the same guarantees. */
+  speaker: { id: string; lost: string[]; renderError: number; sayError: number; stoppedPeak: number };
 }
 
 let failed = false;
@@ -170,6 +173,36 @@ for (const name of wanted) {
         at += part.length;
       }
 
+      // The unified Speaker interface (`intone/speaker`): CHIMERA through it must keep the same
+      // guarantees as `createWorkerVoice` directly, since it only wraps it.
+      const { createSpeaker } = await import(`${origin}/speaker.js`);
+      const chimeraSpeaker = await createSpeaker("chimera", { body: "female" });
+      const speakerRendered = await chimeraSpeaker.render?.(text);
+      let speakerRenderError = 0;
+      for (let i = 0; i < audio.length; i++)
+        speakerRenderError = Math.max(
+          speakerRenderError,
+          Math.abs((speakerRendered?.audio[i] ?? 0) - audio[i]),
+        );
+      const speakerSayContext = new OfflineAudioContext(1, sayExpected.length + 4096, sampleRate);
+      const speakerSaid = chimeraSpeaker.say(text, { context: speakerSayContext });
+      await speakerSaid.queued;
+      const speakerSayOut = (await speakerSayContext.startRendering()).getChannelData(0);
+      await speakerSaid.done;
+      let speakerSayError = 0;
+      for (let i = 0; i < sayExpected.length; i++)
+        speakerSayError = Math.max(speakerSayError, Math.abs(speakerSayOut[i] - sayExpected[i]));
+      // Stopped before it plays, through the unified interface too: nothing is heard.
+      const speakerStopContext = new OfflineAudioContext(1, sampleRate, sampleRate);
+      const speakerInterrupted = chimeraSpeaker.say(`${text} ${text}`, { context: speakerStopContext });
+      speakerInterrupted.stop();
+      await speakerInterrupted.queued;
+      const speakerStopOut = (await speakerStopContext.startRendering()).getChannelData(0);
+      await speakerInterrupted.done;
+      let speakerStoppedPeak = 0;
+      for (const x of speakerStopOut) speakerStoppedPeak = Math.max(speakerStoppedPeak, Math.abs(x));
+      chimeraSpeaker.free();
+
       const { systemVoices } = await import(`${origin}/web-speech.js`);
       const listed = await systemVoices(speechSynthesis, 500);
       return {
@@ -191,6 +224,13 @@ for (const name of wanted) {
           underruns: sayEnd.underruns,
           stoppedPeak,
         },
+        speaker: {
+          id: chimeraSpeaker.id,
+          lost: speakerRendered?.lost ?? ["render missing"],
+          renderError: speakerRenderError,
+          sayError: speakerSayError,
+          stoppedPeak: speakerStoppedPeak,
+        },
       };
     }, ORIGIN);
     const problems = [
@@ -210,6 +250,14 @@ for (const name of wanted) {
       result.say.stoppedPeak > 0 && `a stopped say still sounded (peak ${result.say.stoppedPeak})`,
       result.worker.length !== Math.round(result.renderedSeconds * 48_000) &&
         `the worker gave ${result.worker.length} samples`,
+      result.speaker.id !== "chimera" && `createSpeaker("chimera") reported id ${result.speaker.id}`,
+      result.speaker.lost.length > 0 && `createSpeaker("chimera") lost ${result.speaker.lost.join(", ")}`,
+      result.speaker.renderError > 0 &&
+        `createSpeaker("chimera")'s render differs from createVoice's by ${result.speaker.renderError}`,
+      result.speaker.sayError > 0 &&
+        `createSpeaker("chimera")'s say differs from speech() by ${result.speaker.sayError}`,
+      result.speaker.stoppedPeak > 0 &&
+        `createSpeaker("chimera")'s stopped say still sounded (peak ${result.speaker.stoppedPeak})`,
     ].filter(Boolean);
     console.log(
       `${problems.length === 0 ? "ok  " : "FAIL"} ${name} ${await browser.version()} ${JSON.stringify(result)}`,
