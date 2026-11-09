@@ -2,11 +2,16 @@
  * What every backend does with a song the same way, whether it sings it or can only speak its
  * lyrics: the same refusals, so a call that one backend refuses is refused by all of them.
  */
-import type { Song } from "./layers.js";
+import type { Score, Song } from "./layers.js";
 
 /** A song, as opposed to text or pieces of text. */
 export function isSong(input: unknown): input is Song {
   return typeof input === "object" && input !== null && "notes" in input;
+}
+
+/** A score, as opposed to text or a song. */
+export function isScore(input: unknown): input is Score {
+  return typeof input === "object" && input !== null && "sounds" in input;
 }
 
 /** A song or a score sets its own rate and pitch: asking for them is an error, not a loss. */

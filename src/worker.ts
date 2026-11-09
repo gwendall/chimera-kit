@@ -5,15 +5,14 @@
  */
 import { deliver } from "./delivery.js";
 import { createVoice } from "./index.js";
-import type { Song } from "./layers.js";
+import type { Score, Song } from "./layers.js";
 import { pacedClause } from "./pace.js";
-import { isSong } from "./song.js";
 import type { StreamOptions, Voice } from "./voice.js";
 import type { DeliveryOptions, WorkerStreamOptions, WorkerVoiceOptions } from "./worker-voice.js";
 
 export type ToWorker =
   | { type: "open"; options: Omit<WorkerVoiceOptions, "worker"> }
-  | { type: "render" | "stream"; id: number; text: string | Song; options: WorkerStreamOptions }
+  | { type: "render" | "stream"; id: number; text: string | Song | Score; options: WorkerStreamOptions }
   /** Starts speaking into `port`, an AudioWorklet player's, the clauses that follow. */
   | { type: "say"; id: number; options: WorkerStreamOptions; port: MessagePort }
   | { type: "clause"; id: number; text: string | Song }
@@ -51,7 +50,7 @@ const breathe = () =>
 
 /** A request that has arrived and not finished: its clauses so far, and whether it was cancelled. */
 interface Pending {
-  clauses: (string | Song)[];
+  clauses: (string | Song | Score)[];
   said: boolean;
   cancelled: boolean;
   wake?: (() => void) | undefined;
@@ -115,7 +114,7 @@ async function serve(request: ToWorker): Promise<void> {
         if (request.type === "render") {
           if (state.cancelled) return;
           const { text, options } = request;
-          const { audio } = voice.render(text, voiceOptions(options, isSong(text)));
+          const { audio } = voice.render(text, voiceOptions(options, typeof text !== "string"));
           post({ type: "rendered", id, audio }, [audio.buffer]);
           return;
         }
@@ -165,13 +164,14 @@ async function speak(
       since = performance.now();
       continue;
     }
-    // `say` gives each clause the pause its last mark asks; `stream`, and a song, are the engine's
-    // samples as they are.
-    const chunks = isSong(text)
-      ? voice.stream(text, voiceOptions(options, true))
-      : paced
-        ? pacedClause(voice, text, voiceOptions(options))
-        : voice.stream(text, voiceOptions(options));
+    // `say` gives each clause the pause its last mark asks; `stream`, a song and a score are the
+    // engine's samples as they are.
+    const chunks =
+      typeof text !== "string"
+        ? voice.stream(text, voiceOptions(options, true))
+        : paced
+          ? pacedClause(voice, text, voiceOptions(options))
+          : voice.stream(text, voiceOptions(options));
     for (const chunk of chunks) {
       send(chunk);
       if (performance.now() - since > SLICE_MS) {

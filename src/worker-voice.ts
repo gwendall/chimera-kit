@@ -5,9 +5,9 @@
 import { type ClauseOptions, clauses } from "./clauses.js";
 import type { Delivery, Mood } from "./delivery.js";
 import type { CreateVoiceOptions } from "./index.js";
-import type { Song } from "./layers.js";
+import type { Score, Song } from "./layers.js";
 import { type Playback, type PlayOptions, playThrough } from "./player.js";
-import { isSong, refuseTiming } from "./song.js";
+import { isScore, isSong, refuseTiming } from "./song.js";
 import type { Rendered, StreamOptions } from "./voice.js";
 import type { FromWorker, ToWorker } from "./worker.js";
 
@@ -41,10 +41,16 @@ export interface SayOptions extends WorkerStreamOptions, Omit<PlayOptions, "ahea
 /** A voice whose samples arrive asynchronously. */
 export interface AsyncVoice {
   readonly sampleRate: number;
-  /** Text or a song, as a voice on this thread renders it. A song takes only its call's delivery. */
-  render(text: string | Song, options?: WorkerStreamOptions): Promise<Rendered>;
+  /**
+   * Text, a song or a score, as a voice on this thread renders it. A song or a score takes only
+   * its call's delivery. A score is the way to give a worker a `style`: apply it on the page.
+   */
+  render(text: string | Song | Score, options?: WorkerStreamOptions): Promise<Rendered>;
   /** Chunks as the worker computes them. Ending the loop early cancels the rest. */
-  stream(text: string | Song, options?: WorkerStreamOptions): AsyncGenerator<Float32Array, void, undefined>;
+  stream(
+    text: string | Song | Score,
+    options?: WorkerStreamOptions,
+  ): AsyncGenerator<Float32Array, void, undefined>;
   /**
    * Speaks aloud. A string or a song is one utterance; pieces of text that are still arriving (a
    * language model's tokens) are spoken clause by clause, Markdown read as words.
@@ -93,6 +99,7 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
     if (freed) throw new Error("intone: this voice has been freed");
     if (failure) throw failure;
     if (isSong(text)) refuseTiming("a song", speak);
+    if (isScore(text)) refuseTiming("a score", speak);
   };
 
   return {

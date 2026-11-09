@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { deliver } from "./delivery.ts";
 import { createVoice } from "./index.ts";
+import { shift } from "./transforms.ts";
 import { type AsyncVoice, createWorkerVoice } from "./worker-voice.ts";
 
 const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
@@ -32,6 +33,27 @@ async function collect(chunks: AsyncIterable<Float32Array>): Promise<Float32Arra
 }
 
 describe("a worker voice", () => {
+  test("sings a score transformed on the page, sample for sample, as a style can't be posted", async () => {
+    const here = await createVoice({ wasm, dictionary, body: "female" });
+    const song = {
+      lyrics: "sun-light on the wa-ter ~",
+      notes: [60, 62, 64, 67, 69, 67, 60].map((midi) => ({ midi, beats: 1 })),
+      bpm: 120,
+    };
+    const score = shift(2)(here.plan(song));
+    const expected = here.render(score).audio;
+    here.free();
+    expect(await collect(voice.stream(score, { chunkSize: 512 }))).toEqual(expected);
+    expect((await voice.render(score)).audio).toEqual(expected);
+  });
+
+  test("a score refuses rate on this thread, as a song does", async () => {
+    const here = await createVoice({ wasm, dictionary });
+    const score = here.plan("hello");
+    here.free();
+    expect(() => voice.render(score, { rate: 1.2 })).toThrow(/a score ignores rate/);
+  });
+
   test("gives exactly the samples of a voice on this thread", async () => {
     const here = await createVoice({ wasm, dictionary, body: "female" });
     const expected = here.render(TEXT).audio;
