@@ -9,6 +9,17 @@ import { type Voice, voiceFrom } from "./voice.js";
 
 export type { Body, SpeakOptions } from "./engine.js";
 export type { Source } from "./engines/chimera.js";
+export type {
+  Curve,
+  Phrase,
+  PhraseEnd,
+  Phrasing,
+  Score,
+  Sound,
+  Syllable,
+  Word,
+  WordSpan,
+} from "./layers.js";
 export type { Rendered, StreamOptions, Voice } from "./voice.js";
 
 export interface CreateVoiceOptions extends SpeakOptions, ChimeraSources {}
