@@ -58,6 +58,12 @@ pub struct Score {
     /// changes value is refused (see `plan_from_score`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tension: Option<Curve>,
+    /// Vibrato depth in cents, as CHIMERA's `VIBRATO` source control would see it (the oscillation
+    /// itself is the glottis's own LFO, not part of this curve: see `plan_from_score`). Without
+    /// this field a sung score's pitch curve carries only the note-to-note pitch, averaging the
+    /// vibrato out; `crates/intone-chimera/src/sing.rs` is what sets it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vibrato: Option<Curve>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub words: Option<Vec<WordSpan>>,
 }
@@ -151,6 +157,9 @@ fn validate(score: &Score, body: BodyMix) -> Result<(), String> {
     }
     if let Some(c) = &score.tension {
         validate_curve(c, score.duration, "score.tension", 0.0, 1.0)?;
+    }
+    if let Some(c) = &score.vibrato {
+        validate_curve(c, score.duration, "score.vibrato", 0.0, 400.0)?;
     }
     let mut end = 0.0;
     for (i, s) in score.sounds.iter().enumerate() {
@@ -317,10 +326,10 @@ pub fn plan_from_score(score: &Score, body: BodyMix) -> Result<(Plan, Option<f64
         result.end = result.end.max(p.end);
     }
     // The score's own pitch curve replaces the planner's intonation guesses entirely: it is a
-    // required field, so every gesture's F0/vibrato target is stripped and rebuilt from it.
+    // required field, so every gesture's F0 target is stripped and rebuilt from it. (The planner
+    // never sets VIBRATO on its own; a score carries vibrato only if its own curve says so, below.)
     for g in &mut result.gestures {
         g.targets.remove(ControlKey::F0);
-        g.targets.remove(ControlKey::VIBRATO);
     }
     result.gestures.retain(|g| !g.targets.is_empty());
     result.gestures.extend(curve_gestures(
@@ -390,6 +399,21 @@ pub fn plan_from_score(score: &Score, body: BodyMix) -> Result<(Plan, Option<f64
             score.duration,
             ControlKey::BREATH,
             "breath",
+        ));
+    }
+    // A vibrato curve (singing: see `sing.rs`) replaces whatever the gestures had on VIBRATO,
+    // the same way the pitch curve replaces F0. Absent (the speech score path never sets it),
+    // nothing changes here: no VIBRATO target exists on a planner-built gesture to begin with.
+    if let Some(vibrato) = score.vibrato.as_ref().filter(|c| !c.is_empty()) {
+        for g in &mut result.gestures {
+            g.targets.remove(ControlKey::VIBRATO);
+        }
+        result.gestures.retain(|g| !g.targets.is_empty());
+        result.gestures.extend(curve_gestures(
+            &resample(vibrato, score.duration, CURVE_STEP),
+            score.duration,
+            ControlKey::VIBRATO,
+            "vibrato",
         ));
     }
     Ok((result, tension))
@@ -503,6 +527,7 @@ pub fn from_plan(plan: &Plan, phrases: &[Phrase], base_f0: f64) -> Score {
         loudness: None,
         breath: Some(breath),
         tension: None,
+        vibrato: None,
         words,
     }
 }

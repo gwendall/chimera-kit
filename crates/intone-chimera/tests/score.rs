@@ -44,6 +44,7 @@ fn held_vowel(duration: f64, pitch: Vec<[f64; 2]>) -> Score {
         loudness: None,
         breath: None,
         tension: None,
+        vibrato: None,
         words: None,
     }
 }
@@ -152,6 +153,7 @@ fn a_hand_built_score_with_breath_and_loudness_renders_the_same_regardless_of_ch
         loudness: Some(vec![[0.0, 0.0], [0.4, -6.0], [0.8, 0.0]]),
         breath: Some(vec![[0.0, 0.1], [0.4, 0.5], [0.8, 0.1]]),
         tension: Some(vec![[0.0, 0.3]]),
+        vibrato: Some(vec![[0.0, 0.0], [0.4, 40.0], [0.8, 40.0]]),
         words: None,
     };
     let whole = render_score(&speaker, score.clone(), 4096);
