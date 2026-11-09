@@ -4,12 +4,14 @@
 //! It only uses the engine's public API, so `crates/chimera` can keep tracking upstream.
 
 pub mod abi;
+pub mod score;
 
 use chimera::anatomy::human::{BodyMix, BodyName};
 use chimera::control::score::GestureScore;
 use chimera::phonetics::english::EnglishG2P;
 use chimera::phonetics::planner::{PhraseInput, PlanOptions, plan_phrases};
 use chimera::voice::human_voice::{HumanVoice, SourcePatch};
+use score::Score;
 use serde::Deserialize;
 
 /// Every utterance renders at this rate, whatever the audio device uses.
@@ -19,7 +21,7 @@ const BLOCK: usize = 128;
 /// Airway steps per output sample.
 const OVERSAMPLE: usize = 2;
 /// Time left after the last gesture for the sound to die away.
-const TAIL_SECONDS: f64 = 0.3;
+pub(crate) const TAIL_SECONDS: f64 = 0.3;
 
 /// Who speaks: a named body, or a blend of them.
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
@@ -55,7 +57,7 @@ impl Body {
 }
 
 /// The body's speaking pitch when the request doesn't set one.
-fn default_f0(mix: BodyMix) -> f64 {
+pub(crate) fn default_f0(mix: BodyMix) -> f64 {
     mix.blend(|b| match b {
         BodyName::Male => 112.0,
         BodyName::Female => 205.0,
@@ -166,6 +168,42 @@ impl Speaker {
             left: total,
             total,
         })
+    }
+
+    /// Plans an utterance the same way [`Speaker::utterance`] does, but hands back the score
+    /// instead of rendering it: layer 2 of `docs/design.md`, with exact timing and a pitch curve
+    /// a test can measure.
+    pub fn plan(&self, request: &Request) -> Result<Score, String> {
+        request.validate()?;
+        let phrases = self.g2p.to_phrases(&request.text);
+        if phrases.iter().all(|p| p.segments.is_empty()) {
+            return Err("nothing to say: the text has no pronounceable words".into());
+        }
+        let mix = request.body.mix();
+        let f0 = request.f0.unwrap_or_else(|| default_f0(mix));
+        let inputs: Vec<PhraseInput> = phrases
+            .iter()
+            .map(|p| PhraseInput {
+                segments: p.segments.clone(),
+                intonation: Some(p.intonation),
+                pause: Some(p.pause),
+            })
+            .collect();
+        let plan = plan_phrases(
+            &inputs,
+            &PlanOptions {
+                body: mix,
+                t0: 0.0,
+                f0: Some(f0),
+                rate: request.rate,
+                accent: request.accent,
+                ..Default::default()
+            },
+        );
+        if plan.gestures.len() > GestureScore::CAPACITY {
+            return Err("text too long for one utterance: split it into sentences".into());
+        }
+        Ok(score::from_plan(&plan, &phrases, f0))
     }
 }
 
