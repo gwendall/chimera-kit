@@ -5,6 +5,7 @@
 
 pub mod abi;
 pub mod score;
+pub mod sing;
 
 use chimera::anatomy::human::{BodyMix, BodyName};
 use chimera::control::score::GestureScore;
@@ -214,6 +215,12 @@ impl Speaker {
             return Err("text too long for one utterance: split it into sentences".into());
         }
         Ok(score::from_plan(&plan, &phrases, f0))
+    }
+
+    /// Plans a melody with lyrics into a score, the way [`Speaker::plan`] plans text: see
+    /// `sing::sing`.
+    pub fn sing(&self, request: &sing::SingRequest) -> Result<Score, String> {
+        sing::sing(&self.g2p, request)
     }
 
     /// Renders a score exactly: its sound boundaries, and its pitch and breath curves. Refuses a

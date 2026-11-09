@@ -154,8 +154,40 @@ pub unsafe extern "C" fn ic_speaker_plan(
     }
 }
 
+/// Plans a JSON [`crate::sing::SingRequest`] (lyrics and notes) into a score, the way
+/// `ic_speaker_plan` plans text: additive, so it shares that call's storage and getters
+/// (`ic_speaker_plan_ptr`/`_len`) rather than adding new ones. 0 on error (the speaker then holds
+/// the message); 1 on success. A later `ic_speaker_plan` or `ic_speaker_sing` call on the same
+/// speaker replaces whichever score was there.
+///
 /// # Safety
-/// `s` must be live, and the pointer is valid only until the next `ic_speaker_plan` call.
+/// `s` must be live and `json` must point to `len` readable bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_speaker_sing(
+    s: *mut SpeakerHandle,
+    json: *const u8,
+    len: usize,
+) -> u32 {
+    let s = unsafe { &mut *s };
+    let bytes = unsafe { slice::from_raw_parts(json, len) };
+    let result = serde_json::from_slice::<crate::sing::SingRequest>(bytes)
+        .map_err(|e| format!("invalid sing request: {e}"))
+        .and_then(|request| s.speaker.sing(&request));
+    match result {
+        Ok(score) => {
+            s.plan = serde_json::to_string(&score).expect("a score always serializes");
+            1
+        }
+        Err(message) => {
+            s.error = message;
+            0
+        }
+    }
+}
+
+/// # Safety
+/// `s` must be live, and the pointer is valid only until the next `ic_speaker_plan` or
+/// `ic_speaker_sing` call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ic_speaker_plan_ptr(s: *const SpeakerHandle) -> *const u8 {
     unsafe { &*s }.plan.as_ptr()
