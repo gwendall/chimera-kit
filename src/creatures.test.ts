@@ -73,6 +73,43 @@ describe("loadCreatures", () => {
       b.free();
     });
 
+    test("stream computes as it is read, so freeing mid-call stops it cleanly", () => {
+      const bird = zoo.create("songbird");
+      const chunks = bird.stream("trill", { chunkSize: 256 });
+      expect(chunks.next().value?.length).toBe(256);
+      bird.free();
+      expect(() => chunks.next()).toThrow("has been freed");
+    });
+
+    test("a freed creature refuses every use, and a second free is harmless", () => {
+      const bird = zoo.create("songbird");
+      bird.free();
+      bird.free();
+      const refused = "has been freed";
+      expect(() => bird.render(128)).toThrow(refused);
+      expect(() => bird.call("trill")).toThrow(refused);
+      expect(() => bird.gate(1)).toThrow(refused);
+      expect(() => bird.stop()).toThrow(refused);
+      expect(() => bird.set({})).toThrow(refused);
+    });
+
+    test("an unknown parameter is an error that names the known ones", () => {
+      const bird = zoo.create("songbird");
+      const known = bird.info.params[0]?.key ?? "";
+      expect(() => bird.set({ nope: 1 })).toThrow(known);
+      bird.free();
+    });
+
+    test("a non-finite control is refused before it reaches the simulation", () => {
+      const bird = zoo.create("songbird");
+      const key = bird.info.params[0]?.key ?? "";
+      expect(() => bird.set({ [key]: Number.NaN })).toThrow(RangeError);
+      expect(() => bird.gate(Number.POSITIVE_INFINITY)).toThrow(RangeError);
+      expect(() => bird.call("trill", { amp: Number.NaN })).toThrow(RangeError);
+      expect(() => [...bird.stream("trill", { chunkSize: 0 })]).toThrow(RangeError);
+      bird.free();
+    });
+
     test("render gives continuous, bounded audio at an arbitrary length", () => {
       const bird = zoo.create("songbird");
       bird.gate(1);

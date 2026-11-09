@@ -229,12 +229,12 @@ play([bird.call("flute")], zoo.sampleRate);
 `stream` gives the same samples as a generator, in chunks. `set({ ... })`, `gate(level)` and
 `render(samples)` play a creature live, like an instrument.
 
-| Creature                | Calls                               |
-| ------------------------ | ------------------------------------ |
-| `songbird`               | `flute`, `trill`, `chirps`, `buzz`   |
-| `seal` (Weddell seal)    | `trill`, `zap`, `whistle`, `chug`    |
-| `alligator`              | `bellow`, `growl`, `hiss`, `dance`   |
-| `elephant`               | `rumble`, `trumpet`, `squeak`        |
+| Creature              | Calls                              |
+| --------------------- | ---------------------------------- |
+| `songbird`            | `flute`, `trill`, `chirps`, `buzz` |
+| `seal` (Weddell seal) | `trill`, `zap`, `whistle`, `chug`  |
+| `alligator`           | `bellow`, `growl`, `hiss`, `dance` |
+| `elephant`            | `rumble`, `trumpet`, `squeak`      |
 
 ## Intelligibility
 

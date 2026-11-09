@@ -44,6 +44,8 @@ interface Result {
   /** `intone/speaker`'s `createSpeaker("chimera", ...)`, against the same renders: it only wraps
    * `createWorkerVoice`, so it must keep the same guarantees. */
   speaker: { id: string; lost: string[]; renderError: number; sayError: number; stoppedPeak: number };
+  /** The creatures' own wasm, loaded and heard in a browser. */
+  creature: { kinds: number; samples: number; peak: number };
   /** A song through the worker to the audio thread: the samples of its render, nothing lost. */
   song: { lost: string[]; sayError: number };
 }
@@ -215,6 +217,14 @@ for (const name of wanted) {
         songError = Math.max(songError, Math.abs(songOut[i] - (songExpected[i] ?? 0)));
       chimeraSpeaker.free();
 
+      const { loadCreatures } = await import(`${origin}/creatures.js`);
+      const creatures = await loadCreatures();
+      const creature = creatures.create(creatures.list[0].id);
+      const cry: Float32Array = creature.call(creatures.list[0].calls[0].id);
+      let creaturePeak = 0;
+      for (const x of cry) creaturePeak = Math.max(creaturePeak, Math.abs(x));
+      creature.free();
+
       const { systemVoices } = await import(`${origin}/web-speech.js`);
       const listed = await systemVoices(speechSynthesis, 500);
       return {
@@ -243,6 +253,7 @@ for (const name of wanted) {
           sayError: speakerSayError,
           stoppedPeak: speakerStoppedPeak,
         },
+        creature: { kinds: creatures.list.length, samples: cry.length, peak: creaturePeak },
         song: {
           lost: sung.lost,
           sayError: songError,
@@ -272,6 +283,8 @@ for (const name of wanted) {
         `createSpeaker("chimera")'s render differs from createVoice's by ${result.speaker.renderError}`,
       result.speaker.sayError > 0 &&
         `createSpeaker("chimera")'s say differs from speech() by ${result.speaker.sayError}`,
+      !(result.creature.kinds > 0 && result.creature.samples > 0 && result.creature.peak > 0.001) &&
+        `a creature was not heard: ${JSON.stringify(result.creature)}`,
       result.song.lost.length > 0 && `a sung say lost ${result.song.lost.join(", ")}`,
       result.song.sayError > 0 && `a sung say differs from its render by ${result.song.sayError}`,
       result.speaker.stoppedPeak > 0 &&

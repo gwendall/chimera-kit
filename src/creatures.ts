@@ -183,6 +183,11 @@ function join(chunks: Float32Array[], total: number): Float32Array {
   return out;
 }
 
+/** A NaN or infinite control would poison the simulation's state for good. */
+function finite(name: string, value: number): void {
+  if (!Number.isFinite(value)) throw new RangeError(`intone: ${name} must be finite, got ${value}`);
+}
+
 function unknownCallError(info: CreatureInfo, id: string): Error {
   const known = info.calls.map((c) => c.id).join(", ");
   return new Error(`intone: ${info.id} has no call '${id}'; known calls: ${known}`);
@@ -190,6 +195,7 @@ function unknownCallError(info: CreatureInfo, id: string): Error {
 
 class CreatureImpl implements Creature {
   private readonly paramIndex: Map<string, number>;
+  private freed = false;
 
   constructor(
     private readonly x: Exports,
@@ -200,19 +206,33 @@ class CreatureImpl implements Creature {
     this.paramIndex = new Map(info.params.map((p, i) => [p.key, i]));
   }
 
+  /** A freed handle is dangling memory in the wasm: refuse it here rather than corrupt the heap. */
+  private check(): void {
+    if (this.freed) throw new Error("intone: this creature has been freed");
+  }
+
   set(params: Record<string, number>): void {
-    const { x, handle } = this;
+    this.check();
+    const { x, handle, info } = this;
     for (const [key, value] of Object.entries(params)) {
       const index = this.paramIndex.get(key);
-      if (index !== undefined) x.cc_creature_param(handle, index, value);
+      if (index === undefined) {
+        const known = info.params.map((p) => p.key).join(", ");
+        throw new Error(`intone: ${info.id} has no parameter '${key}'; known parameters: ${known}`);
+      }
+      finite(key, value);
+      x.cc_creature_param(handle, index, value);
     }
   }
 
   gate(level: number): void {
+    this.check();
+    finite("gate", level);
     this.x.cc_creature_gate(this.handle, level);
   }
 
   render(samples: number): Float32Array {
+    this.check();
     const { x, handle } = this;
     const out = new Float32Array(samples);
     let at = 0;
@@ -225,32 +245,60 @@ class CreatureImpl implements Creature {
   }
 
   call(id: string, options: CallOptions = {}): Float32Array {
-    return this.renderCall(id, options);
+    const steps = [...this.steps(id, options)];
+    return join(
+      steps,
+      steps.reduce((total, step) => total + step.length, 0),
+    );
   }
 
   *stream(id: string, options: StreamOptions = {}): Generator<Float32Array> {
-    const full = this.renderCall(id, options);
     const chunkSize = options.chunkSize ?? 1024;
-    for (let i = 0; i < full.length; i += chunkSize) {
-      yield full.subarray(i, Math.min(i + chunkSize, full.length));
+    if (!Number.isInteger(chunkSize) || chunkSize < 1) {
+      throw new RangeError(`intone: chunkSize must be a positive integer, got ${chunkSize}`);
     }
+    // Computed step by step, as the caller reads it: the first chunk waits for one chunk's worth of
+    // sound, not for the whole call.
+    let chunk = new Float32Array(chunkSize);
+    let filled = 0;
+    for (const step of this.steps(id, options)) {
+      let at = 0;
+      while (at < step.length) {
+        const n = Math.min(step.length - at, chunkSize - filled);
+        chunk.set(step.subarray(at, at + n), filled);
+        filled += n;
+        at += n;
+        if (filled === chunkSize) {
+          yield chunk;
+          chunk = new Float32Array(chunkSize);
+          filled = 0;
+        }
+      }
+    }
+    if (filled > 0) yield chunk.subarray(0, filled);
   }
 
   stop(): void {
+    this.check();
     this.x.cc_creature_stop(this.handle);
   }
 
   free(): void {
+    if (this.freed) return;
+    this.freed = true;
     this.x.cc_creature_free(this.handle);
   }
 
-  /** Renders a whole call: the active portion (computed from the catalog, so it never depends on
+  /** Computes a whole call step by step: the active portion (computed from the catalog, so it never depends on
    * how finely we poll the engine), then the release tail, sample-stepped until it is quiet or
    * the tail cap is reached. The result is the same whatever `stream`'s `chunkSize` later is. */
-  private renderCall(id: string, options: CallOptions): Float32Array {
+  private *steps(id: string, options: CallOptions): Generator<Float32Array> {
+    this.check();
     const call = this.info.calls.find((c) => c.id === id);
     if (!call) throw unknownCallError(this.info, id);
     const index = this.info.calls.indexOf(call);
+    if (options.pitch !== undefined) finite("pitch", options.pitch);
+    if (options.amp !== undefined) finite("amp", options.amp);
 
     const { x, handle, sampleRate } = this;
     const lastKeyT = call.keys[call.keys.length - 1]?.t ?? 0;
@@ -260,34 +308,30 @@ class CreatureImpl implements Creature {
 
     x.cc_creature_call(handle, index, options.pitch ?? Number.NaN, options.amp ?? 1);
 
-    const chunks: Float32Array[] = [];
-    let total = 0;
-    const renderStep = (n: number): Float32Array => {
+    const step = (n: number): Float32Array => {
+      this.check(); // a caller reading a stream may free the creature between two chunks
       const got = x.cc_creature_render(handle, n);
-      const view = new Float32Array(x.memory.buffer, x.cc_creature_buffer(handle), got).slice();
-      chunks.push(view);
-      total += got;
-      return view;
+      return new Float32Array(x.memory.buffer, x.cc_creature_buffer(handle), got).slice();
     };
 
     let rendered = 0;
     while (rendered < activeSamples) {
-      rendered += renderStep(Math.min(RENDER_STEP, activeSamples - rendered)).length;
+      const view = step(Math.min(RENDER_STEP, activeSamples - rendered));
+      rendered += view.length;
+      yield view;
     }
 
     let quietRun = 0;
     let tailRendered = 0;
-    while (tailRendered < maxTailSamples) {
-      const view = renderStep(Math.min(RENDER_STEP, maxTailSamples - tailRendered));
+    while (tailRendered < maxTailSamples && quietRun < quietSamples) {
+      const view = step(Math.min(RENDER_STEP, maxTailSamples - tailRendered));
       tailRendered += view.length;
       for (const sample of view) {
         quietRun = Math.abs(sample) < QUIET_AMPLITUDE ? quietRun + 1 : 0;
         if (quietRun >= quietSamples) break;
       }
-      if (quietRun >= quietSamples) break;
+      yield view;
     }
-
-    return join(chunks, total);
   }
 }
 
