@@ -84,6 +84,11 @@ physical-modeling vocal synthesizer, kept unmodified in `crates/chimera` as a gi
 `bun run sync-upstream` merges new upstream work in. Everything specific to this package lives in
 `crates/intone-chimera` and `src/`.
 
+## Where it is going
+
+One API for speech, singing and sounds that are not words, over any engine, local first. See
+[docs/design.md](docs/design.md).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The evaluation harness and its rules are in
