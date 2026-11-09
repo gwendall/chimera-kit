@@ -16,6 +16,10 @@ const SIZE_LIMITS: Record<string, number> = {
 };
 /** Share of one core a voice may use in real time, measured in Bun. */
 const CORE_LIMIT = 0.45;
+/** Loading the engine and the dictionary, once per page. */
+const COLD_START_LIMIT_MS = 150;
+/** From asking to speak to the first sample worth hearing: what a chat feels. */
+const FIRST_AUDIO_LIMIT_MS = 15;
 
 let failed = false;
 function check(label: string, value: string, ok: boolean): void {
@@ -30,7 +34,27 @@ for (const [file, limit] of Object.entries(SIZE_LIMITS)) {
 }
 
 if (!process.argv.includes("--no-speed")) {
+  const coldStarted = performance.now();
   const voice = await createVoice();
+  const cold = performance.now() - coldStarted;
+  check("cold start", `${cold.toFixed(1)} ms (limit ${COLD_START_LIMIT_MS} ms)`, cold <= COLD_START_LIMIT_MS);
+
+  let firstAudio = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < 10; i++) {
+    const started = performance.now();
+    for (const chunk of voice.stream("Hello there, how are you?")) {
+      if (chunk.some((sample) => Math.abs(sample) > 1e-3)) {
+        firstAudio = Math.min(firstAudio, performance.now() - started);
+        break;
+      }
+    }
+  }
+  check(
+    "first audible sample",
+    `${firstAudio.toFixed(1)} ms (limit ${FIRST_AUDIO_LIMIT_MS} ms)`,
+    firstAudio <= FIRST_AUDIO_LIMIT_MS,
+  );
+
   let best = Number.POSITIVE_INFINITY;
   let seconds = 0;
   for (let i = 0; i < 3; i++) {

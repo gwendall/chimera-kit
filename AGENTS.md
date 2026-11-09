@@ -17,7 +17,7 @@ fine programmatic control of the delivery is what it is for. Natural is not a go
 
 - `crates/chimera/`: the engine, **from upstream**. See below.
 - `crates/chimera-speak/`: our layer over it (`lib.rs`) and the browser's C ABI (`abi.rs`).
-- `src/index.ts`: the package's whole JavaScript side.
+- `src/`: the JavaScript side. `voice.ts` and `engine.ts` know no engine; `engines/chimera.ts` is the adapter.
 - `eval/`: the intelligibility harness and the budgets. `eval/README.md` has its rules.
 - `scripts/sync-upstream.sh`: brings in upstream's engine.
 
@@ -30,7 +30,10 @@ fine programmatic control of the delivery is what it is for. Natural is not a go
   `chimera::math`, no allocation while rendering, output independent of block size.
 - **Any engine change moves the sound.** Golden tests fail by design; re-bless with
   `CHIMERA_BLESS=1 cargo test --workspace --no-fail-fast`, run twice. Then run the evaluation.
-- **The ABI is defined twice**, in `abi.rs` and `src/index.ts`. Change both, and bump `ABI_VERSION`
+- **No engine name outside its adapter.** The public API, `voice.ts` and `engine.ts` speak of voices
+  and utterances, so that the engine can be replaced. `engine.ts` stays internal until a second
+  engine exists.
+- **The ABI is defined twice**, in `abi.rs` and `src/engines/chimera.ts`. Change both, and bump `ABI_VERSION`
   in both.
 - **`bun test` tests `dist/`**, which is a build product: run `bun run build` after a Rust change.
 - **Tuning for intelligibility follows `eval/README.md`** and never edits its judges or its corpus.

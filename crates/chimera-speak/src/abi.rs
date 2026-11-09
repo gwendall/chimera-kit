@@ -1,15 +1,15 @@
 //! The C ABI the TypeScript facade calls. Requests are JSON, audio is a pointer into wasm memory.
 //!
 //! Every pointer argument must come from the matching `cs_*` constructor or from `cs_alloc`, and
-//! must not be used after its `cs_*_free`. `src/index.ts` is the only intended caller.
+//! must not be used after its `cs_*_free`. `src/engines/chimera.ts` is the only intended caller.
 
 use crate::{Request, SAMPLE_RATE, Speaker, Utterance};
 use std::alloc::{Layout, alloc, dealloc};
 use std::slice;
 
-/// Bump when a signature below changes, along with `ABI_VERSION` in `src/index.ts`.
-const ABI_VERSION: u32 = 1;
-/// Samples handed over per `cs_utterance_render` call.
+/// Bump when a signature below changes, along with `ABI_VERSION` in `src/engines/chimera.ts`.
+const ABI_VERSION: u32 = 2;
+/// The most samples one `cs_utterance_render` call can hand over.
 const CHUNK: usize = 4096;
 
 /// A speaker and the text of its last error.
@@ -138,14 +138,15 @@ pub unsafe extern "C" fn cs_utterance_samples(u: *const UtteranceHandle) -> usiz
     unsafe { &*u }.utterance.total_samples()
 }
 
-/// Renders the next chunk into the utterance's buffer and returns its length; 0 means finished.
+/// Renders up to `max` samples (at most 4096) into the utterance's buffer and returns how many;
+/// 0 means finished. A small `max` hands the first audio over sooner.
 ///
 /// # Safety
 /// `u` must be live.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn cs_utterance_render(u: *mut UtteranceHandle) -> usize {
+pub unsafe extern "C" fn cs_utterance_render(u: *mut UtteranceHandle, max: usize) -> usize {
     let u = unsafe { &mut *u };
-    u.utterance.render(&mut u.buffer[..])
+    u.utterance.render(&mut u.buffer[..max.min(CHUNK)])
 }
 
 /// # Safety

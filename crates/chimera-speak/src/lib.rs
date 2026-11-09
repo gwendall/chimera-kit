@@ -18,8 +18,6 @@ pub const SAMPLE_RATE: f64 = 48_000.0;
 const BLOCK: usize = 128;
 /// Airway steps per output sample.
 const OVERSAMPLE: usize = 2;
-/// Silence before the first gesture, so the attack is not cut.
-const LEAD_SECONDS: f64 = 0.05;
 /// Time left after the last gesture for the sound to die away.
 const TAIL_SECONDS: f64 = 0.3;
 
@@ -147,7 +145,8 @@ impl Speaker {
             &inputs,
             &PlanOptions {
                 body: mix,
-                t0: LEAD_SECONDS,
+                // Speech starts at the first sample: any silence here is latency in a chat.
+                t0: 0.0,
                 f0: Some(f0),
                 rate: request.rate,
                 accent: request.accent,

@@ -37,6 +37,19 @@ describe("a voice", () => {
     expect(joined as Float32Array).toEqual(whole);
   });
 
+  test("streams in the requested chunk size, 128 samples by default", () => {
+    expect(voice.stream(TEXT).next().value?.length).toBe(128);
+    const chunks = [...voice.stream(TEXT, { chunkSize: 1000 })];
+    expect(chunks[0]?.length).toBe(1000);
+    expect(chunks.reduce((n, chunk) => n + chunk.length, 0)).toBe(voice.render(TEXT).audio.length);
+  });
+
+  test("refuses a chunk size the engine can't honor", () => {
+    for (const chunkSize of [0, 4097, 1.5]) {
+      expect(() => voice.stream(TEXT, { chunkSize }).next()).toThrow("chunkSize");
+    }
+  });
+
   test("is deterministic", () => {
     expect(voice.render(TEXT).audio).toEqual(voice.render(TEXT).audio);
   });

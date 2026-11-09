@@ -33,11 +33,30 @@ fn speech_is_audible_and_bounded() {
 fn output_does_not_depend_on_chunk_size() {
     let speaker = Speaker::new();
     let json = r#"{"text":"The quick fox.","body":"female"}"#;
-    // Multiples of the engine's block, as cs_utterance_render always asks for.
-    assert_eq!(
-        render(&speaker, json, 4096),
-        render(&speaker, json, 128 * 3)
-    );
+    // Callers pick the chunk size, so it needn't be a multiple of the engine's block.
+    let whole = render(&speaker, json, 4096);
+    for chunk in [128 * 3, 128, 97, 1000] {
+        assert_eq!(whole, render(&speaker, json, chunk), "chunk size {chunk}");
+    }
+}
+
+#[test]
+fn speech_is_audible_within_a_few_milliseconds() {
+    let speaker = Speaker::new();
+    for text in [
+        "Yes.",
+        "Hello there.",
+        "Pack the box.",
+        "Stop it now.",
+        "Many men.",
+        "Apple pie.",
+        "Under the bridge.",
+    ] {
+        let out = render(&speaker, &format!(r#"{{"text":"{text}"}}"#), 4096);
+        let first = out.iter().position(|x| x.abs() > 1e-3).unwrap();
+        let ms = first as f64 / SAMPLE_RATE * 1000.0;
+        assert!(ms < 30.0, "{text:?} is silent for {ms:.1} ms");
+    }
 }
 
 #[test]
@@ -111,7 +130,7 @@ fn the_abi_reports_errors_and_renders() {
         let total = cs_utterance_samples(u);
         let mut seen = 0;
         loop {
-            let n = cs_utterance_render(u);
+            let n = cs_utterance_render(u, 4096);
             if n == 0 {
                 break;
             }
