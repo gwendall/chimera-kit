@@ -263,6 +263,29 @@ pub struct Utterance {
 }
 
 impl Utterance {
+    /// The airway as it is now, written over `out`: the velum port's area (cm²), the pharynx's and
+    /// the mouth's lengths (cm), the number of sections of the pharynx, the mouth and the nose, then
+    /// each section's area (cm²) from the glottis to the lips and on to the nostrils, then each
+    /// section's pressure, in the same order.
+    pub fn airway(&self, out: &mut Vec<f32>) {
+        let a = &self.voice.airway;
+        let tubes = [&a.pharynx, &a.oral, &a.nasal];
+        out.clear();
+        out.extend([
+            a.net.port_area[a.velum_port] as f32,
+            a.ph_len as f32,
+            a.or_len as f32,
+        ]);
+        out.extend(tubes.iter().map(|t| t.n as f32));
+        for values in [&a.net.area, &a.net.p] {
+            out.extend(
+                tubes
+                    .iter()
+                    .flat_map(|t| (0..t.n).map(|i| values[t.node(i)] as f32)),
+            );
+        }
+    }
+
     /// The utterance's length in samples.
     pub fn total_samples(&self) -> usize {
         self.total

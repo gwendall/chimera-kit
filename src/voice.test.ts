@@ -63,6 +63,22 @@ describe("a voice over any engine", () => {
     expect(log.requests).toEqual([{ rate: 2, text: "hi" }]);
   });
 
+  test("airway reports once per chunk, and is skipped by an engine without one", () => {
+    const { engine } = fakeEngine();
+    const seen: Float32Array[] = [];
+    const chunks = [...voiceFrom(engine).stream("hi", { chunkSize: 50, airway: (s) => seen.push(s) })];
+    expect(chunks.length).toBeGreaterThan(0);
+    expect(seen.length).toBe(0);
+
+    const state = new Float32Array([1, 2, 3]);
+    const begin = engine.begin.bind(engine);
+    engine.begin = (request) => Object.assign(begin(request), { airway: () => state });
+    const counted: Float32Array[] = [];
+    const again = [...voiceFrom(engine).stream("hi", { chunkSize: 50, airway: (s) => counted.push(s) })];
+    expect(counted.length).toBe(again.length);
+    expect(counted[0]).toBe(state);
+  });
+
   test("a stream abandoned early still frees its utterance", () => {
     const { engine, log } = fakeEngine();
     for (const _ of voiceFrom(engine).stream("hi", { chunkSize: 10 })) break;

@@ -42,6 +42,8 @@ interface Exports {
   ic_utterance_samples(u: number): number;
   ic_utterance_render(u: number, max: number): number;
   ic_utterance_buffer(u: number): number;
+  ic_utterance_airway(u: number): number;
+  ic_utterance_airway_len(u: number): number;
 }
 
 async function readBytes(source: Source): Promise<Uint8Array> {
@@ -87,6 +89,12 @@ class ChimeraUtterance implements EngineUtterance {
     const { x, pointer } = this;
     const n = x.ic_utterance_render(pointer, max);
     return n > 0 ? new Float32Array(x.memory.buffer, x.ic_utterance_buffer(pointer), n) : null;
+  }
+
+  airway(): Float32Array {
+    const { x, pointer } = this;
+    const at = x.ic_utterance_airway(pointer);
+    return new Float32Array(x.memory.buffer, at, x.ic_utterance_airway_len(pointer)).slice();
   }
 
   free(): void {

@@ -66,7 +66,7 @@ export interface SpokenPlayback {
  * comes as a mood or numbers, and each backend says in `lost` what of it it could not do. A `style`
  * is a function: give it to a page-thread voice (`createVoice`) instead.
  */
-export type SpeakerStreamOptions = Omit<StreamOptions, "style"> & DeliveryOptions;
+export type SpeakerStreamOptions = Omit<StreamOptions, "style" | "airway"> & DeliveryOptions;
 
 export interface SpeakerSayOptions extends SpeakerStreamOptions, Omit<PlayOptions, "ahead"> {}
 

@@ -23,7 +23,7 @@ export interface DeliveryOptions {
  * A worker gets its options through postMessage, which cannot carry a function such as `style`:
  * a delivery comes as data instead.
  */
-export type WorkerStreamOptions = Omit<StreamOptions, "style"> & DeliveryOptions;
+export type WorkerStreamOptions = Omit<StreamOptions, "style" | "airway"> & DeliveryOptions;
 
 export interface WorkerVoiceOptions extends Omit<CreateVoiceOptions, "style">, DeliveryOptions {
   /**

@@ -38,6 +38,8 @@ export interface EngineUtterance {
   readonly samples: number;
   /** The next samples, at most `max`, or null when finished. Only valid until the next call. */
   next(max: number): Float32Array | null;
+  /** The airway now, for an engine that simulates one. See `StreamOptions.airway` for the layout. */
+  airway?(): Float32Array;
   free(): void;
 }
 

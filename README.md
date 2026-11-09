@@ -76,6 +76,21 @@ the first sample.
 `createVoice({ dictionary: false })` skips the pronouncing dictionary and uses spelling rules
 alone: 223 KB in all, at a cost in pronunciation.
 
+### Watching the throat
+
+Because the voice is a simulated airway, the airway can be read while it speaks: the area and the
+pressure of every section of tube, from the vocal folds to the lips and through the nose. Use it
+to draw the throat, or to drive a character's mouth from the real lip opening.
+
+```ts
+const chunks = voice.stream("Hello there.", {
+  airway(state) {
+    const [velum, pharynxLength, mouthLength, pharynx, mouth, nose] = state;
+    const areas = state.subarray(6, 6 + pharynx + mouth + nose); // then the pressures
+  },
+});
+```
+
 ### Shaping one reading
 
 `plan` gives the score the voice would speak: every sound with its timing, the pitch, and where

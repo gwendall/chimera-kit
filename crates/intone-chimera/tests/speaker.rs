@@ -21,6 +21,50 @@ fn render(speaker: &Speaker, json: &str, chunk: usize) -> Vec<f32> {
 }
 
 #[test]
+fn the_airway_reads_the_live_tube_and_closes_on_a_stop() {
+    let speaker = Speaker::new();
+    let mut utterance = speaker.utterance(&request(r#"{"text":"mama"}"#)).unwrap();
+    let mut airway = Vec::new();
+    let mut lips_narrowest = f32::MAX;
+    let mut lips_widest = 0f32;
+    let mut velum_widest = 0f32;
+    let mut chunk = [0.0; 128];
+    while utterance.render(&mut chunk) > 0 {
+        utterance.airway(&mut airway);
+        let [ph, or, na] = [airway[3], airway[4], airway[5]].map(|n| n as usize);
+        assert_eq!(
+            airway.len(),
+            6 + 2 * (ph + or + na),
+            "the layout is 6 + areas + pressures"
+        );
+        assert!(
+            airway[1] > 0.0 && airway[2] > 0.0,
+            "tube lengths are positive"
+        );
+        assert!(airway.iter().all(|x| x.is_finite()));
+        // The last few sections of the mouth are the lips.
+        let lips = airway[6 + ph + or - 3..6 + ph + or]
+            .iter()
+            .fold(f32::MAX, |m, x| m.min(*x));
+        lips_narrowest = lips_narrowest.min(lips);
+        lips_widest = lips_widest.max(lips);
+        velum_widest = velum_widest.max(airway[0]);
+    }
+    assert!(
+        lips_narrowest < 0.1,
+        "the lips never close on /m/: {lips_narrowest} cm²"
+    );
+    assert!(
+        lips_widest > 1.0,
+        "the lips never open on /a/: {lips_widest} cm²"
+    );
+    assert!(
+        velum_widest > 0.1,
+        "the velum never opens on /m/: {velum_widest} cm²"
+    );
+}
+
+#[test]
 fn speech_is_audible_and_bounded() {
     let out = render(&Speaker::new(), r#"{"text":"Hello there."}"#, 4096);
     assert!(out.len() as f64 > 0.3 * SAMPLE_RATE);

@@ -19,6 +19,13 @@ export interface VoiceOptions extends SpeakOptions {
 export interface StreamOptions extends VoiceOptions {
   /** Samples per chunk, from 1 to 4096. Defaults to 128 (2.7 ms of audio). */
   chunkSize?: number;
+  /**
+   * Called after each chunk with the simulated airway at that moment, on an engine that has one:
+   * `[velum, pharynxLength, mouthLength, pharynxSections, mouthSections, noseSections, ...areas,
+   * ...pressures]`. Areas are cm², lengths cm, sections run from the glottis to the lips, then the
+   * nose. For drawing a throat or driving a mouth. Not available through a worker or a speaker.
+   */
+  airway?: (state: Float32Array) => void;
 }
 
 export interface Rendered {
@@ -99,13 +106,14 @@ class EngineVoice implements Voice {
 
   *stream(input: Speakable, options: StreamOptions = {}): Generator<Float32Array, void, undefined> {
     const { maxChunk } = this.engine;
-    const { chunkSize = DEFAULT_CHUNK, ...speak } = options;
+    const { chunkSize = DEFAULT_CHUNK, airway, ...speak } = options;
     if (!Number.isInteger(chunkSize) || chunkSize < 1 || chunkSize > maxChunk) {
       throw new RangeError(`intone: chunkSize must be from 1 to ${maxChunk}, got ${chunkSize}`);
     }
     const utterance = this.begin(input, speak);
     try {
       for (let chunk = utterance.next(chunkSize); chunk; chunk = utterance.next(chunkSize)) {
+        if (airway && utterance.airway) airway(utterance.airway());
         yield chunk.slice();
       }
     } finally {

@@ -22,6 +22,7 @@ pub struct SpeakerHandle {
 pub struct UtteranceHandle {
     utterance: Utterance,
     buffer: Box<[f32; CHUNK]>,
+    airway: Vec<f32>,
 }
 
 #[unsafe(no_mangle)]
@@ -118,6 +119,7 @@ pub unsafe extern "C" fn ic_utterance_new(
         Ok(utterance) => Box::into_raw(Box::new(UtteranceHandle {
             utterance,
             buffer: Box::new([0.0; CHUNK]),
+            airway: Vec::new(),
         })),
         Err(message) => {
             s.error = message;
@@ -220,6 +222,7 @@ pub unsafe extern "C" fn ic_utterance_new_from_score(
         Ok(utterance) => Box::into_raw(Box::new(UtteranceHandle {
             utterance,
             buffer: Box::new([0.0; CHUNK]),
+            airway: Vec::new(),
         })),
         Err(message) => {
             s.error = message;
@@ -240,6 +243,27 @@ pub unsafe extern "C" fn ic_utterance_free(u: *mut UtteranceHandle) {
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ic_utterance_samples(u: *const UtteranceHandle) -> usize {
     unsafe { &*u }.utterance.total_samples()
+}
+
+/// Reads the airway as it is now into the utterance's storage; see [`Utterance::airway`] for the
+/// layout. Returns its address, valid until the next call on `u`.
+///
+/// # Safety
+/// `u` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_utterance_airway(u: *mut UtteranceHandle) -> *const f32 {
+    let u = unsafe { &mut *u };
+    u.utterance.airway(&mut u.airway);
+    u.airway.as_ptr()
+}
+
+/// The values [`ic_utterance_airway`] last wrote.
+///
+/// # Safety
+/// `u` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_utterance_airway_len(u: *const UtteranceHandle) -> usize {
+    unsafe { &*u }.airway.len()
 }
 
 /// Renders up to `max` samples (at most 4096) into the utterance's buffer and returns how many;
