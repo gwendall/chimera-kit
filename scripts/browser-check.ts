@@ -39,6 +39,8 @@ interface Result {
   systemVoices: number;
   /** A voice in the default Worker: its samples against render's, and its first chunk's delay. */
   worker: { maxError: number; length: number; firstChunkMs: number };
+  /** `say` from the worker straight to the audio thread, a string then tokens, against renders. */
+  say: { maxError: number; tokensMaxError: number; clauses: number; underruns: number; stoppedPeak: number };
 }
 
 let failed = false;
@@ -104,6 +106,48 @@ for (const name of wanted) {
         if (firstChunkMs < 0) firstChunkMs = performance.now() - asked;
         parts.push(chunk);
       }
+      // A string, then tokens: the worker writes into the player's port, the page never sees a sample.
+      const sayContext = new OfflineAudioContext(1, audio.length + 4096, sampleRate);
+      const said = remote.say(text, { context: sayContext });
+      await said.queued;
+      const sayOut = (await sayContext.startRendering()).getChannelData(0);
+      const sayEnd = await said.done;
+      let sayError = 0;
+      for (let i = 0; i < audio.length; i++) sayError = Math.max(sayError, Math.abs(sayOut[i] - audio[i]));
+      for (let i = audio.length; i < sayOut.length; i++) sayError = Math.max(sayError, Math.abs(sayOut[i]));
+
+      const answer = "Sure, the canoe slid. It was *smooth*.";
+      const { clauses } = await import(`${origin}/index.js`);
+      const parts2: string[] = await Array.fromAsync(clauses(answer));
+      const here = await createVoice({ body: "female" });
+      const clauseAudio = parts2.map((part: string) => here.render(part).audio);
+      here.free();
+      const total = clauseAudio.reduce((n: number, a: Float32Array) => n + a.length, 0);
+      async function* tokens() {
+        for (const piece of answer.match(/.{1,3}/gs) ?? []) {
+          await new Promise((resolve) => setTimeout(resolve, 2));
+          yield piece;
+        }
+      }
+      const tokensContext = new OfflineAudioContext(1, total + 4096, sampleRate);
+      const saidTokens = remote.say(tokens(), { context: tokensContext });
+      await saidTokens.queued;
+      const tokensOut = (await tokensContext.startRendering()).getChannelData(0);
+      await saidTokens.done;
+      let tokensError = 0;
+      let k = 0;
+      for (const part of clauseAudio)
+        for (let i = 0; i < part.length; i++, k++)
+          tokensError = Math.max(tokensError, Math.abs(tokensOut[k] - part[i]));
+      // Stopped before it plays: nothing is heard, and `done` still settles.
+      const stopContext = new OfflineAudioContext(1, sampleRate, sampleRate);
+      const interrupted = remote.say(`${text} ${text} ${text}`, { context: stopContext });
+      interrupted.stop();
+      await interrupted.queued;
+      const stopOut = (await stopContext.startRendering()).getChannelData(0);
+      await interrupted.done;
+      let stoppedPeak = 0;
+      for (const x of stopOut) stoppedPeak = Math.max(stoppedPeak, Math.abs(x));
       remote.free();
       let workerError = 0;
       let at = 0;
@@ -127,6 +171,13 @@ for (const name of wanted) {
         },
         systemVoices: listed.length,
         worker: { maxError: workerError, length: at, firstChunkMs },
+        say: {
+          maxError: sayError,
+          tokensMaxError: tokensError,
+          clauses: parts2.length,
+          underruns: sayEnd.underruns,
+          stoppedPeak,
+        },
       };
     }, ORIGIN);
     const problems = [
@@ -138,6 +189,11 @@ for (const name of wanted) {
         `resampled length ratio ${result.resampled.lengthRatio}`,
       Math.abs(result.resampled.rmsRatio - 1) > 0.05 && `resampled level ratio ${result.resampled.rmsRatio}`,
       result.worker.maxError > 0 && `the worker's samples differ from render by ${result.worker.maxError}`,
+      result.say.maxError > 0 && `say from the worker differs from render by ${result.say.maxError}`,
+      result.say.tokensMaxError > 0 &&
+        `say with tokens differs from the clauses' renders by ${result.say.tokensMaxError}`,
+      result.say.underruns > 0 && `${result.say.underruns} underruns saying from the worker`,
+      result.say.stoppedPeak > 0 && `a stopped say still sounded (peak ${result.say.stoppedPeak})`,
       result.worker.length !== Math.round(result.renderedSeconds * 48_000) &&
         `the worker gave ${result.worker.length} samples`,
     ].filter(Boolean);

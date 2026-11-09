@@ -1,8 +1,10 @@
 /**
- * A voice that computes in a Worker, so speaking costs the page's thread almost nothing: it only
- * passes the chunks on to the player.
+ * A voice that computes in a Worker, so speaking costs the page's thread almost nothing. With
+ * `say`, the samples go from the worker to the audio thread without passing through the page.
  */
+import { type ClauseOptions, clauses } from "./clauses.js";
 import type { CreateVoiceOptions } from "./index.js";
+import { type Playback, type PlayOptions, playThrough } from "./player.js";
 import type { Rendered, StreamOptions } from "./voice.js";
 import type { FromWorker, ToWorker } from "./worker.js";
 
@@ -14,12 +16,22 @@ export interface WorkerVoiceOptions extends CreateVoiceOptions {
   worker?: Worker;
 }
 
+export interface SayOptions extends StreamOptions, Omit<PlayOptions, "ahead"> {
+  /** How text that arrives in pieces is cut into clauses. */
+  clauses?: ClauseOptions;
+}
+
 /** A voice whose samples arrive asynchronously. */
 export interface AsyncVoice {
   readonly sampleRate: number;
   render(text: string, options?: StreamOptions): Promise<Rendered>;
   /** Chunks as the worker computes them. Ending the loop early cancels the rest. */
   stream(text: string, options?: StreamOptions): AsyncGenerator<Float32Array, void, undefined>;
+  /**
+   * Speaks aloud. A string is one utterance; pieces of text that are still arriving (a language
+   * model's tokens) are spoken clause by clause, Markdown read as words.
+   */
+  say(text: string | Iterable<string> | AsyncIterable<string>, options?: SayOptions): Playback;
   /** Stops the worker. */
   free(): void;
 }
@@ -28,7 +40,7 @@ export interface AsyncVoice {
 export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promise<AsyncVoice> {
   const { worker = new Worker(new URL("./worker.js", import.meta.url), { type: "module" }), ...rest } =
     options;
-  const send = (request: ToWorker) => worker.postMessage(request);
+  const send = (request: ToWorker, transfer: Transferable[] = []) => worker.postMessage(request, transfer);
   const listeners = new Map<number, (reply: FromWorker) => void>();
   let failure: Error | undefined;
   let opened: ((sampleRate: number) => void) | undefined;
@@ -111,6 +123,44 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
         listeners.delete(id);
         if (!ended && !error) send({ type: "cancel", id });
       }
+    },
+
+    say(text, options = {}) {
+      check();
+      const id = ++next;
+      const { context, destination, signal, clauses: cutting, ...speak } = options;
+      let refuse: (error: Error) => void = () => {};
+      const failure = new Promise<never>((_, reject) => {
+        refuse = reject;
+      });
+      listeners.set(id, (reply) => {
+        if (reply.type === "error") refuse(new Error(reply.message));
+      });
+      const playOptions: PlayOptions = {};
+      if (context) playOptions.context = context;
+      if (destination) playOptions.destination = destination;
+      if (signal) playOptions.signal = signal;
+      const playback = playThrough(
+        sampleRate,
+        playOptions,
+        async (port, stopped) => {
+          if (stopped()) return;
+          send({ type: "say", id, options: speak, port }, [port]);
+          try {
+            const pieces = typeof text === "string" ? [text] : clauses(text, cutting);
+            for await (const clause of pieces) {
+              if (stopped()) return;
+              send({ type: "clause", id, text: clause });
+            }
+          } finally {
+            // A stop that came before the worker knew this request is repeated here.
+            send({ type: stopped() ? "cancel" : "said", id });
+          }
+        },
+        () => send({ type: "cancel", id }),
+      );
+      const done = Promise.race([playback.done, failure]).finally(() => listeners.delete(id));
+      return { queued: playback.queued, done, stop: playback.stop };
     },
 
     free() {

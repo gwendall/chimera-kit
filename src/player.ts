@@ -15,7 +15,7 @@ export interface PlayOptions {
 }
 
 export interface Playback {
-  /** Every sample has reached the audio thread. */
+  /** Every sample that will play has reached the audio thread (none, after a stop). */
   queued: Promise<void>;
   /** The last sample has played, or playback was stopped. */
   done: Promise<PlaybackEnd>;
@@ -31,17 +31,71 @@ type Source = Iterable<Float32Array> | AsyncIterable<Float32Array>;
 
 /** Starts playing `source`, chunks of mono samples at `sampleRate`. */
 export function play(source: Source, sampleRate: number, options: PlayOptions = {}): Playback {
+  const ahead = options.ahead ?? 0.25;
+  return playWith(sampleRate, options, async (player, stopped, context) => {
+    const start = context.currentTime;
+    let pushed = 0;
+    let worked = performance.now();
+    for await (const chunk of source) {
+      if (stopped()) return;
+      const copy = chunk.slice();
+      player.port.postMessage(copy, [copy.buffer]);
+      pushed += copy.length;
+      // Stay at most `ahead` seconds in front of playback, and let the page breathe.
+      for (;;) {
+        const lead = pushed / sampleRate - (context.currentTime - start);
+        if (stopped() || lead <= ahead) break;
+        await sleep(Math.min(50, (lead - ahead) * 1000));
+        worked = performance.now();
+      }
+      if (performance.now() - worked > 8) {
+        await sleep(0);
+        worked = performance.now();
+      }
+    }
+    if (!stopped()) player.port.postMessage("end");
+  });
+}
+
+/**
+ * Plays chunks that someone else sends straight to the audio thread, such as a Worker, so they
+ * never wait for the page. `attach` gets the port to send them on, then "end" after the last.
+ * @internal
+ */
+export function playThrough(
+  sampleRate: number,
+  options: PlayOptions,
+  attach: (port: MessagePort, stopped: () => boolean) => Promise<void>,
+  onStop: () => void,
+): Playback {
+  return playWith(
+    sampleRate,
+    options,
+    async (player, stopped) => {
+      const { port1, port2 } = new MessageChannel();
+      player.port.postMessage({ port: port2 }, [port2]);
+      await attach(port1, stopped);
+    },
+    onStop,
+  );
+}
+
+/** Sends a player its chunks and its "end"; `stopped` turns true when playback is stopped. */
+type Feed = (player: AudioWorkletNode, stopped: () => boolean, context: BaseAudioContext) => Promise<void>;
+
+function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?: () => void): Playback {
   const context = options.context ?? new AudioContext({ sampleRate, latencyHint: "interactive" });
   const owned = options.context === undefined;
-  const ahead = options.ahead ?? 0.25;
   let node: AudioWorkletNode | undefined;
   let stopped = false;
   const stop = () => {
+    if (stopped) return;
     stopped = true;
     node?.port.postMessage("stop");
+    onStop?.();
   };
   options.signal?.addEventListener("abort", stop, { once: true });
-  if (options.signal?.aborted) stopped = true;
+  if (options.signal?.aborted) stop();
 
   let markQueued: () => void = () => {};
   let markDone: (end: PlaybackEnd) => void = () => {};
@@ -67,28 +121,8 @@ export function play(source: Source, sampleRate: number, options: PlayOptions = 
     };
     player.connect(options.destination ?? context.destination);
     try {
-      const start = context.currentTime;
-      let pushed = 0;
-      let worked = performance.now();
-      for await (const chunk of source) {
-        if (stopped) break;
-        const copy = chunk.slice();
-        player.port.postMessage(copy, [copy.buffer]);
-        pushed += copy.length;
-        // Stay at most `ahead` seconds in front of playback, and let the page breathe.
-        for (;;) {
-          const lead = pushed / sampleRate - (context.currentTime - start);
-          if (stopped || lead <= ahead) break;
-          await sleep(Math.min(50, (lead - ahead) * 1000));
-          worked = performance.now();
-        }
-        if (performance.now() - worked > 8) {
-          await sleep(0);
-          worked = performance.now();
-        }
-      }
+      await feed(player, () => stopped, context);
       if (stopped) player.port.postMessage("stop");
-      player.port.postMessage("end");
       return await finished;
     } finally {
       markQueued();
@@ -134,19 +168,27 @@ class IntonePlayer extends AudioWorkletProcessor {
     this.started = false;
     this.starved = false;
     this.underruns = 0;
-    this.port.onmessage = ({ data }) => {
-      if (data === "end") {
+    this.stopped = false;
+    // Chunks come on this port, or on another one it is given (a Worker's), never both.
+    const receive = ({ data }) => {
+      if (data instanceof Float32Array) {
+        if (this.stopped) return;
+        this.chunks.push(data);
+        this.available += data.length;
+      } else if (data === "end") {
         this.ended = true;
         this.port.postMessage({ queued: this.available });
       } else if (data === "stop") {
         this.chunks = [];
         this.offset = this.available = this.position = 0;
-        this.ended = true;
-      } else {
-        this.chunks.push(data);
-        this.available += data.length;
+        this.ended = this.stopped = true;
+        // Nothing more will play. Said from here, so an offline render can start after it.
+        this.port.postMessage({ queued: 0 });
+      } else if (data && data.port) {
+        data.port.onmessage = receive;
       }
     };
+    this.port.onmessage = receive;
   }
   at(i) {
     let k = i - this.offset;

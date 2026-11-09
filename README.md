@@ -25,11 +25,16 @@ thread, about a third of one core while it speaks. To leave that thread free, ru
 Worker: the same samples, the same calls, but `render` and `stream` are asynchronous.
 
 ```ts
-import { createWorkerVoice, play } from "intone";
+import { createWorkerVoice } from "intone";
 
 const voice = await createWorkerVoice({ body: "female" });
-await play(voice.stream("Hello there."), voice.sampleRate, { ahead: 1 }).done;
+await voice.say("Hello there.").done;
+const speech = voice.say(answer); // tokens as they arrive, spoken clause by clause
+speech.stop(); // when the user interrupts
 ```
+
+`say` sends the samples from the worker to the audio thread directly, so a busy page cannot make
+the voice stutter. `stream` and `render` are there too, asynchronous.
 
 The worker script is `intone/worker.js`, found next to the module with
 `new URL("./worker.js", import.meta.url)`; pass `worker` to start it some other way.
@@ -94,7 +99,7 @@ await speech.done;
 | JavaScript: `createVoice` alone              | 1.4 KB  |
 | JavaScript: a chat (`clauses`, `play`)       | 4.1 KB  |
 | JavaScript: everything                       | 7.8 KB  |
-| JavaScript: a voice in a Worker (both sides) | 4.0 KB  |
+| JavaScript: a voice in a Worker (both sides) | 6.3 KB  |
 | JavaScript: the device's voices only         | 2.8 KB  |
 | Pronouncing dictionary (CMUdict, English)    | 869 KB  |
 

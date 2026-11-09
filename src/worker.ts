@@ -1,6 +1,7 @@
 /**
  * The Worker side of `createWorkerVoice`: one voice, its requests served one after the other, and
- * samples sent back as they are computed. Not meant to be imported.
+ * samples sent as they are computed, back to the page or straight to the audio thread. Not meant
+ * to be imported.
  */
 import { type CreateVoiceOptions, createVoice } from "./index.js";
 import type { StreamOptions, Voice } from "./voice.js";
@@ -8,6 +9,11 @@ import type { StreamOptions, Voice } from "./voice.js";
 export type ToWorker =
   | { type: "open"; options: CreateVoiceOptions }
   | { type: "render" | "stream"; id: number; text: string; options: StreamOptions }
+  /** Starts speaking into `port`, an AudioWorklet player's, the clauses that follow. */
+  | { type: "say"; id: number; options: StreamOptions; port: MessagePort }
+  | { type: "clause"; id: number; text: string }
+  /** No more clauses for this `say`. */
+  | { type: "said"; id: number }
   | { type: "cancel"; id: number }
   | { type: "free" };
 
@@ -38,17 +44,32 @@ const breathe = () =>
     channel.port2.postMessage(0);
   });
 
+/** A request that has arrived and not finished: its clauses so far, and whether it was cancelled. */
+interface Pending {
+  clauses: string[];
+  said: boolean;
+  cancelled: boolean;
+  wake?: (() => void) | undefined;
+}
+
 let voice: Voice | undefined;
-const waiting = new Set<number>();
-const cancelled = new Set<number>();
+const pending = new Map<number, Pending>();
 let queue: Promise<void> = Promise.resolve();
 
 scope.onmessage = ({ data }) => {
-  if (data.type === "cancel") {
-    if (waiting.has(data.id)) cancelled.add(data.id);
+  if (data.type === "cancel" || data.type === "clause" || data.type === "said") {
+    const request = pending.get(data.id);
+    if (!request) return;
+    if (data.type === "cancel") request.cancelled = true;
+    else if (data.type === "said") request.said = true;
+    else request.clauses.push(data.text);
+    request.wake?.();
     return;
   }
-  if (data.type === "render" || data.type === "stream") waiting.add(data.id);
+  if (data.type === "render" || data.type === "stream" || data.type === "say") {
+    const say = data.type === "say";
+    pending.set(data.id, { clauses: say ? [] : [data.text], said: !say, cancelled: false });
+  }
   queue = queue.then(() => serve(data));
 };
 
@@ -63,31 +84,32 @@ async function serve(request: ToWorker): Promise<void> {
       }
       return;
     case "render":
-    case "stream": {
+    case "stream":
+    case "say": {
       const { id } = request;
+      const state = pending.get(id) as Pending;
+      const port = request.type === "say" ? request.port : undefined;
       try {
-        if (cancelled.has(id)) return;
         if (!voice) throw new Error("intone: the worker has no voice");
         if (request.type === "render") {
+          if (state.cancelled) return;
           const { audio } = voice.render(request.text, request.options);
           post({ type: "rendered", id, audio }, [audio.buffer]);
           return;
         }
-        let since = performance.now();
-        for (const chunk of voice.stream(request.text, request.options)) {
-          post({ type: "chunk", id, chunk }, [chunk.buffer]);
-          if (performance.now() - since > SLICE_MS) {
-            await breathe();
-            if (cancelled.has(id)) return;
-            since = performance.now();
-          }
+        const send = port
+          ? (chunk: Float32Array) => port.postMessage(chunk, [chunk.buffer])
+          : (chunk: Float32Array) => post({ type: "chunk", id, chunk }, [chunk.buffer]);
+        if (await speak(voice, state, request.options, send)) {
+          if (port) port.postMessage("end");
+          else post({ type: "end", id });
         }
-        post({ type: "end", id });
       } catch (error) {
+        port?.postMessage("stop");
         post({ type: "error", id, message: message(error) });
       } finally {
-        waiting.delete(id);
-        cancelled.delete(id);
+        pending.delete(id);
+        port?.close();
       }
       return;
     }
@@ -95,7 +117,38 @@ async function serve(request: ToWorker): Promise<void> {
       voice?.free();
       scope.close();
       return;
-    case "cancel":
+    default:
       return;
+  }
+}
+
+/** Speaks a request's clauses as they come. False when it was cancelled. */
+async function speak(
+  voice: Voice,
+  state: Pending,
+  options: StreamOptions,
+  send: (chunk: Float32Array) => void,
+): Promise<boolean> {
+  let since = performance.now();
+  for (;;) {
+    if (state.cancelled) return false;
+    const text = state.clauses.shift();
+    if (text === undefined) {
+      if (state.said) return true;
+      await new Promise<void>((resolve) => {
+        state.wake = resolve;
+      });
+      state.wake = undefined;
+      since = performance.now();
+      continue;
+    }
+    for (const chunk of voice.stream(text, options)) {
+      send(chunk);
+      if (performance.now() - since > SLICE_MS) {
+        await breathe();
+        if (state.cancelled) return false;
+        since = performance.now();
+      }
+    }
   }
 }
