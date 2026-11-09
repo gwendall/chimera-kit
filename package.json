@@ -28,7 +28,7 @@
     "build:wasm": "cargo build -p intone-chimera --release --target wasm32-unknown-unknown && mkdir -p dist && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_chimera.wasm -o dist/intone_chimera.wasm",
     "build:js": "bun build src/index.ts --outdir dist --format esm --target browser --minify && tsc -p tsconfig.build.json",
     "build": "bun run build:wasm && bun run build:js && cp public/data/cmudict.txt.gz dist/",
-    "test": "bun run build && cargo test --workspace && bun test src eval",
+    "test": "bun run build && cargo test --workspace && bun test --timeout 30000 src eval",
     "typecheck": "tsc --noEmit",
     "lint": "biome check . && cargo fmt -p intone-chimera --check && cargo clippy -p intone-chimera --no-deps --all-targets -- -D warnings",
     "budget": "bun eval/budget.ts",

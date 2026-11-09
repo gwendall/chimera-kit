@@ -140,15 +140,16 @@ interface Style {
 
 const tired: Style = {
   phrasing: [longerPauses(1.4), lessEmphasis(0.5)],
-  score: [slower(0.85), lower("-2st"), narrower(0.6), breathier(0.3)],
+  score: [rate(0.85), shift("-2st"), range(0.6), breathier(0.3)],
 };
 ```
 
-The basic transforms: `slower`/`faster`, `higher`/`lower`, `wider`/`narrower` (pitch range),
-`louder`/`softer`, `breathier`, `tenser`, `pause`, `emphasize`. A scoped transform ramps in and out
+The basic transforms (`src/transforms.ts`): `stretch`, `rate`, `shift` (semitones or cents), `range`
+(pitch excursions), `gain`, `breathier`, `tenser`, `pauseAt`, `emphasize`, and `compose`. A scoped transform ramps in and out
 over 30 ms so that an edit never clicks. Stretching a span shifts everything after it.
 
-Named emotions are styles built from these, with an intensity: `style("sad", 0.6)`. They are
+Named moods are deliveries (`src/delivery.ts`): plain numbers for rate, pitch, range, level,
+breath, tension and pauses, applied at an intensity with `deliver("sad", 0.6)`. They are
 starting points, written down in a table that anyone can read and change, not a model.
 
 ## The API
@@ -161,7 +162,7 @@ for await (const chunk of voice.stream("Hello there.")) player.push(chunk); // s
 
 const take = voice.plan("I told you. Never come back here.", { style: "cold" }); // layers 3 and 2
 take.word("never").emphasize(1).pitch("+2st");
-take.after("you.").pause(0.6);
+take.word("you").pauseAfter(0.6);
 await voice.say(take);
 
 await voice.say(llm.tokens()); // AsyncIterable<string>: speaks clause by clause as text arrives
@@ -229,7 +230,7 @@ that other engines can use them too.
 ```ts
 const take = voice.plan("I told you. Never come back here.", { style: "cold" });
 take.word("never").emphasize(1).pitch("+2st");
-take.after("you.").pause(0.6);
+take.word("you").pauseAfter(0.6);
 await voice.say(take);
 ```
 

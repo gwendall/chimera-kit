@@ -32,3 +32,24 @@ export async function createVoice(options: CreateVoiceOptions = {}): Promise<Voi
   if (dictionary !== undefined) sources.dictionary = dictionary;
   return voiceFrom(await loadChimera(sources), defaults);
 }
+
+export { blend, type Delivery, deliver, MOODS, type Mood } from "./delivery.js";
+export { Selection, Take, take } from "./take.js";
+export type { ScoreTransform, Span } from "./transforms.js";
+export {
+  breathier,
+  compose,
+  EMPHASIS,
+  emphasize,
+  gain,
+  parseInterval,
+  pauseAt,
+  pauses,
+  RAMP,
+  range,
+  rate,
+  shift,
+  stretch,
+  tenser,
+  valueAt,
+} from "./transforms.js";

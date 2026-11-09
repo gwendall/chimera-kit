@@ -11,7 +11,7 @@ const DIST = join(import.meta.dir, "../dist");
 /** Limits in bytes, gzipped. */
 const SIZE_LIMITS: Record<string, number> = {
   "intone_chimera.wasm": 200_000,
-  "index.js": 2_000,
+  "index.js": 6_000,
   "cmudict.txt.gz": 880_000,
 };
 /** Share of one core a voice may use in real time, measured in Bun. */
