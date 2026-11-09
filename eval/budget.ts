@@ -11,8 +11,16 @@ const DIST = join(import.meta.dir, "../dist");
 /** Limits in bytes, gzipped. */
 const SIZE_LIMITS: Record<string, number> = {
   "intone_chimera.wasm": 200_000,
-  "index.js": 6_000,
   "cmudict.txt.gz": 880_000,
+};
+/**
+ * What an app's bundler keeps of the JavaScript for a given import, gzipped. The package has no
+ * side effects, so an app ships only what it imports.
+ */
+const BUNDLE_LIMITS: Record<string, { imports: string[]; limit: number }> = {
+  "speaking (createVoice)": { imports: ["createVoice"], limit: 2_000 },
+  "a chat (createVoice, clauses, play)": { imports: ["createVoice", "clauses", "play"], limit: 5_000 },
+  "everything (index.js)": { imports: [], limit: 9_000 },
 };
 /** Share of one core a voice may use in real time, measured in Bun. */
 const CORE_LIMIT = 0.45;
@@ -31,6 +39,23 @@ for (const [file, limit] of Object.entries(SIZE_LIMITS)) {
   const bytes = await Bun.file(join(DIST, file)).bytes();
   const size = file.endsWith(".gz") ? bytes.length : Bun.gzipSync(bytes, { level: 9 }).length;
   check(file, `${size} bytes gzipped (limit ${limit})`, size <= limit);
+}
+
+const BUNDLES = join(import.meta.dir, "out/bundles");
+for (const [label, { imports, limit }] of Object.entries(BUNDLE_LIMITS)) {
+  const entry = join(BUNDLES, `${label.split(" ")[0]}.js`);
+  const from = JSON.stringify(join(DIST, "index.js"));
+  await Bun.write(
+    entry,
+    imports.length > 0
+      ? `import { ${imports.join(", ")} } from ${from};\nglobalThis.keep = [${imports.join(", ")}];\n`
+      : `import * as all from ${from};\nglobalThis.keep = all;\n`,
+  );
+  const built = await Bun.build({ entrypoints: [entry], minify: true, target: "browser" });
+  const output = built.outputs[0];
+  if (!built.success || !output) throw new Error(`budget: could not bundle ${label}`);
+  const size = Bun.gzipSync(new Uint8Array(await output.arrayBuffer()), { level: 9 }).length;
+  check(`JavaScript for ${label}`, `${size} bytes gzipped (limit ${limit})`, size <= limit);
 }
 
 if (!process.argv.includes("--no-speed")) {

@@ -23,6 +23,24 @@ speakers; `stop()` or an `AbortSignal` cuts it short. Browsers keep audio suspen
 page gets a click or a key press, so call it from one. The samples are computed on the calling
 thread, about a third of one core while it speaks.
 
+Text that is still being written, such as a language model's answer, is spoken clause by clause
+as it arrives. `clauses` reads it as Markdown (code blocks are skipped, links read as their text)
+and cuts it at punctuation and line ends:
+
+```ts
+import { clauses } from "intone";
+
+async function* speech(tokens: AsyncIterable<string>) {
+  for await (const clause of clauses(tokens)) yield* voice.stream(clause);
+}
+await play(speech(answer), voice.sampleRate).done;
+```
+
+The first clause leaves at its first punctuation, and a run of more than eight words without any
+is cut before a conjunction. With tokens arriving at 40 a second, the first sound came 0.13 s
+after the answer started (three tokens, then the engine's start), and each clause is computed
+while the one before it plays.
+
 For a file, or to mix the voice yourself, `render` returns every sample at once:
 
 ```ts
