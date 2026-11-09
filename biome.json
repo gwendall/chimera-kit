@@ -8,6 +8,11 @@
       "!target",
       "!eval/out",
       "!eval/baselines",
+      "!site/.next",
+      "!site/out",
+      "!site/node_modules",
+      "!site/lib/intone",
+      "!site/next-env.d.ts",
       "!.claude",
       "!**/*.generated.json"
     ]
