@@ -160,6 +160,26 @@ only the style given with its call (`delivery` on a worker voice or a speaker). 
 cannot sing (`supports.singing` is false: Kokoro, the device's voices) speaks the lyrics and says
 `notes` in `lost`.
 
+`intone/singing` has the rest of a singer's kit, all pure functions. `melody` writes notes as text,
+`harmony` makes a second part for another voice, and `scoop` and `fall` slide into a note and off
+the end of a phrase:
+
+```ts
+import { compose, createVoice, play } from "intone";
+import { fall, harmony, melody, scoop } from "intone/singing";
+
+const song = { lyrics: "sun-light on the wa-ter ~", notes: melody("C4 D4 E4 G4 A4 G4 C4:2"), bpm: 120 };
+const style = compose(scoop(1, 0.09), fall(3, 0.25)); // semitones, seconds
+await play(voice.stream(song, { style }), voice.sampleRate).done;
+
+const third = harmony(song, "third-above"); // or third-below, fifth-below, octave-above, octave-below
+```
+
+A harmony keeps the lyrics and the rhythm, so it lasts exactly as long as the melody; give each part
+its own voice. Thirds stay in the key, which is worked out from the notes (`keyOf`) or given
+(`harmony(song, "third-above", { key: "Eb" })`, `"A minor"`). Two keys that cover a melody equally
+are told apart by the note it ends on.
+
 ## The device's voices
 
 The same calls can speak through the voices the device already has (Web Speech): nothing to
@@ -291,6 +311,7 @@ is refused rather than dropped, which would move every later syllable onto the w
 | JavaScript: the device's voices only           | 2.7 KB  |
 | JavaScript: `profile` (`intone/imitate`) alone | 2.6 KB  |
 | JavaScript: tool calls (`intone/tools`)        | 2.7 KB  |
+| JavaScript: songs (`intone/singing`)           | 2.0 KB  |
 | Pronouncing dictionary (CMUdict, English)      | 869 KB  |
 
 On an Apple M2, loading takes about 70 ms once per page, the first audible sample comes about

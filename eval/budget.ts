@@ -59,6 +59,12 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
     from: "tools.js",
     limit: 3_000,
   },
+  // A new entry too: 1,958 bytes gzipped measured with all of it imported (`--no-speed`, 2026-11-09).
+  "songs (singing.js)": {
+    imports: ["melody", "harmony", "keyOf", "scoop", "fall"],
+    from: "singing.js",
+    limit: 2_200,
+  },
 };
 /** Share of one core a voice may use in real time, measured in Bun. */
 const CORE_LIMIT = 0.45;
