@@ -180,11 +180,50 @@ pub fn beat_hit(engine: &mut Engine, req: &BeatHitRequest) -> Result<(), String>
     Ok(())
 }
 
-/// Replaces the pattern from its text ("B . t ."). Unrecognised tokens are rests, as
-/// `parse_beat` already treats them (so a typo mutes a step instead of failing the whole
-/// pattern); `beat_hit` above is where an unknown sound is refused.
+/// Replaces the pattern from its text: by pattern symbol ("B . t .") or, just as well, by each
+/// sound's name ("kick . snare ."), case-insensitively either way (`beat_hit`'s own
+/// [`BeatHitRequest::resolve`] takes just one sound the same way). Every token is tried as a
+/// name before `parse_beat` (which only knows symbols) turns the result into steps. A token that
+/// resolves to neither is left as it was, which `parse_beat` already treats as a rest (so a typo
+/// mutes a step instead of failing the whole pattern); `beat_hit` is where an unknown sound is
+/// refused instead.
 pub fn set_beat_steps(engine: &mut Engine, text: &str) {
-    engine.set_beat_steps(&parse_beat(text));
+    let translated: String = text
+        .split(|c: char| c.is_whitespace() || c == '|')
+        .filter(|t| !t.is_empty())
+        .map(resolve_beat_token)
+        .collect::<Vec<_>>()
+        .join(" ");
+    engine.set_beat_steps(&parse_beat(&translated));
+}
+
+/// One pattern token, its name resolved to its symbol ("kick" -> "B") when it has one; a rest, a
+/// note or accent suffix, and an already-valid symbol pass through unchanged. Mirrors the suffix
+/// order `parse_beat` itself parses: an optional trailing '>' (accent), then an optional
+/// ":digits" (a hum's note) on what is left.
+fn resolve_beat_token(token: &str) -> String {
+    if token == "." || token == "-" {
+        return token.to_string();
+    }
+    let (mut head, accented) = match token.strip_suffix('>') {
+        Some(t) => (t, true),
+        None => (token, false),
+    };
+    let mut note = String::new();
+    if let Some(pos) = head.rfind(':') {
+        let (h, digits) = (&head[..pos], &head[pos + 1..]);
+        if !h.is_empty() && !digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit()) {
+            note = format!(":{digits}");
+            head = h;
+        }
+    }
+    let lower = head.to_lowercase();
+    let id = chimera::phonetics::beatbox::BEAT_SOUNDS
+        .iter()
+        .find(|s| s.id.to_lowercase() == lower || s.name.to_lowercase() == lower)
+        .map(|s| s.id)
+        .unwrap_or(head);
+    format!("{id}{note}{}", if accented { ">" } else { "" })
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]

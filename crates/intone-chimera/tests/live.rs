@@ -206,6 +206,40 @@ fn live_render_output_does_not_depend_on_chunk_size() {
 }
 
 #[test]
+fn beat_steps_accepts_sound_names_as_well_as_pattern_symbols() {
+    unsafe {
+        let by_name = {
+            let h = ic_live_new(SAMPLE_RATE);
+            let pattern = "kick . snare .";
+            assert_eq!(ic_beat_steps(h, pattern.as_ptr(), pattern.len()), 1);
+            let tempo = json(serde_json::json!({"bpm": 600.0})); // one step per render below
+            assert_eq!(ic_beat_tempo(h, tempo.as_ptr(), tempo.len()), 1);
+            ic_beat_playing(h, 1);
+            let out = render(h, SAMPLE_RATE as usize / 5);
+            ic_live_free(h);
+            out
+        };
+        let by_symbol = {
+            let h = ic_live_new(SAMPLE_RATE);
+            let pattern = "B . Pf .";
+            assert_eq!(ic_beat_steps(h, pattern.as_ptr(), pattern.len()), 1);
+            let tempo = json(serde_json::json!({"bpm": 600.0}));
+            assert_eq!(ic_beat_tempo(h, tempo.as_ptr(), tempo.len()), 1);
+            ic_beat_playing(h, 1);
+            let out = render(h, SAMPLE_RATE as usize / 5);
+            ic_live_free(h);
+            out
+        };
+        assert_eq!(
+            by_name, by_symbol,
+            "a pattern by name should sound the same as by symbol"
+        );
+        let peak = by_name.iter().fold(0f32, |m, x| m.max(x.abs()));
+        assert!(peak > 0.01, "the named pattern was not heard: peak {peak}");
+    }
+}
+
+#[test]
 fn beatbox_hit_is_audible() {
     unsafe {
         let h = ic_live_new(SAMPLE_RATE);
