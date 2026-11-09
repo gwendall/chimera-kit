@@ -25,5 +25,8 @@ jobs:
       - run: bun run typecheck
       - run: bun run lint
       - run: cargo test --workspace
-      - run: bun test src eval
+      - run: bun test --timeout 30000 src eval
       - run: bun eval/budget.ts --no-speed
+      - run: bun scripts/browser-check.ts chromium
+        env:
+          BROWSER_CHANNEL: chrome

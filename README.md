@@ -12,30 +12,21 @@ by a program.
 ## Usage
 
 ```ts
-import { createVoice } from "intone";
+import { createVoice, play } from "intone";
 
 const voice = await createVoice({ body: "female" });
-const { audio, sampleRate } = voice.render("The birch canoe slid on the smooth planks.", {
-  rate: 1.1,
-  accent: 0.3,
-});
-
-const context = new AudioContext({ sampleRate });
-const buffer = context.createBuffer(1, audio.length, sampleRate);
-buffer.copyToChannel(audio, 0);
-const source = context.createBufferSource();
-source.buffer = buffer;
-source.connect(context.destination);
-source.start();
+await play(voice.stream("The birch canoe slid on the smooth planks."), voice.sampleRate).done;
 ```
 
-Render in a Worker: `render` blocks until the utterance is done.
+`play` starts with the first 128 samples and keeps a quarter of a second computed ahead of the
+speakers; `stop()` or an `AbortSignal` cuts it short. Browsers keep audio suspended until the
+page gets a click or a key press, so call it from one. The samples are computed on the calling
+thread, about a third of one core while it speaks.
 
-For chats and anything that must answer at once, `voice.stream(text)` gives the same samples as
-they are computed, 128 at a time unless `chunkSize` says otherwise (up to 4096):
+For a file, or to mix the voice yourself, `render` returns every sample at once:
 
 ```ts
-for (const chunk of voice.stream("Hello there.")) player.push(chunk);
+const { audio, sampleRate } = voice.render("Hello there.", { rate: 1.1, accent: 0.3 });
 ```
 
 Planning takes a fraction of a millisecond whatever the length of the text, and speech starts at
@@ -56,7 +47,9 @@ alone: 189 KB in all, at a cost in pronunciation.
 |                                           | gzipped |
 | ----------------------------------------- | ------- |
 | Engine (`intone_chimera.wasm`)            | 188 KB  |
-| JavaScript                                | 1.3 KB  |
+| JavaScript: `createVoice` alone           | 1.5 KB  |
+| JavaScript: with the player `play`        | 2.7 KB  |
+| JavaScript: everything                    | 5.8 KB  |
 | Pronouncing dictionary (CMUdict, English) | 869 KB  |
 
 On an Apple M2, loading takes about 70 ms once per page, the first audible sample comes about

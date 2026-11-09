@@ -29,6 +29,7 @@
     "build:js": "bun build src/index.ts --outdir dist --format esm --target browser --minify && tsc -p tsconfig.build.json",
     "build": "bun run build:wasm && bun run build:js && cp public/data/cmudict.txt.gz dist/",
     "test": "bun run build && cargo test --workspace && bun test --timeout 30000 src eval",
+    "check:browser": "bun scripts/browser-check.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome check . && cargo fmt -p intone-chimera --check && cargo clippy -p intone-chimera --no-deps --all-targets -- -D warnings",
     "budget": "bun eval/budget.ts",
@@ -39,6 +40,7 @@
     "@biomejs/biome": "2.6.6",
     "@types/bun": "1.4.4",
     "binaryen": "132.0.0",
+    "playwright-core": "1.64.1",
     "typescript": "7.0.2"
   }
 }
