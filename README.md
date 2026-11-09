@@ -60,14 +60,30 @@ the first sample.
 `createVoice({ dictionary: false })` skips the pronouncing dictionary and uses spelling rules
 alone: 189 KB in all, at a cost in pronunciation.
 
+## The device's voices
+
+The same calls can speak through the voices the device already has (Web Speech): nothing to
+download, natural-sounding, but the system decides almost everything. It takes one rate, pitch
+and volume per clause, and `lost` says what of a delivery it could not apply.
+
+```ts
+import { createSystemVoice } from "intone/web-speech";
+
+const voice = await createSystemVoice({ lang: "en" });
+const speech = voice.say(answer, { delivery: "calm" }); // a string, or tokens as they arrive
+speech.lost; // ["pitch range", "breath", "tension", "pause length"]
+await speech.done;
+```
+
 ## Cost
 
 |                                           | gzipped |
 | ----------------------------------------- | ------- |
 | Engine (`intone_chimera.wasm`)            | 188 KB  |
-| JavaScript: `createVoice` alone           | 1.5 KB  |
-| JavaScript: with the player `play`        | 2.7 KB  |
-| JavaScript: everything                    | 5.8 KB  |
+| JavaScript: `createVoice` alone           | 1.4 KB  |
+| JavaScript: a chat (`clauses`, `play`)    | 4.1 KB  |
+| JavaScript: everything                    | 7.2 KB  |
+| JavaScript: the device's voices only      | 2.8 KB  |
 | Pronouncing dictionary (CMUdict, English) | 869 KB  |
 
 On an Apple M2, loading takes about 70 ms once per page, the first audible sample comes about

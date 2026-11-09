@@ -17,10 +17,15 @@ const SIZE_LIMITS: Record<string, number> = {
  * What an app's bundler keeps of the JavaScript for a given import, gzipped. The package has no
  * side effects, so an app ships only what it imports.
  */
-const BUNDLE_LIMITS: Record<string, { imports: string[]; limit: number }> = {
+const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: number }> = {
   "speaking (createVoice)": { imports: ["createVoice"], limit: 2_000 },
   "a chat (createVoice, clauses, play)": { imports: ["createVoice", "clauses", "play"], limit: 5_000 },
   "everything (index.js)": { imports: [], limit: 9_000 },
+  "the device's voices (web-speech.js)": {
+    imports: ["createSystemVoice"],
+    from: "web-speech.js",
+    limit: 3_500,
+  },
 };
 /** Share of one core a voice may use in real time, measured in Bun. */
 const CORE_LIMIT = 0.45;
@@ -42,9 +47,9 @@ for (const [file, limit] of Object.entries(SIZE_LIMITS)) {
 }
 
 const BUNDLES = join(import.meta.dir, "out/bundles");
-for (const [label, { imports, limit }] of Object.entries(BUNDLE_LIMITS)) {
-  const entry = join(BUNDLES, `${label.split(" ")[0]}.js`);
-  const from = JSON.stringify(join(DIST, "index.js"));
+for (const [label, { imports, from: file = "index.js", limit }] of Object.entries(BUNDLE_LIMITS)) {
+  const entry = join(BUNDLES, `${label.split(" ").slice(0, 2).join("-")}.js`);
+  const from = JSON.stringify(join(DIST, file));
   await Bun.write(
     entry,
     imports.length > 0

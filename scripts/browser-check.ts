@@ -35,6 +35,8 @@ interface Result {
   renderedSeconds: number;
   exact: { maxError: number; trailingMax: number; underruns: number };
   resampled: { rate: number; lengthRatio: number; rmsRatio: number; underruns: number };
+  /** The device-voice entry loads next to the main one, and how many voices the browser lists. */
+  systemVoices: number;
 }
 
 let failed = false;
@@ -91,6 +93,8 @@ for (const name of wanted) {
         return Math.sqrt(sum / n);
       };
       voice.free();
+      const { systemVoices } = await import(`${origin}/web-speech.js`);
+      const listed = await systemVoices(speechSynthesis, 500);
       return {
         loadMs,
         renderedSeconds: audio.length / sampleRate,
@@ -101,6 +105,7 @@ for (const name of wanted) {
           rmsRatio: rms(resampledOut, expected) / rms(audio, audio.length),
           underruns: resampledEnd.underruns,
         },
+        systemVoices: listed.length,
       };
     }, ORIGIN);
     const problems = [
