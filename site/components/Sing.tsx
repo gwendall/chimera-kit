@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { compose, type Song } from "@/lib/intone/index.js";
+import { fall, harmony, type Part, scoop } from "@/lib/intone/singing.js";
 import { studio } from "@/lib/studio";
 import { Latency } from "./Latency";
 
@@ -11,24 +13,49 @@ const START = [62, 64, 66, 69, 67, 66, 64, 62, 66, 67, 69, 74, 73, 69, 67, 69];
 const BEATS = [1, 0.5, 0.5, 1, 0.5, 0.5, 1, 2, 1, 0.5, 0.5, 1, 0.5, 0.5, 1, 2];
 const TOP = 78;
 const ROWS = 22;
+/** The parts on offer, each with who sings it. */
+const PARTS: { part: Part; label: string; body: "female" | "male" | "child" }[] = [
+  { part: "third-above", label: "Third above", body: "child" },
+  { part: "third-below", label: "Third below", body: "female" },
+  { part: "octave-below", label: "Octave below", body: "male" },
+];
 
 export function Sing() {
   const [midi, setMidi] = useState(START);
   const [vibrato, setVibrato] = useState(30);
+  const [chosen, setChosen] = useState<Part[]>([]);
+  const [ornate, setOrnate] = useState(false);
   const drag = useRef<{ index: number; startY: number; startMidi: number } | null>(null);
   const total = BEATS.reduce((a, b) => a + b, 0);
 
-  const sing = (notes = midi) => {
-    void studio.speak(
-      {
-        lyrics: LYRICS,
-        bpm: 92,
-        vibrato,
-        notes: notes.map((n, i) => ({ midi: n, beats: BEATS[i] ?? 1 })),
-      },
-      { body: "female", label: "singing" },
+  const sing = async (notes = midi) => {
+    const song: Song = {
+      lyrics: LYRICS,
+      bpm: 92,
+      vibrato,
+      notes: notes.map((n, i) => ({ midi: n, beats: BEATS[i] ?? 1 })),
+    };
+    // A style is a function a worker can't receive, so the score is shaped here and sent as data.
+    const style = compose(scoop(), fall());
+    const shaped = async (input: Song, body: "female" | "male" | "child") =>
+      ornate ? style(await studio.plan(input, body)) : input;
+    const lines = [
+      { input: song, body: "female" as const },
+      ...PARTS.filter(({ part }) => chosen.includes(part)).map(({ part, body }) => ({
+        input: harmony(song, part),
+        body,
+      })),
+    ];
+    if (lines.length === 1) {
+      void studio.speak(await shaped(song, "female"), { body: "female", label: "singing" });
+      return;
+    }
+    void studio.parts(
+      await Promise.all(lines.map(async ({ input, body }) => ({ input: await shaped(input, body), body }))),
     );
   };
+  const toggle = (part: Part) =>
+    setChosen((old) => (old.includes(part) ? old.filter((p) => p !== part) : [...old, part]));
 
   let beat = 0;
   return (
@@ -38,7 +65,10 @@ export function Sing() {
         It can carry
         <br />a <em>tune.</em>
       </h2>
-      <p>The same engine, on notes. Drag any note up or down and it sings the new melody straight away.</p>
+      <p>
+        The same engine, on notes. Drag any note up or down and it sings the new melody straight away. Add a
+        part and another simulated throat joins in, on harmony worked out from your notes.
+      </p>
       <svg
         className="roll"
         viewBox="0 0 1000 250"
@@ -75,7 +105,7 @@ export function Sing() {
               }}
               onPointerUp={() => {
                 drag.current = null;
-                sing();
+                void sing();
               }}
             >
               <rect x={x} y={y} width={width} height={250 / ROWS - 2} fill="#ff5c36" rx="2" />
@@ -87,7 +117,7 @@ export function Sing() {
         })}
       </svg>
       <div className="row">
-        <button type="button" className="go" onClick={() => sing()}>
+        <button type="button" className="go" onClick={() => void sing()}>
           Sing it
         </button>
         <button type="button" className="ghost-button" onClick={() => setMidi(START)}>
@@ -104,6 +134,27 @@ export function Sing() {
           />
         </label>
         <Latency />
+      </div>
+      <div className="row">
+        {PARTS.map(({ part, label }) => (
+          <button
+            key={part}
+            type="button"
+            className="ghost-button"
+            aria-pressed={chosen.includes(part)}
+            onClick={() => toggle(part)}
+          >
+            {label}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="ghost-button"
+          aria-pressed={ornate}
+          onClick={() => setOrnate((old) => !old)}
+        >
+          Scoops and falls
+        </button>
       </div>
     </section>
   );

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import { Agent } from "@/components/Agent";
 import { Anyone } from "@/components/Anyone";
 import { Beasts } from "@/components/Beasts";
+import { Consonants } from "@/components/Consonants";
 import { Crowd } from "@/components/Crowd";
 import { Direct } from "@/components/Direct";
 import { Engines } from "@/components/Engines";
@@ -38,9 +40,11 @@ export default function Page() {
         <Speed />
         <Anyone />
         <Sing />
+        <Consonants />
         <Crowd />
         <Beasts />
         <Live />
+        <Agent />
         <Engines />
         <Layers />
         <footer>

@@ -381,7 +381,9 @@ class Studio {
       },
       onFirstSample,
     );
-    this.watch(sounding, play(timed, voice.sampleRate, { context, destination: output }));
+    const playback = play(timed, voice.sampleRate, { context, destination: output });
+    this.watch(sounding, playback);
+    return playback;
   }
 
   /** Tokens as a language model would send them, spoken clause by clause while they arrive. */
@@ -568,9 +570,91 @@ class Studio {
     return end;
   }
 
+  /**
+   * The parts of one song together, each a real simulation in its own worker. Each holds its first
+   * samples until every part has some, so that they come in on the same beat.
+   */
+  async parts(parts: { input: Song | Score; body: Body }[]): Promise<void> {
+    const { context, output } = this.audio();
+    this.stop();
+    const calledAt = performance.now();
+    const pool = await this.spawn(parts.length);
+    const run = new AbortController();
+    this.crowdRun = run;
+    this.scopeUntil = 0;
+    const bus = context.createGain();
+    bus.gain.value = 1 / Math.sqrt(parts.length);
+    const limiter = context.createDynamicsCompressor();
+    bus.connect(limiter);
+    limiter.connect(output);
+    this.set({ speaking: true, label: `${parts.length} parts`, voices: parts.length });
+
+    let waiting = parts.length;
+    let open: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    run.signal.addEventListener("abort", () => open());
+    const note = (ms: number) => this.note(ms);
+    let timed = false;
+
+    await Promise.allSettled(
+      parts.map(({ input, body }, index) => {
+        const voice = pool[index] as AsyncVoice;
+        const chunks = voice.stream(input, { body });
+        const held = async function* () {
+          const early: Float32Array[] = [];
+          let samples = 0;
+          let waited = false;
+          const arrive = async () => {
+            waited = true;
+            waiting -= 1;
+            if (waiting === 0) open();
+            await gate;
+          };
+          for await (const chunk of chunks) {
+            if (!timed) {
+              timed = true;
+              note(performance.now() - calledAt);
+            }
+            if (waited) {
+              yield chunk;
+              continue;
+            }
+            early.push(chunk);
+            samples += chunk.length;
+            if (samples < CROWD_CUSHION * voice.sampleRate) continue;
+            await arrive();
+            yield* early;
+          }
+          if (!waited) {
+            await arrive();
+            yield* early;
+          }
+        };
+        return play(held(), voice.sampleRate, { context, destination: bus, signal: run.signal }).done;
+      }),
+    );
+    bus.disconnect();
+    limiter.disconnect();
+    if (this.crowdRun === run) {
+      this.crowdRun = null;
+      this.scopeUntil = performance.now() + 900;
+      this.set({ speaking: false, voices: 0 });
+    }
+  }
+
   private record(sounding: Sounding, state: Float32Array, t: number) {
     sounding.frames.push(state);
     sounding.times.push(t);
+  }
+
+  /** The sound being heard at this instant, without touching the throat's reading of the frames. */
+  soundNow(): string | null {
+    const now = this.sounding;
+    if (!now?.score || !this.context || now.startedAt === null) return null;
+    const t = this.context.currentTime - now.startedAt;
+    return now.score.sounds.find((sound) => t >= sound.t0 && t < sound.t1)?.sound ?? null;
   }
 
   /** What the throat should show at this instant. */

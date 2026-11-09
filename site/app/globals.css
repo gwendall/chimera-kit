@@ -357,6 +357,67 @@ p {
   color: var(--ink);
 }
 
+.code.wrapped {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.phones {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 10px 14px;
+  align-items: start;
+}
+
+.phones > span {
+  padding-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.phones > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.phones button {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 17px;
+  color: #c9c1b5;
+  transition:
+    border-color 120ms ease,
+    color 120ms ease,
+    background 60ms ease;
+}
+
+.phones button:hover {
+  border-color: #6a6157;
+  color: var(--ink);
+}
+
+.phones button[data-on] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+@media (max-width: 520px) {
+  .phones {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .phones > div {
+    margin-bottom: 10px;
+  }
+}
+
+.ghost-button[aria-pressed="true"],
 .chip[aria-pressed="true"] {
   background: var(--ink);
   border-color: var(--ink);
