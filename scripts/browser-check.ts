@@ -67,7 +67,7 @@ interface Result {
 // from a real server, loading it cross-origin from the page.route-faked ORIGIN is blocked by
 // Private Network Access (ORIGIN's address space reads as unknown/public to Chromium, since
 // nothing is really dialed, and a public page may not fetch a loopback target without a preflight
-// that worklet module loading never sends — confirmed: the request never even reaches this
+// that worklet module loading never sends - confirmed: the request never even reaches this
 // server). A loopback address is a secure context on its own regardless of scheme, so serving the
 // whole page from here and navigating straight to it sidesteps both: same origin throughout, no
 // addModule interception gap, no cross-address-space fetch.

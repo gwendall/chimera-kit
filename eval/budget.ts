@@ -68,7 +68,7 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
     from: "singing.js",
     limit: 2_200,
   },
-  // 1,516 bytes measured: createInstrument alone (the worklet's own code ships separately, loaded
+  // 1,529 bytes measured: createInstrument alone (the worklet's own code ships separately, loaded
   // by `context.audioWorklet.addModule`, so the page only carries the small main-thread half:
   // compiling the wasm, the worklet node, and the Safari DataCloneError fallback).
   "a played voice, page side (createInstrument)": {
@@ -76,8 +76,8 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
     from: "live.js",
     limit: 2_000,
   },
-  // 1,673 bytes measured: the AudioWorkletProcessor itself (the held voice's engine wrapper and
-  // the message-handling switch), never loaded by the page's own bundle.
+  // 1,931 bytes measured, the UTF-8 fallback included: the AudioWorkletProcessor itself (the held
+  // voice's engine wrapper and the message-handling switch), never loaded by the page's own bundle.
   "a played voice, worklet side (worklet-live.js)": {
     imports: [],
     from: "worklet-live.js",
