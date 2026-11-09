@@ -140,6 +140,24 @@ function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?:
     markDone = resolve;
   });
 
+  // `done`'s only other source is the AudioWorklet's own "done" message, posted from inside
+  // `process()` (see PROCESSOR below) -- which the browser stops calling the moment the context
+  // it runs on closes. A caller-owned context closed directly (not through `stop()`) therefore
+  // never posts it: `done` would hang forever, found live by e2e/scenarios/reliability.ts's
+  // "context closed mid-stream" case (confirmed: still pending after 140s, not just slow). Treat
+  // an external close the same as `stop()` and settle both promises ourselves; the real underrun
+  // count is unknowable once the audio thread has stopped running, so this reports 0.
+  let onContextClosed: (() => void) | undefined;
+  if (!owned && context instanceof AudioContext) {
+    onContextClosed = () => {
+      if (context.state !== "closed") return;
+      stopped = true;
+      markQueued();
+      markDone({ underruns: 0 });
+    };
+    context.addEventListener("statechange", onContextClosed);
+  }
+
   const run = async (): Promise<PlaybackEnd> => {
     try {
       // `addProcessor` and the node below can both reject or throw (no AudioWorklet support, a
@@ -164,8 +182,16 @@ function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?:
       return await finished;
     } finally {
       markQueued();
-      node?.disconnect();
+      // A context closed externally (the case onContextClosed exists for) also makes
+      // disconnect() throw InvalidStateError; nothing is listening on the audio thread by then
+      // either way, so this is a safe no-op in that case.
+      try {
+        node?.disconnect();
+      } catch {
+        // already closed
+      }
       options.signal?.removeEventListener("abort", stop);
+      if (onContextClosed) context.removeEventListener("statechange", onContextClosed);
       if (owned) await (context as AudioContext).close();
     }
   };
