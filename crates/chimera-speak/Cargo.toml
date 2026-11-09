@@ -1,0 +1,15 @@
+[package]
+name = "chimera-speak"
+description = "Text to speech on the CHIMERA physical-modelling voice engine, with a small C ABI for wasm."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+chimera = { path = "../chimera" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
