@@ -3,13 +3,17 @@
 //! Every pointer argument must come from the matching `ic_*` constructor or from `ic_alloc`, and
 //! must not be used after its `ic_*_free`. `src/engines/chimera.ts` is the only intended caller.
 
-use crate::{Request, SAMPLE_RATE, ScoreRequest, Speaker, Utterance};
+use crate::live::{self, BeatHitRequest, BeatTempoRequest, ShapeRequest};
+use crate::{Body, Request, SAMPLE_RATE, ScoreRequest, Speaker, Utterance};
+use chimera::engine::Engine;
+use chimera::voice::human_voice::{SourcePatch, VoiceTelemetry};
 use std::alloc::{Layout, alloc, dealloc};
 use std::slice;
 
-/// Bump when a signature below changes, along with `ABI_VERSION` in `src/engines/chimera.ts`.
-const ABI_VERSION: u32 = 3;
-/// The most samples one `ic_utterance_render` call can hand over.
+/// Bump when a signature below changes, along with `ABI_VERSION` in `src/engines/chimera.ts`
+/// and in `src/engines/chimera-live.ts`.
+const ABI_VERSION: u32 = 4;
+/// The most samples one `ic_utterance_render` or `ic_live_render` call can hand over.
 const CHUNK: usize = 4096;
 
 /// A speaker, the text of its last error, and its last planned score's JSON.
@@ -282,4 +286,240 @@ pub unsafe extern "C" fn ic_utterance_render(u: *mut UtteranceHandle, max: usize
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ic_utterance_buffer(u: *const UtteranceHandle) -> *const f32 {
     unsafe { &*u }.buffer.as_ptr()
+}
+
+// ---------------------------------------------------------------------- the held, played voice
+
+/// A live `Engine`, its telemetry buffers, the beat's playhead at the last `ic_live_telemetry`
+/// call, and the text of its last error.
+pub struct LiveHandle {
+    engine: Engine,
+    error: String,
+    buffer: Box<[f32; CHUNK]>,
+    telemetry: VoiceTelemetry,
+    telemetry_buf: Vec<f32>,
+}
+
+/// # Safety
+/// `sample_rate` must be a normal, positive audio rate.
+#[unsafe(no_mangle)]
+pub extern "C" fn ic_live_new(sample_rate: f64) -> *mut LiveHandle {
+    Box::into_raw(Box::new(LiveHandle {
+        engine: Engine::new(sample_rate),
+        error: String::new(),
+        buffer: Box::new([0.0; CHUNK]),
+        telemetry: VoiceTelemetry::default(),
+        telemetry_buf: Vec::new(),
+    }))
+}
+
+/// # Safety
+/// `h` must come from `ic_live_new` and not have been freed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_free(h: *mut LiveHandle) {
+    drop(unsafe { Box::from_raw(h) });
+}
+
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_error_ptr(h: *const LiveHandle) -> *const u8 {
+    unsafe { &*h }.error.as_ptr()
+}
+
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_error_len(h: *const LiveHandle) -> usize {
+    unsafe { &*h }.error.len()
+}
+
+/// Applies a JSON [`Body`] (a 0 on failure, the handle's error then holds the message) shared by
+/// every `ic_live_*`/`ic_beat_*` setter below: parse, validate, and only then mutate the engine,
+/// so invalid input leaves it exactly as it was.
+unsafe fn apply<T>(
+    h: *mut LiveHandle,
+    json: *const u8,
+    len: usize,
+    run: impl FnOnce(&mut Engine, T) -> Result<(), String>,
+) -> u32
+where
+    T: serde::de::DeserializeOwned,
+{
+    let h = unsafe { &mut *h };
+    let bytes = unsafe { slice::from_raw_parts(json, len) };
+    let result = serde_json::from_slice::<T>(bytes)
+        .map_err(|e| format!("invalid request: {e}"))
+        .and_then(|request| run(&mut h.engine, request));
+    match result {
+        Ok(()) => 1,
+        Err(message) => {
+            h.error = message;
+            0
+        }
+    }
+}
+
+/// # Safety
+/// `h` must be live and `json` must point to `len` readable bytes (a [`Body`]).
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_set_body(h: *mut LiveHandle, json: *const u8, len: usize) -> u32 {
+    unsafe { apply::<Body>(h, json, len, |e, body| live::set_body(e, &body)) }
+}
+
+/// # Safety
+/// `h` must be live and `json` must point to `len` readable bytes (a [`ShapeRequest`]).
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_shape(h: *mut LiveHandle, json: *const u8, len: usize) -> u32 {
+    unsafe { apply::<ShapeRequest>(h, json, len, |e, req| live::set_artic(e, &req)) }
+}
+
+/// # Safety
+/// `h` must be live and `json` must point to `len` readable bytes (a [`SourcePatch`]).
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_source(h: *mut LiveHandle, json: *const u8, len: usize) -> u32 {
+    unsafe { apply::<SourcePatch>(h, json, len, |e, patch| live::set_source(e, &patch)) }
+}
+
+/// # Safety
+/// `h` must be live and `ipa` must point to `len` readable UTF-8 bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_vowel(h: *mut LiveHandle, ipa: *const u8, len: usize) -> u32 {
+    let h = unsafe { &mut *h };
+    let result = std::str::from_utf8(unsafe { slice::from_raw_parts(ipa, len) })
+        .map_err(|e| format!("vowel is not UTF-8: {e}"))
+        .and_then(|ipa| live::set_vowel(&mut h.engine, ipa));
+    match result {
+        Ok(()) => 1,
+        Err(message) => {
+            h.error = message;
+            0
+        }
+    }
+}
+
+/// Starts a note: `midi` is its pitch, `velocity` the breath gate (0..1.5; 1 is a plain note).
+///
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_note_on(h: *mut LiveHandle, midi: f64, velocity: f64) -> u32 {
+    let h = unsafe { &mut *h };
+    match live::note_on(&mut h.engine, midi, velocity) {
+        Ok(()) => 1,
+        Err(message) => {
+            h.error = message;
+            0
+        }
+    }
+}
+
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_note_off(h: *mut LiveHandle) {
+    live::note_off(&mut unsafe { &mut *h }.engine);
+}
+
+/// Glides to a new pitch while a note is held.
+///
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_bend(h: *mut LiveHandle, midi: f64) -> u32 {
+    let h = unsafe { &mut *h };
+    match live::bend(&mut h.engine, midi) {
+        Ok(()) => 1,
+        Err(message) => {
+            h.error = message;
+            0
+        }
+    }
+}
+
+/// Renders up to `max` samples (at most 4096) into the live buffer; always `max.min(4096)`, since
+/// a held voice never runs out the way an utterance does.
+///
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_render(h: *mut LiveHandle, max: usize) -> usize {
+    let h = unsafe { &mut *h };
+    let n = max.min(CHUNK);
+    h.engine.render(&mut h.buffer[..n]);
+    n
+}
+
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_buffer(h: *const LiveHandle) -> *const f32 {
+    unsafe { &*h }.buffer.as_ptr()
+}
+
+/// Reads the voice's telemetry and the beat's playhead now, packed as [`live::pack_telemetry`]
+/// documents. Returns its address, valid until the next call on `h`.
+///
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_telemetry(h: *mut LiveHandle) -> *const f32 {
+    let h = unsafe { &mut *h };
+    h.engine.telemetry(&mut h.telemetry);
+    let step = h.engine.beat_step();
+    live::pack_telemetry(&h.telemetry, step, &mut h.telemetry_buf);
+    h.telemetry_buf.as_ptr()
+}
+
+/// The values [`ic_live_telemetry`] last wrote.
+///
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_live_telemetry_len(h: *const LiveHandle) -> usize {
+    unsafe { &*h }.telemetry_buf.len()
+}
+
+// ---------------------------------------------------------------------- the beatbox sequencer
+
+/// One beatbox hit, by pattern symbol or sound name.
+///
+/// # Safety
+/// `h` must be live and `json` must point to `len` readable bytes (a [`BeatHitRequest`]).
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_beat_hit(h: *mut LiveHandle, json: *const u8, len: usize) -> u32 {
+    unsafe { apply::<BeatHitRequest>(h, json, len, |e, req| live::beat_hit(e, &req)) }
+}
+
+/// Replaces the sequencer's pattern from its text ("B . t .").
+///
+/// # Safety
+/// `h` must be live and `text` must point to `len` readable UTF-8 bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_beat_steps(h: *mut LiveHandle, text: *const u8, len: usize) -> u32 {
+    let h = unsafe { &mut *h };
+    match std::str::from_utf8(unsafe { slice::from_raw_parts(text, len) }) {
+        Ok(text) => {
+            live::set_beat_steps(&mut h.engine, text);
+            1
+        }
+        Err(e) => {
+            h.error = format!("beat pattern is not UTF-8: {e}");
+            0
+        }
+    }
+}
+
+/// # Safety
+/// `h` must be live and `json` must point to `len` readable bytes (a [`BeatTempoRequest`]).
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_beat_tempo(h: *mut LiveHandle, json: *const u8, len: usize) -> u32 {
+    unsafe { apply::<BeatTempoRequest>(h, json, len, |e, req| live::set_beat_tempo(e, &req)) }
+}
+
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_beat_playing(h: *mut LiveHandle, playing: u32) {
+    live::set_beat_playing(&mut unsafe { &mut *h }.engine, playing != 0);
 }

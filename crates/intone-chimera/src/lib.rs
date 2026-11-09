@@ -4,6 +4,7 @@
 //! It only uses the engine's public API, so `crates/chimera` can keep tracking upstream.
 
 pub mod abi;
+pub mod live;
 pub mod score;
 pub mod sing;
 
@@ -47,6 +48,17 @@ impl Default for Body {
 }
 
 impl Body {
+    pub(crate) fn validate(&self) -> Result<(), String> {
+        if let Body::Mix { female, child } = self {
+            for (name, value) in [("female", *female), ("child", *child)] {
+                if !(0.0..=1.0).contains(&value) {
+                    return Err(format!("body.{name} must be between 0 and 1, got {value}"));
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn mix(self) -> BodyMix {
         match self {
             Body::Named(NamedBody::Male) => BodyName::Male.into(),
@@ -86,13 +98,7 @@ pub struct Request {
 
 impl Request {
     fn validate(&self) -> Result<(), String> {
-        if let Body::Mix { female, child } = self.body {
-            for (name, value) in [("female", female), ("child", child)] {
-                if !(0.0..=1.0).contains(&value) {
-                    return Err(format!("body.{name} must be between 0 and 1, got {value}"));
-                }
-            }
-        }
+        self.body.validate()?;
         if let Some(rate) = self.rate
             && !(rate.is_finite() && rate > 0.0 && rate <= 4.0)
         {
