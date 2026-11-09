@@ -1,4 +1,4 @@
-use chimera_speak::{Request, SAMPLE_RATE, Speaker};
+use intone_chimera::{Request, SAMPLE_RATE, Speaker};
 
 fn request(json: &str) -> Request {
     serde_json::from_str(json).unwrap()
@@ -116,28 +116,28 @@ fn text_too_long_for_the_score_is_refused_not_truncated() {
 
 #[test]
 fn the_abi_reports_errors_and_renders() {
-    use chimera_speak::abi::*;
+    use intone_chimera::abi::*;
     unsafe {
-        let s = cs_speaker_new();
+        let s = ic_speaker_new();
         let bad = br#"{"text":"Hi","rate":0}"#;
-        assert!(cs_utterance_new(s, bad.as_ptr(), bad.len()).is_null());
-        let message = std::slice::from_raw_parts(cs_speaker_error_ptr(s), cs_speaker_error_len(s));
+        assert!(ic_utterance_new(s, bad.as_ptr(), bad.len()).is_null());
+        let message = std::slice::from_raw_parts(ic_speaker_error_ptr(s), ic_speaker_error_len(s));
         assert!(String::from_utf8_lossy(message).contains("rate"));
 
         let good = br#"{"text":"Hi."}"#;
-        let u = cs_utterance_new(s, good.as_ptr(), good.len());
+        let u = ic_utterance_new(s, good.as_ptr(), good.len());
         assert!(!u.is_null());
-        let total = cs_utterance_samples(u);
+        let total = ic_utterance_samples(u);
         let mut seen = 0;
         loop {
-            let n = cs_utterance_render(u, 4096);
+            let n = ic_utterance_render(u, 4096);
             if n == 0 {
                 break;
             }
             seen += n;
         }
         assert_eq!(seen, total);
-        cs_utterance_free(u);
-        cs_speaker_free(s);
+        ic_utterance_free(u);
+        ic_speaker_free(s);
     }
 }

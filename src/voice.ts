@@ -61,7 +61,7 @@ class EngineVoice implements Voice {
     const { maxChunk } = this.engine;
     const { chunkSize = DEFAULT_CHUNK, ...speak } = options;
     if (!Number.isInteger(chunkSize) || chunkSize < 1 || chunkSize > maxChunk) {
-      throw new RangeError(`chimera-speak: chunkSize must be from 1 to ${maxChunk}, got ${chunkSize}`);
+      throw new RangeError(`intone: chunkSize must be from 1 to ${maxChunk}, got ${chunkSize}`);
     }
     const utterance = this.begin(text, speak);
     try {
@@ -80,7 +80,7 @@ class EngineVoice implements Voice {
   }
 
   private begin(text: string, options?: SpeakOptions): EngineUtterance {
-    if (this.freed) throw new Error("chimera-speak: this voice has been freed");
+    if (this.freed) throw new Error("intone: this voice has been freed");
     return this.engine.begin({ ...this.defaults, ...options, text });
   }
 }

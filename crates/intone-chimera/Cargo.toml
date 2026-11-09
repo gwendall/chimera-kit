@@ -1,5 +1,5 @@
 [package]
-name = "chimera-speak"
+name = "intone-chimera"
 description = "Text to speech on the CHIMERA physical-modelling voice engine, with a small C ABI for wasm."
 version.workspace = true
 edition.workspace = true

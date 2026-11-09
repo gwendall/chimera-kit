@@ -1,5 +1,5 @@
 {
-  "name": "chimera-speak",
+  "name": "intone",
   "version": "0.0.0",
   "private": true,
   "packageManager": "bun@1.3.11",
@@ -14,7 +14,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./chimera_speak.wasm": "./dist/chimera_speak.wasm",
+    "./intone_chimera.wasm": "./dist/intone_chimera.wasm",
     "./cmudict.txt.gz": "./dist/cmudict.txt.gz"
   },
   "files": [
@@ -25,12 +25,12 @@
     "node": ">=18"
   },
   "scripts": {
-    "build:wasm": "cargo build -p chimera-speak --release --target wasm32-unknown-unknown && mkdir -p dist && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/chimera_speak.wasm -o dist/chimera_speak.wasm",
+    "build:wasm": "cargo build -p intone-chimera --release --target wasm32-unknown-unknown && mkdir -p dist && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_chimera.wasm -o dist/intone_chimera.wasm",
     "build:js": "bun build src/index.ts --outdir dist --format esm --target browser --minify && tsc -p tsconfig.build.json",
     "build": "bun run build:wasm && bun run build:js && cp public/data/cmudict.txt.gz dist/",
     "test": "bun run build && cargo test --workspace && bun test src eval",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check . && cargo fmt -p chimera-speak --check && cargo clippy -p chimera-speak --no-deps --all-targets -- -D warnings",
+    "lint": "biome check . && cargo fmt -p intone-chimera --check && cargo clippy -p intone-chimera --no-deps --all-targets -- -D warnings",
     "budget": "bun eval/budget.ts",
     "eval": "bun eval/run.ts",
     "sync-upstream": "scripts/sync-upstream.sh"

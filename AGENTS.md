@@ -1,4 +1,4 @@
-# chimera-speak
+# intone
 
 Text to speech in the browser, from a physical model of the human airway: a small Rust/wasm engine
 under a small TypeScript API. Small and cheap to run are the point. Intelligible comes next, and
@@ -16,7 +16,7 @@ fine programmatic control of the delivery is what it is for. Natural is not a go
 ## Map
 
 - `crates/chimera/`: the engine, **from upstream**. See below.
-- `crates/chimera-speak/`: our layer over it (`lib.rs`) and the browser's C ABI (`abi.rs`).
+- `crates/intone-chimera/`: our layer over it (`lib.rs`) and the browser's C ABI (`abi.rs`).
 - `src/`: the JavaScript side. `voice.ts` and `engine.ts` know no engine; `engines/chimera.ts` is the adapter.
 - `eval/`: the intelligibility harness and the budgets. `eval/README.md` has its rules.
 - `scripts/sync-upstream.sh`: brings in upstream's engine.
@@ -24,7 +24,7 @@ fine programmatic control of the delivery is what it is for. Natural is not a go
 ## Rules
 
 - **`crates/chimera` belongs to upstream.** Sync it with `bun run sync-upstream`, which merges in
-  three ways. Everything of ours goes in `crates/chimera-speak` when it can. When a change must
+  three ways. Everything of ours goes in `crates/intone-chimera` when it can. When a change must
   touch the engine, keep it small, in its own commit, and worth proposing upstream.
 - **The engine's contract** (upstream's `docs/rust-engine.md`): transcendental math through
   `chimera::math`, no allocation while rendering, output independent of block size.

@@ -10,7 +10,7 @@ import { createVoice } from "../dist/index.js";
 const DIST = join(import.meta.dir, "../dist");
 /** Limits in bytes, gzipped. */
 const SIZE_LIMITS: Record<string, number> = {
-  "chimera_speak.wasm": 200_000,
+  "intone_chimera.wasm": 200_000,
   "index.js": 2_000,
   "cmudict.txt.gz": 880_000,
 };

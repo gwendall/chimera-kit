@@ -1,5 +1,5 @@
 /**
- * chimera-speak: text to speech from a simulated airway, in about a megabyte.
+ * intone: text to speech from a simulated airway, in about a megabyte.
  *
  * The API speaks of voices and utterances. The engine behind it is an implementation detail.
  */

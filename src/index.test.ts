@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { createVoice, type Voice } from "./index.ts";
 
-const wasm = new URL("../dist/chimera_speak.wasm", import.meta.url);
+const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
 const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
 const TEXT = "Hello there.";
 
@@ -59,7 +59,7 @@ describe("a voice", () => {
   });
 
   test("reports bad requests with a message and keeps working", () => {
-    expect(() => voice.render("")).toThrow("chimera-speak");
+    expect(() => voice.render("")).toThrow("intone");
     expect(() => voice.render(TEXT, { rate: -1 })).toThrow("rate");
     expect(voice.render(TEXT).audio.length).toBeGreaterThan(0);
   });

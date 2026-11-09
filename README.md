@@ -1,4 +1,4 @@
-# chimera-speak
+# intone
 
 Text to speech in the browser, with no model weights and no server. It speaks by simulating a
 human airway: vocal folds, a moving tongue and lips, air through a tube.
@@ -12,7 +12,7 @@ by a program.
 ## Usage
 
 ```ts
-import { createVoice } from "chimera-speak";
+import { createVoice } from "intone";
 
 const voice = await createVoice({ body: "female" });
 const { audio, sampleRate } = voice.render("The birch canoe slid on the smooth planks.", {
@@ -55,7 +55,7 @@ alone: 189 KB in all, at a cost in pronunciation.
 
 |                                           | gzipped |
 | ----------------------------------------- | ------- |
-| Engine (`chimera_speak.wasm`)             | 188 KB  |
+| Engine (`intone_chimera.wasm`)            | 188 KB  |
 | JavaScript                                | 1.3 KB  |
 | Pronouncing dictionary (CMUdict, English) | 869 KB  |
 
@@ -71,7 +71,7 @@ control is macOS `say`, which shows what a clear voice scores on the same test.
 
 |                                 | Parakeet TDT 0.6b v3 | Whisper large-v3-turbo |
 | ------------------------------- | -------------------- | ---------------------- |
-| chimera-speak                   | 46.9 %               | 26.5 %                 |
+| intone                          | 46.9 %               | 26.5 %                 |
 | Control (macOS `say`, Samantha) | 2.3 %                | 2.6 %                  |
 
 It is still hard to understand, and improving that is the current work. See
@@ -82,7 +82,7 @@ It is still hard to understand, and improving that is the current work. See
 The engine is [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth) by Jameson Hodge, a
 physical-modeling vocal synthesizer, kept unmodified in `crates/chimera` as a git subtree.
 `bun run sync-upstream` merges new upstream work in. Everything specific to this package lives in
-`crates/chimera-speak` and `src/`.
+`crates/intone-chimera` and `src/`.
 
 ## Contributing
 
