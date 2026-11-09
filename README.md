@@ -170,6 +170,12 @@ speech.lost; // ["pitch range", "breath", "tension", "pause length"]
 await speech.done;
 ```
 
+## Sound on phones
+
+iOS mutes Web Audio with the silent switch and only starts audio from code running inside a tap.
+`play` handles both when it is called from the tap. If your handler awaits something first, call
+`unlockAudio(context)` at the top of it, or give `play` a context you resumed yourself.
+
 ## One interface, three backends
 
 `intone/speaker` is one asynchronous interface that CHIMERA, Kokoro (a neural TTS model, run

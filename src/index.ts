@@ -37,7 +37,7 @@ export async function createVoice(options: CreateVoiceOptions = {}): Promise<Voi
 export { ClauseCutter, type ClauseOptions, clauses, speakable } from "./clauses.js";
 export { blend, type Delivery, deliver, MOODS, type Mood } from "./delivery.js";
 export { pauseAfter, type SpeechOptions, speech, withPause } from "./pace.js";
-export { type Playback, type PlaybackEnd, type PlayOptions, play } from "./player.js";
+export { type Playback, type PlaybackEnd, type PlayOptions, play, unlockAudio } from "./player.js";
 export { Selection, Take, take } from "./take.js";
 export type { ScoreTransform, Span } from "./transforms.js";
 export {

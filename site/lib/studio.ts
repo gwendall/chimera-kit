@@ -11,6 +11,7 @@ import {
   type Score,
   type Song,
   speech,
+  unlockAudio,
   type Voice,
 } from "./intone/index.js";
 
@@ -138,8 +139,13 @@ class Studio {
       this.output.maxDecibels = -18;
       this.output.connect(this.context.destination);
     }
-    void this.context.resume();
+    unlockAudio(this.context);
     return { context: this.context, output: this.output };
+  }
+
+  /** Called on every tap until sound is allowed, so a demo may await something before it speaks. */
+  unlock(): boolean {
+    return this.audio().context.state === "running";
   }
 
   get analyser(): AnalyserNode | null {

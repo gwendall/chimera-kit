@@ -26,9 +26,12 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
   "speaking (createVoice)": { imports: ["createVoice"], limit: 2_000 },
   // Songs (a voice plans and renders a Song) took the chat from 4,954 to 5,090, everything from
   // 8,979 to 9,123.
-  "a chat (createVoice, speech, play)": { imports: ["createVoice", "speech", "play"], limit: 5_200 },
+  // Sound on phones (`unlockAudio`: the iOS audio session, its fallback, resuming inside the tap) took
+  // the chat from 5,180 to 5,466 and everything from 9,237 to 9,537. Without it an iPhone on silent
+  // plays nothing.
+  "a chat (createVoice, speech, play)": { imports: ["createVoice", "speech", "play"], limit: 5_500 },
   // The `airway` stream option, which reads the simulated tube, took everything from 9,178 to 9,237.
-  "everything (index.js)": { imports: [], limit: 9_300 },
+  "everything (index.js)": { imports: [], limit: 9_600 },
   // `say` is a method, so its clause cutter stays in: this is a chat's page side.
   "a voice in a Worker, page side (createWorkerVoice, play)": {
     imports: ["createWorkerVoice", "play"],

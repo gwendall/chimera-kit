@@ -29,6 +29,38 @@ export interface PlaybackEnd {
 
 type Source = Iterable<Float32Array> | AsyncIterable<Float32Array>;
 
+// Half a second of silence, a WAV of zeros (the trailing "A"s).
+const SILENCE = `data:audio/wav;base64,UklGRmAfAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YTwfAAAA${"A".repeat(10660)}`;
+let silence: HTMLAudioElement | undefined;
+
+/**
+ * Lets sound through on phones. iOS mutes Web Audio with the silent switch unless the page asks for
+ * the "playback" audio session, and only starts a context from code running inside a tap. `play`
+ * calls this itself. Call it from your click handler when `play` only comes after an `await`.
+ *
+ * iOS before 16.4 has no audio session API, where a looping silent media element does the same.
+ * An app that set `navigator.audioSession.type` itself keeps its choice.
+ */
+export function unlockAudio(context?: AudioContext): void {
+  if (context && context.state !== "running") void context.resume().catch(() => {});
+  if (typeof navigator === "undefined") return;
+  const session = (navigator as { audioSession?: { type: string } }).audioSession;
+  if (session) {
+    if (session.type === "auto") session.type = "playback";
+    return;
+  }
+  const iOS =
+    /iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (!iOS) return;
+  if (!silence) {
+    silence = new Audio(SILENCE);
+    silence.loop = true;
+    silence.setAttribute("playsinline", "");
+  }
+  if (silence.paused) void silence.play().catch(() => {});
+}
+
 /** Starts playing `source`, chunks of mono samples at `sampleRate`. */
 export function play(source: Source, sampleRate: number, options: PlayOptions = {}): Playback {
   const ahead = options.ahead ?? 0.25;
@@ -86,6 +118,8 @@ type Feed = (player: AudioWorkletNode, stopped: () => boolean, context: BaseAudi
 function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?: () => void): Playback {
   const context = options.context ?? new AudioContext({ sampleRate, latencyHint: "interactive" });
   const owned = options.context === undefined;
+  // Before anything is awaited: on iOS only code still inside the tap may start audio.
+  if (context instanceof AudioContext) unlockAudio(context);
   let node: AudioWorkletNode | undefined;
   let stopped = false;
   const stop = () => {
@@ -108,7 +142,7 @@ function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?:
 
   const run = async (): Promise<PlaybackEnd> => {
     await addProcessor(context);
-    if (context instanceof AudioContext && context.state === "suspended") void context.resume();
+    if (context instanceof AudioContext && context.state !== "running") void context.resume();
     const player = new AudioWorkletNode(context, "intone-player", {
       numberOfInputs: 0,
       outputChannelCount: [1],

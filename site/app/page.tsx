@@ -14,6 +14,16 @@ import { studio } from "@/lib/studio";
 export default function Page() {
   useEffect(() => {
     void studio.load();
+    // pointerdown doesn't count as a gesture on iOS: these do. A scroll's touchend is refused, so keep trying.
+    const events = ["pointerup", "touchend", "click", "keydown"];
+    const wake = () => {
+      if (!studio.unlock()) return;
+      for (const name of events) document.removeEventListener(name, wake, true);
+    };
+    for (const name of events) document.addEventListener(name, wake, true);
+    return () => {
+      for (const name of events) document.removeEventListener(name, wake, true);
+    };
   }, []);
 
   return (
