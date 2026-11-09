@@ -46,7 +46,14 @@ interface Result {
   say: { maxError: number; tokensMaxError: number; clauses: number; underruns: number; stoppedPeak: number };
   /** `intone/speaker`'s `createSpeaker("chimera", ...)`, against the same renders: it only wraps
    * `createWorkerVoice`, so it must keep the same guarantees. */
-  speaker: { id: string; lost: string[]; renderError: number; sayError: number; stoppedPeak: number };
+  speaker: {
+    id: string;
+    lost: string[];
+    renderError: number;
+    sayError: number;
+    underruns: number | undefined;
+    stoppedPeak: number;
+  };
   /** The creatures' own wasm, loaded and heard in a browser. */
   creature: { kinds: number; samples: number; peak: number };
   /** A song through the worker to the audio thread: the samples of its render, nothing lost. */
@@ -236,7 +243,7 @@ try {
           const speakerSaid = chimeraSpeaker.say(text, { context: speakerSayContext });
           await speakerSaid.queued;
           const speakerSayOut = (await speakerSayContext.startRendering()).getChannelData(0);
-          await speakerSaid.done;
+          const speakerSayEnd = await speakerSaid.done;
           let speakerSayError = 0;
           for (let i = 0; i < sayExpected.length; i++)
             speakerSayError = Math.max(speakerSayError, Math.abs(speakerSayOut[i] - sayExpected[i]));
@@ -296,6 +303,7 @@ try {
               lost: speakerRendered?.lost ?? ["render missing"],
               renderError: speakerRenderError,
               sayError: speakerSayError,
+              underruns: speakerSayEnd.underruns,
               stoppedPeak: speakerStoppedPeak,
             },
             creature: { kinds: creatures.list.length, samples: cry.length, peak: creaturePeak },
@@ -393,6 +401,8 @@ try {
           `createSpeaker("chimera")'s render differs from createVoice's by ${result.speaker.renderError}`,
         result.speaker.sayError > 0 &&
           `createSpeaker("chimera")'s say differs from speech() by ${result.speaker.sayError}`,
+        result.speaker.underruns !== 0 &&
+          `createSpeaker("chimera")'s say reported ${result.speaker.underruns} underruns (0 expected, a count required)`,
         !(result.creature.kinds > 0 && result.creature.samples > 0 && result.creature.peak > 0.001) &&
           `a creature was not heard: ${JSON.stringify(result.creature)}`,
         result.song.lost.length > 0 && `a sung say lost ${result.song.lost.join(", ")}`,

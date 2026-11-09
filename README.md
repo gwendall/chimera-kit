@@ -220,7 +220,7 @@ speaker.id; // "kokoro"
 speaker.supports; // { pitchCurve: false, soundTiming: false, breath: false, phones: true, ... }
 const spoken = speaker.say("Hello there.");
 spoken.lost; // what this call asked for that Kokoro could not do
-await spoken.done;
+await spoken.done; // { underruns: 0 }, or {} from the system voice, which can't tell
 speaker.free();
 ```
 

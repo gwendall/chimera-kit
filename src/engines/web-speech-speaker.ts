@@ -59,7 +59,7 @@ export async function createWebSpeechSpeaker(options: WebSpeechSpeakerOptions = 
         // Web Speech has no queueing step of its own to confirm against: the system has been told
         // to speak as soon as `say` returns.
         queued: Promise.resolve(),
-        done: speech.done,
+        done: speech.done.then(() => ({})),
         lost: [...new Set([...(isSong(text) ? unsung(text) : []), ...lostFor(speakOptions), ...speech.lost])],
         stop: speech.stop,
       };

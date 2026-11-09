@@ -54,7 +54,7 @@ export async function createChimeraSpeaker(options: ChimeraSpeakerOptions = {}):
       const playback = voice.say(text, speakOptions);
       return {
         queued: playback.queued,
-        done: playback.done.then(() => undefined),
+        done: playback.done.then(({ underruns }) => ({ underruns })),
         lost: NOTHING_LOST,
         stop: playback.stop,
       };

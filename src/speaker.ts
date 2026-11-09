@@ -50,12 +50,19 @@ export interface SpokenRendered extends Rendered {
   lost: string[];
 }
 
+/** How a spoken call ended. */
+export interface SpokenEnd {
+  /** Times the audio thread ran out of samples while it played. Absent when the backend can't
+   * tell, such as the system voice, which plays outside the page. */
+  underruns?: number;
+}
+
 export interface SpokenPlayback {
   /** Every sample that will play has reached the audio thread, or (`output: "playback"`) the
    * backend has been told to start. Resolves to nothing for a stopped call. */
   queued: Promise<void>;
   /** Speech has finished, or was stopped. */
-  done: Promise<void>;
+  done: Promise<SpokenEnd>;
   /** What this call asked for that the backend could not do. Empty when nothing was lost. */
   lost: string[];
   stop(): void;

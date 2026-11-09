@@ -154,7 +154,7 @@ export function speakerFromKokoro(voice: KokoroVoice): Speaker {
       );
       return {
         queued: playback.queued,
-        done: playback.done.then(() => undefined),
+        done: playback.done.then(({ underruns }) => ({ underruns })),
         lost: song ? [...song.lost, ...lost] : lost,
         stop: playback.stop,
       };

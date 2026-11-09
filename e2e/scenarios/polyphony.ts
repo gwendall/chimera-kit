@@ -158,12 +158,8 @@ async function stepInPage({
       };
     }
 
-    // worker and speaker modes: say() sends samples straight to the audio thread.
-    // `createWorkerVoice`'s `say()` reports underruns through `done`; `intone/speaker`'s unified
-    // `say()` discards them (`done: Promise<void>`, see src/engines/chimera-speaker.ts) - a real
-    // API gap this ramp surfaces, logged as a finding rather than worked around here.
-    const underrunsObservable = mode === "worker";
-
+    // worker and speaker modes: say() sends samples straight to the audio thread, and both
+    // report its underruns through `done`.
     // createWorkerVoice and createSpeaker return compatible but differently-typed `say()` results;
     // this harness only reads their common shape, so `any` here is deliberate, not a slip.
     const opened: any[] = await Promise.all(
@@ -181,9 +177,7 @@ async function stepInPage({
       const playback = opened[i].say(text, { context: audioCtx, destination: meter });
       underrunsP.push(
         playback.done
-          .then((end: { underruns?: number } | undefined) =>
-            underrunsObservable ? (end?.underruns ?? 0) : 0,
-          )
+          .then((end: { underruns?: number }) => end.underruns ?? 0)
           .catch(() => {
             errors++;
             return 0;
@@ -265,12 +259,9 @@ export const scenario: Scenario = {
             ctx.log(`polyphony: ${browserName} ${mode} N=${n}`);
             const r = await page.evaluate(stepInPage, { origin: ORIGIN, mode, n });
             const rtf = r.nominalAudioMs > 0 ? r.wallMs / r.nominalAudioMs : Number.POSITIVE_INFINITY;
-            // intone/speaker's say() does not report underruns (see the finding logged by
-            // stepInPage's comment): don't let a fake zero count as proof it held real time.
-            const underrunsObservable = mode !== "speaker";
             const holds =
               r.errors === 0 &&
-              (!underrunsObservable || r.underruns === 0) &&
+              r.underruns === 0 &&
               rtf <= THRESHOLDS.polyphony.realTimeFactorCeiling &&
               r.nonFiniteSamples === 0 &&
               r.createMs >= 0;
@@ -286,11 +277,8 @@ export const scenario: Scenario = {
                 name: `polyphony.${browserName}.${mode}.N${n}.underruns`,
                 value: r.underruns,
                 unit: "count",
-                threshold: underrunsObservable ? 0 : undefined,
-                pass: underrunsObservable ? r.underruns === 0 : undefined,
-                note: underrunsObservable
-                  ? undefined
-                  : "not observable: intone/speaker's say() drops PlaybackEnd (see findings)",
+                threshold: 0,
+                pass: r.underruns === 0,
               },
               { name: `polyphony.${browserName}.${mode}.N${n}.createMs`, value: r.createMs, unit: "ms" },
               {

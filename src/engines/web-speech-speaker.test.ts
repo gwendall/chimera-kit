@@ -106,7 +106,8 @@ describe("createWebSpeechSpeaker", () => {
     const speaker = await createWebSpeechSpeaker(options);
     const spoken = speaker.say("Hello there.", { rate: 1.2, f0: 300 });
     await spoken.queued;
-    await spoken.done;
+    // The system voice plays outside the page: it cannot know of underruns, so it reports none.
+    expect(await spoken.done).toEqual({});
     expect(synth.spoken.map((u) => u.text)).toEqual(["Hello there."]);
     expect(synth.spoken[0]?.rate).toBeCloseTo(1.2, 9);
     expect(spoken.lost).toEqual(["f0"]);
