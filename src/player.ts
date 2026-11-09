@@ -141,26 +141,30 @@ function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?:
   });
 
   const run = async (): Promise<PlaybackEnd> => {
-    await addProcessor(context);
-    if (context instanceof AudioContext && context.state !== "running") void context.resume();
-    const player = new AudioWorkletNode(context, "intone-player", {
-      numberOfInputs: 0,
-      outputChannelCount: [1],
-      processorOptions: { sourceRate: sampleRate },
-    });
-    node = player;
-    player.port.onmessage = ({ data }) => {
-      if (data?.queued !== undefined) markQueued();
-      if (data?.done) markDone({ underruns: data.underruns });
-    };
-    player.connect(options.destination ?? context.destination);
     try {
+      // `addProcessor` and the node below can both reject or throw (no AudioWorklet support, a
+      // strict CSP blocking the blob: URL it loads through). Everything that can fail is inside
+      // this try, so `queued` always settles in `finally` instead of hanging forever while `done`
+      // rejects on its own: a caller awaiting either promise gets a clear outcome, never a stall.
+      await addProcessor(context);
+      if (context instanceof AudioContext && context.state !== "running") void context.resume();
+      const player = new AudioWorkletNode(context, "intone-player", {
+        numberOfInputs: 0,
+        outputChannelCount: [1],
+        processorOptions: { sourceRate: sampleRate },
+      });
+      node = player;
+      player.port.onmessage = ({ data }) => {
+        if (data?.queued !== undefined) markQueued();
+        if (data?.done) markDone({ underruns: data.underruns });
+      };
+      player.connect(options.destination ?? context.destination);
       await feed(player, () => stopped, context);
       if (stopped) player.port.postMessage("stop");
       return await finished;
     } finally {
       markQueued();
-      player.disconnect();
+      node?.disconnect();
       options.signal?.removeEventListener("abort", stop);
       if (owned) await (context as AudioContext).close();
     }
