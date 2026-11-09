@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Score } from "@/lib/intone/index.js";
 import { studio } from "@/lib/studio";
+import { Latency } from "./Latency";
 import { useStudio } from "./useStudio";
 
 const LINE = "Hello there.";
@@ -10,6 +11,20 @@ const LINE = "Hello there.";
 export function Layers() {
   const { ready } = useStudio();
   const [score, setScore] = useState<Score | null>(null);
+  const section = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const node = section.current;
+    if (!node) return;
+    const seen = new IntersectionObserver(
+      (entries) => {
+        studio.showThroat = entries.some((entry) => entry.isIntersecting);
+      },
+      { threshold: 0.25 },
+    );
+    seen.observe(node);
+    return () => seen.disconnect();
+  }, []);
 
   useEffect(() => {
     if (ready) void studio.plan(LINE).then(setScore);
@@ -22,7 +37,7 @@ export function Layers() {
     .join(", ");
 
   return (
-    <section>
+    <section ref={section}>
       <span className="kicker">How it works</span>
       <h2>
         Plain data,
@@ -33,6 +48,19 @@ export function Layers() {
         Each step is a value you can read, change and hand back. Stay at the top and it is one line of code;
         drop as low as you want and you are moving a tongue.
       </p>
+      <p>
+        The monitor has switched to what is underneath:{" "}
+        <a href="https://github.com/jamesondh/chimera-vocal-synth">CHIMERA</a>, by{" "}
+        <a href="https://github.com/jamesondh">Jameson Hodge</a>, simulates air moving through a vocal tract,
+        one cell per slice. intone is what makes that usable in a product: streaming, clause cutting for
+        language models, direction, workers, and an interface that also drives other engines.
+      </p>
+      <div className="row">
+        <button type="button" className="go" disabled={!ready} onClick={() => void studio.speak(LINE)}>
+          Say it and watch the tract
+        </button>
+        <Latency />
+      </div>
       <div className="layers">
         <div className="layer">
           <span>4</span>

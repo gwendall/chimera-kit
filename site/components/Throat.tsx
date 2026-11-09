@@ -454,46 +454,57 @@ class Scope {
     }
   }
 
-  draw(ctx: CanvasRenderingContext2D, width: number, height: number, title: string) {
+  /** Draws one more column: from `column` when given, otherwise from what is sounding now. */
+  draw(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    title: string,
+    column: Uint8Array | null,
+  ) {
     const analyser = studio.analyser;
     const off = this.context;
-    if (!analyser || !off) return;
+    if (!off || !(column || analyser)) return;
     const w = Math.max(Math.round(width), 1);
     const h = Math.max(Math.round(height), 1);
     if (this.canvas.width !== w || this.canvas.height !== h) {
       this.canvas.width = w;
       this.canvas.height = h;
     }
-    if (this.bins.length !== analyser.frequencyBinCount)
-      this.bins = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(this.bins);
+    if (column) this.bins = column as Uint8Array<ArrayBuffer>;
+    else if (analyser) {
+      if (this.bins.length !== analyser.frequencyBinCount)
+        this.bins = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(this.bins);
+    }
 
     const step = Math.max(3, Math.round(w / 130));
     off.globalCompositeOperation = "copy";
     off.drawImage(this.canvas, -step, 0);
     off.globalCompositeOperation = "source-over";
-    const column = off.createImageData(step, h);
-    const nyquist = analyser.context.sampleRate / 2;
+    const strip = off.createImageData(step, h);
+    const nyquist = 24_000;
     for (let y = 0; y < h; y++) {
       const hz = SCALE_LOW * (SCALE_HIGH / SCALE_LOW) ** (1 - y / h);
       const value = this.bins[Math.round((hz / nyquist) * this.bins.length)] ?? 0;
       const color = this.palette[value] ?? [0, 0, 0];
       for (let x = 0; x < step; x++) {
         const at = (y * step + x) * 4;
-        column.data[at] = color[0];
-        column.data[at + 1] = color[1];
-        column.data[at + 2] = color[2];
-        column.data[at + 3] = 255;
+        strip.data[at] = color[0];
+        strip.data[at + 1] = color[1];
+        strip.data[at + 2] = color[2];
+        strip.data[at + 3] = 255;
       }
     }
-    off.putImageData(column, w - step, 0);
+    off.putImageData(strip, w - step, 0);
 
     ctx.drawImage(this.canvas, 0, 0, width, height);
-    ctx.font = `italic 34px ${fonts.serif}`;
+    if (!title) return;
+    ctx.font = `italic ${width < 480 ? 22 : 34}px ${fonts.serif}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = "rgb(244,239,232)";
-    ctx.fillText(title, 24, 52);
+    ctx.fillText(title, 20, width < 480 ? 34 : 52);
   }
 }
 
@@ -530,11 +541,22 @@ export function Throat() {
       const headHeight = box.height - stripHeight - 24;
       const ink = reading.mode === "ghost" ? 0.78 : 1;
 
-      if (reading.mode === "scope") {
-        scope.draw(ctx, box.width, box.height, studio.getSnapshot().label);
+      absorb(heat, reading.recent);
+      if (reading.mode === "scope" || !studio.showThroat) {
+        const room = reading.score ? box.height - stripHeight - 26 : box.height;
+        const title = reading.mode === "scope" ? studio.getSnapshot().label : "";
+        scope.draw(
+          ctx,
+          box.width,
+          room,
+          title,
+          reading.mode === "ghost" ? studio.ghostColumn(reading.t) : null,
+        );
+        if (reading.score) {
+          drawScore(ctx, reading, 20, box.height - stripHeight, box.width - 40, stripHeight - 24, ink);
+        }
         return;
       }
-      absorb(heat, reading.recent);
       if (reading.frame) {
         // On a phone there is only room for the airway itself, so the view closes in on it.
         const scale = compact
@@ -560,7 +582,7 @@ export function Throat() {
       ref={canvasRef}
       className="throat-canvas"
       role="img"
-      aria-label="A live simulation of a vocal tract, lit where the air is pushed hardest"
+      aria-label="A live spectrogram of the voice, and of the vocal tract while How it works is on screen"
     />
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Creatures } from "@/lib/intone/creatures.js";
 import { studio } from "@/lib/studio";
+import { Latency } from "./Latency";
 
 export function Beasts() {
   const [zoo, setZoo] = useState<Creatures | null>(null);
@@ -21,16 +22,19 @@ export function Beasts() {
 
   return (
     <section id="creatures">
-      <span className="kicker">Not only people</span>
+      <span className="kicker">Not only people, straight from CHIMERA</span>
       <h2>
         Same physics.
         <br />
-        <em>Longer</em> throats.
+        <em>Other</em> animals.
       </h2>
       <p>
-        Change the anatomy and the same simulation gives you a bird, a seal, an alligator or an elephant.
-        These are not samples either.
+        CHIMERA simulates anatomy, so changing the anatomy gives you a bird, a seal, an alligator or an
+        elephant. None of these are samples. Each call is computed when you press it.
       </p>
+      <div className="row">
+        <Latency label="last call, first sample" />
+      </div>
       <div className="zoo">
         {(zoo?.list ?? []).map((creature) => (
           <div className="beast" key={creature.id}>

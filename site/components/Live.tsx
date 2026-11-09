@@ -48,7 +48,7 @@ export function Live() {
       </h2>
       <p>
         Below, tokens arrive at the pace of a language model. Sound starts after the first few, not after the
-        last.
+        last, and Interrupt really stops it: nothing was queued on a server.
       </p>
       <div className="tokens">
         {shown}

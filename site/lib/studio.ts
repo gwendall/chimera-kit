@@ -1,9 +1,12 @@
 // One voice, one audio graph and one clock for the whole page: every demo speaks through here, and
-// the throat on the right draws whatever is sounding now.
+// the monitor on the right measures and draws whatever is sounding now.
+import { type Scene, scene as sceneTurns, type Turn } from "./crowd";
 import { type Creatures, loadCreatures } from "./intone/creatures.js";
 import {
+  type AsyncVoice,
   type Body,
   createVoice,
+  createWorkerVoice,
   deliver,
   type Mood,
   type Playback,
@@ -14,6 +17,7 @@ import {
   unlockAudio,
   type Voice,
 } from "./intone/index.js";
+import { SPECTRUM_SIZE, spectrumColumn } from "./spectrum";
 
 export interface Snapshot {
   ready: boolean;
@@ -21,6 +25,31 @@ export interface Snapshot {
   /** Milliseconds from the call to the first sample computed, for the last thing spoken. */
   firstSampleMs: number | null;
   label: string;
+  /** Milliseconds from asking for the engine to being able to speak. */
+  engineLoadMs: number | null;
+  /** Seconds of voice computed per second of work, for the last thing spoken. */
+  speedX: number | null;
+  /** Voices sounding right now. */
+  voices: number;
+  /** The last first-sample times, oldest first. */
+  history: number[];
+  /** Network requests the page made while anything was speaking. */
+  requests: number;
+  /** What this device's own audio path adds after the sample is computed. */
+  deviceMs: number | null;
+}
+
+export interface CrowdReport {
+  voices: number;
+  running: boolean;
+  spoken: number;
+  firstMs: number[];
+  /** Seconds of voice the audio thread had to go without. */
+  gapSeconds: number;
+  /** Seconds of voice computed so far, summed over every voice. */
+  audioSeconds: number;
+  errors: number;
+  peak: number;
 }
 
 export interface Reading {
@@ -50,14 +79,34 @@ interface SpeakOptions {
   style?: Mood;
   intensity?: number;
   label?: string;
+  f0?: number;
+  rate?: number;
+  accent?: number;
+  onFirstSample?: (ms: number) => void;
 }
 
-const GHOST_LINE = "I do not have a body, but I do have a throat.";
+const GHOST_LINE = "Every syllable here does exactly what it is told.";
 const SAMPLE_RATE = 48_000;
+const MIN_DB = -92;
+const MAX_DB = -18;
+const HISTORY = 64;
+/** Seconds of a crowd's voice held back before it starts. */
+const CROWD_CUSHION = 0.6;
 
 class Studio {
   private listeners = new Set<() => void>();
-  private snapshot: Snapshot = { ready: false, speaking: false, firstSampleMs: null, label: "" };
+  private snapshot: Snapshot = {
+    ready: false,
+    speaking: false,
+    firstSampleMs: null,
+    label: "",
+    engineLoadMs: null,
+    speedX: null,
+    voices: 0,
+    history: [],
+    requests: 0,
+    deviceMs: null,
+  };
   private voice: Voice | null = null;
   private loading: Promise<Voice> | null = null;
   private zoo: Promise<Creatures> | null = null;
@@ -71,10 +120,20 @@ class Studio {
     score: Score;
     duration: number | null;
     cursor: number;
+    columns: Uint8Array[];
   } | null = null;
+  private pool: Promise<AsyncVoice>[] = [];
+  private crowdRun: AbortController | null = null;
   private serial = 0;
+  /** The last stretch of time something was sounding: the network counter looks at this window. */
+  private spokeFrom = Number.POSITIVE_INFINITY;
+  private spokeUntil = Number.POSITIVE_INFINITY;
+  /** Workers asked for while a voice was sounding, started as soon as it ends. */
+  private warmLater = 0;
   /** A creature's picture stays up for a moment after its call ends. */
   private scopeUntil = 0;
+  /** The monitor draws the throat itself only while "How it works" is on screen. */
+  showThroat = false;
 
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
@@ -84,28 +143,57 @@ class Studio {
   getSnapshot = () => this.snapshot;
 
   private set(patch: Partial<Snapshot>) {
+    const was = this.snapshot.speaking;
     this.snapshot = { ...this.snapshot, ...patch };
+    if (this.snapshot.speaking !== was) {
+      if (this.snapshot.speaking) {
+        this.spokeFrom = performance.now();
+        this.spokeUntil = Number.POSITIVE_INFINITY;
+      } else {
+        this.spokeUntil = performance.now();
+        if (this.warmLater) {
+          this.spawn(this.warmLater);
+          this.warmLater = 0;
+        }
+      }
+    }
     for (const listener of this.listeners) listener();
   }
 
   /** Starts loading the engine; safe to call any number of times. */
   load(): Promise<Voice> {
-    this.loading ??= createVoice({ body: "female" }).then((voice) => {
+    if (this.loading) return this.loading;
+    const asked = performance.now();
+    this.loading = createVoice({ body: "female" }).then((voice) => {
       this.voice = voice;
-      this.set({ ready: true });
+      this.set({ ready: true, engineLoadMs: performance.now() - asked });
+      this.countRequests();
       void this.buildGhost(voice);
       return voice;
     });
     return this.loading;
   }
 
-  /** A real, silent reading, computed in small slices, that keeps the throat moving before any click. */
+  /** From here on, anything fetched while a voice is sounding is counted, and shown. */
+  private countRequests() {
+    if (typeof PerformanceObserver === "undefined") return;
+    new PerformanceObserver((list) => {
+      const during = list
+        .getEntries()
+        .filter(({ startTime }) => startTime >= this.spokeFrom && startTime <= this.spokeUntil).length;
+      if (during) this.set({ requests: this.snapshot.requests + during });
+    }).observe({ type: "resource" });
+  }
+
+  /** A real, silent reading, computed in small slices, that keeps the monitor moving before any click. */
   private async buildGhost(voice: Voice) {
     const score = voice.plan(GHOST_LINE);
     const frames: Float32Array[] = [];
     const times: number[] = [];
     let samples = 0;
-    const ghost = { frames, times, score, duration: null as number | null, cursor: 0 };
+    const columns: Uint8Array[] = [];
+    const ring = new Float32Array(SPECTRUM_SIZE);
+    const ghost = { frames, times, score, duration: null as number | null, cursor: 0, columns };
     this.ghost = ghost;
     const chunks = voice.stream(score, {
       chunkSize: 480,
@@ -123,6 +211,9 @@ class Studio {
           return;
         }
         samples += next.value.length;
+        ring.copyWithin(0, next.value.length);
+        ring.set(next.value, SPECTRUM_SIZE - next.value.length);
+        columns.push(spectrumColumn(ring, MIN_DB, MAX_DB));
       }
       await new Promise((resolve) => setTimeout(resolve, 8));
     }
@@ -135,12 +226,22 @@ class Studio {
       this.output = this.context.createAnalyser();
       this.output.fftSize = 4096;
       this.output.smoothingTimeConstant = 0;
-      this.output.minDecibels = -92;
-      this.output.maxDecibels = -18;
+      this.output.minDecibels = MIN_DB;
+      this.output.maxDecibels = MAX_DB;
       this.output.connect(this.context.destination);
     }
     unlockAudio(this.context);
     return { context: this.context, output: this.output };
+  }
+
+  /** The page's audio graph, for a demo that plays through something other than this voice. */
+  route(): { context: AudioContext; output: AnalyserNode } {
+    return this.audio();
+  }
+
+  /** A first sample measured outside this class, shown on the monitor all the same. */
+  note(ms: number) {
+    this.set({ firstSampleMs: ms });
   }
 
   /** Called on every tap until sound is allowed, so a demo may await something before it speaks. */
@@ -152,12 +253,21 @@ class Studio {
     return this.output;
   }
 
+  /** The silent reading's spectrum at a moment of it, computed like the analyser's. */
+  ghostColumn(t: number): Uint8Array | null {
+    const columns = this.ghost?.columns;
+    if (!columns?.length) return null;
+    return columns[Math.min(columns.length - 1, Math.floor(t * 100))] ?? null;
+  }
+
   stop() {
     this.serial++;
     this.playback?.stop();
     this.playback = null;
     this.sounding = null;
-    this.set({ speaking: false });
+    this.crowdRun?.abort();
+    this.crowdRun = null;
+    this.set({ speaking: false, voices: 0 });
   }
 
   private begin(kind: Sounding["kind"], score: Score | null, label: string): Sounding {
@@ -173,7 +283,7 @@ class Studio {
       startedAt: null,
     };
     this.sounding = sounding;
-    this.set({ speaking: true, label });
+    this.set({ speaking: true, label, voices: 1 });
     return sounding;
   }
 
@@ -184,27 +294,59 @@ class Studio {
       if (sounding.kind === "creature") this.scopeUntil = performance.now() + 1600;
       this.sounding = null;
       this.playback = null;
-      this.set({ speaking: false });
+      this.set({ speaking: false, voices: 0 });
     });
   }
 
-  /** Records when the first sample left, and on which clock, then hands the chunks on. */
+  /** What a first sample cost, shown everywhere at once. */
+  private measured(ms: number, context: AudioContext, keep: boolean) {
+    this.set({
+      firstSampleMs: ms,
+      deviceMs: (context.baseLatency + (context.outputLatency || 0)) * 1000,
+      ...(keep ? { history: [...this.snapshot.history.slice(1 - HISTORY), ms] } : {}),
+    });
+  }
+
+  /** Measures the source as it computes: when its first sample left, and how much faster than real time. */
   private *timed(
     chunks: Iterable<Float32Array>,
     sounding: Sounding,
     context: AudioContext,
     calledAt: number,
+    sampleRate: number,
     onSample: (n: number) => void,
+    onFirstSample?: (ms: number) => void,
   ) {
+    const source = chunks[Symbol.iterator]();
     let samples = 0;
-    for (const chunk of chunks) {
-      if (sounding.startedAt === null) {
-        sounding.startedAt = context.currentTime + context.baseLatency + (context.outputLatency || 0);
-        this.set({ firstSampleMs: performance.now() - calledAt });
+    let busy = 0;
+    let shown = 0;
+    const show = () => {
+      if (busy > 0) this.set({ speedX: ((samples / sampleRate) * 1000) / busy });
+    };
+    try {
+      for (;;) {
+        const before = performance.now();
+        const next = source.next();
+        const after = performance.now();
+        if (next.done) return;
+        busy += after - before;
+        if (sounding.startedAt === null) {
+          sounding.startedAt = context.currentTime + context.baseLatency + (context.outputLatency || 0);
+          this.measured(after - calledAt, context, true);
+          onFirstSample?.(after - calledAt);
+        }
+        samples += next.value.length;
+        onSample(samples);
+        if (after - shown > 200) {
+          shown = after;
+          show();
+        }
+        yield next.value;
       }
-      samples += chunk.length;
-      onSample(samples);
-      yield chunk;
+    } finally {
+      show();
+      source.return?.();
     }
   }
 
@@ -213,10 +355,13 @@ class Studio {
     const { context, output } = this.audio();
     const voice = this.voice ?? (await this.load());
     const calledAt = performance.now();
-    const { body, style, intensity, label } = options;
+    const { body, style, intensity, label, f0, rate, accent, onFirstSample } = options;
     const voiced = {
       ...(body === undefined ? {} : { body }),
       ...(style === undefined ? {} : { style: deliver(style, intensity ?? 1) }),
+      ...(f0 === undefined ? {} : { f0 }),
+      ...(rate === undefined ? {} : { rate }),
+      ...(accent === undefined ? {} : { accent }),
     };
     const score = typeof input === "string" || "notes" in input ? voice.plan(input as string, voiced) : input;
     const sounding = this.begin("voice", score, label ?? "");
@@ -225,9 +370,17 @@ class Studio {
       ...(body === undefined ? {} : { body }),
       airway: (state) => this.record(sounding, state, samples / voice.sampleRate),
     });
-    const timed = this.timed(chunks, sounding, context, calledAt, (n) => {
-      samples = n;
-    });
+    const timed = this.timed(
+      chunks,
+      sounding,
+      context,
+      calledAt,
+      voice.sampleRate,
+      (n) => {
+        samples = n;
+      },
+      onFirstSample,
+    );
     this.watch(sounding, play(timed, voice.sampleRate, { context, destination: output }));
   }
 
@@ -247,7 +400,7 @@ class Studio {
         if (first) {
           first = false;
           sounding.startedAt = context.currentTime + context.baseLatency + (context.outputLatency || 0);
-          studio.set({ firstSampleMs: performance.now() - calledAt });
+          studio.measured(performance.now() - calledAt, context, false);
           options.onFirstSample?.();
         }
         samples += chunk.length;
@@ -268,14 +421,148 @@ class Studio {
     const { context, output } = this.audio();
     const zoo = await this.creatures();
     const sounding = this.begin("creature", null, `${id}: ${call}`);
-    sounding.startedAt = context.currentTime;
+    const calledAt = performance.now();
     const creature = zoo.create(id, params);
-    const playback = play(creature.stream(call, { chunkSize: 512 }), zoo.sampleRate, {
+    const chunks = this.timed(
+      creature.stream(call, { chunkSize: 512 }),
+      sounding,
       context,
-      destination: output,
-    });
+      calledAt,
+      zoo.sampleRate,
+      () => {},
+    );
+    const playback = play(chunks, zoo.sampleRate, { context, destination: output });
     this.watch(sounding, playback);
     void playback.done.finally(() => creature.free());
+  }
+
+  /** Starts the workers a crowd of this size needs, one per voice: a worker speaks one thing at a time. */
+  warmCrowd(voices: number): void {
+    if (this.snapshot.speaking) this.warmLater = Math.max(this.warmLater, voices);
+    else this.spawn(voices);
+  }
+
+  private spawn(voices: number): Promise<AsyncVoice[]> {
+    while (this.pool.length < voices) this.pool.push(createWorkerVoice({ body: "female" }));
+    return Promise.all(this.pool.slice(0, voices));
+  }
+
+  /** A whole scene at once: every voice a real simulation in its own worker, mixed live. */
+  async crowd(name: Scene, voices: number, on: (report: CrowdReport) => void): Promise<CrowdReport> {
+    const { context, output } = this.audio();
+    this.stop();
+    const report: CrowdReport = {
+      voices,
+      running: true,
+      spoken: 0,
+      firstMs: [],
+      gapSeconds: 0,
+      audioSeconds: 0,
+      errors: 0,
+      peak: 0,
+    };
+    on({ ...report });
+    const pool = await this.spawn(voices);
+    const run = new AbortController();
+    this.crowdRun = run;
+    this.scopeUntil = 0;
+    // Voices add up in power: 1/sqrt(N) keeps the level, and the compressor catches the moments they line up.
+    const bus = context.createGain();
+    bus.gain.value = 1 / Math.sqrt(voices);
+    const limiter = context.createDynamicsCompressor();
+    bus.connect(limiter);
+    limiter.connect(output);
+    this.set({ speaking: true, label: `${voices} ${voices === 1 ? "voice" : "voices"}: ${name}`, voices: 0 });
+
+    let active = 0;
+    const speak = async (turn: Turn) => {
+      const voice = pool[turn.voice] as AsyncVoice;
+      const calledAt = performance.now();
+      const { say, body, f0, rate, delivery, intensity } = turn;
+      const sung = typeof say !== "string";
+      const chunks = voice.stream(say, {
+        body,
+        ...(sung || f0 === undefined ? {} : { f0 }),
+        ...(sung || rate === undefined ? {} : { rate }),
+        ...(delivery === undefined ? {} : { delivery }),
+        ...(intensity === undefined ? {} : { intensity }),
+      });
+      // A crowd can spare a moment at the start, and it pays for the seconds when every core is busy.
+      const stamped = async function* () {
+        let first = true;
+        let held: Float32Array[] | null = [];
+        let heldSamples = 0;
+        for await (const chunk of chunks) {
+          if (first) {
+            first = false;
+            report.firstMs.push(performance.now() - calledAt);
+            on({ ...report, firstMs: [...report.firstMs] });
+          }
+          report.audioSeconds += chunk.length / voice.sampleRate;
+          if (held) {
+            held.push(chunk);
+            heldSamples += chunk.length;
+            if (heldSamples < CROWD_CUSHION * voice.sampleRate) continue;
+            yield* held;
+            held = null;
+            continue;
+          }
+          yield chunk;
+        }
+        if (held) yield* held;
+      };
+      active++;
+      report.peak = Math.max(report.peak, active);
+      this.set({ voices: active });
+      try {
+        const { underruns } = await play(stamped(), voice.sampleRate, {
+          context,
+          destination: bus,
+          signal: run.signal,
+        }).done;
+        report.gapSeconds += (underruns * 128) / context.sampleRate;
+        report.spoken++;
+      } catch {
+        report.errors++;
+      }
+      active--;
+      if (this.crowdRun === run) this.set({ voices: active });
+      on({ ...report, firstMs: [...report.firstMs] });
+    };
+
+    // Each person finishes a line before starting the next, however long the line turned out to be.
+    const lines = new Map<number, Turn[]>();
+    for (const turn of sceneTurns(name, voices))
+      lines.set(turn.voice, [...(lines.get(turn.voice) ?? []), turn]);
+    const began = performance.now();
+    const until = (ms: number) =>
+      new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, Math.max(0, ms - performance.now()));
+        run.signal.addEventListener("abort", () => {
+          clearTimeout(timer);
+          resolve();
+        });
+      });
+    await Promise.all(
+      [...lines.values()].map(async (own) => {
+        for (const turn of own) {
+          await until(began + turn.at * 1000);
+          if (run.signal.aborted) return;
+          await speak(turn);
+        }
+      }),
+    );
+    bus.disconnect();
+    limiter.disconnect();
+    if (this.crowdRun === run) {
+      this.crowdRun = null;
+      this.scopeUntil = performance.now() + 900;
+      this.set({ speaking: false, voices: 0 });
+    }
+    report.running = false;
+    const end = { ...report, firstMs: [...report.firstMs] };
+    on(end);
+    return end;
   }
 
   private record(sounding: Sounding, state: Float32Array, t: number) {
@@ -286,7 +573,7 @@ class Studio {
   /** What the throat should show at this instant. */
   read(): Reading {
     const now = this.sounding;
-    if (now?.kind === "creature" || performance.now() < this.scopeUntil) {
+    if (this.crowdRun || now?.kind === "creature" || performance.now() < this.scopeUntil) {
       return { mode: "scope", frame: null, recent: [], t: 0, score: null };
     }
     if (now && this.context && now.startedAt !== null) {

@@ -3,12 +3,14 @@
 import { useEffect } from "react";
 import { Anyone } from "@/components/Anyone";
 import { Beasts } from "@/components/Beasts";
+import { Crowd } from "@/components/Crowd";
 import { Direct } from "@/components/Direct";
-import { Hero } from "@/components/Hero";
+import { Engines } from "@/components/Engines";
 import { Layers } from "@/components/Layers";
 import { Live } from "@/components/Live";
+import { Monitor } from "@/components/Monitor";
 import { Sing } from "@/components/Sing";
-import { Throat } from "@/components/Throat";
+import { Speed } from "@/components/Speed";
 import { studio } from "@/lib/studio";
 
 export default function Page() {
@@ -29,19 +31,23 @@ export default function Page() {
   return (
     <main className="page">
       <aside className="pane">
-        <Throat />
+        <Monitor />
       </aside>
       <div className="story">
-        <Hero />
         <Direct />
+        <Speed />
         <Anyone />
         <Sing />
+        <Crowd />
         <Beasts />
         <Live />
+        <Engines />
         <Layers />
         <footer>
-          Built on <a href="https://github.com/jamesondh/chimera-vocal-synth">CHIMERA</a>, a physical model of
-          the voice. It does not sound natural and it is not trying to. Nothing you type leaves this page.
+          The voice is <a href="https://github.com/jamesondh/chimera-vocal-synth">CHIMERA</a> by{" "}
+          <a href="https://github.com/jamesondh">Jameson Hodge</a>, MIT licensed. intone is the layer that
+          puts it in products. It does not sound natural and it is not trying to. Nothing you type leaves this
+          page.
         </footer>
       </div>
     </main>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Score } from "@/lib/intone/index.js";
 import { take } from "@/lib/intone/index.js";
 import { studio } from "@/lib/studio";
+import { Latency } from "./Latency";
 import { useStudio } from "./useStudio";
 
 const SENTENCE = "I never said she stole my money.";
@@ -55,29 +56,32 @@ function leanOn(plain: Score, word: string): Score {
 }
 
 export function Direct() {
-  const { ready } = useStudio();
+  const { ready, firstSampleMs } = useStudio();
   const [word, setWord] = useState<string | null>(null);
   const [base, setBase] = useState<Score | null>(null);
   const [bends, setBends] = useState<Bend[]>([]);
   const svg = useRef<SVGSVGElement>(null);
   const drag = useRef<{ t: number; y: number; start: Bend[] } | null>(null);
+  const planned = useRef<Score | null>(null);
 
   useEffect(() => {
     if (!ready) return;
     void studio.plan(SENTENCE).then((plain) => {
-      setBase(word ? leanOn(plain, word) : plain);
+      planned.current = plain;
+      setBase(plain);
     });
-  }, [ready, word]);
+  }, [ready]);
 
   const score = useMemo(() => (base ? bent(base, bends) : null), [base, bends]);
 
-  const choose = async (next: string) => {
+  const choose = (next: string) => {
+    const plain = planned.current;
+    if (!plain) return;
     setWord(next);
     setBends([]);
-    const plain = await studio.plan(SENTENCE);
     const shaped = leanOn(plain, next);
     setBase(shaped);
-    void studio.speak(shaped);
+    void studio.speak(shaped, { label: next });
   };
 
   const place = (event: React.PointerEvent) => {
@@ -104,16 +108,22 @@ export function Direct() {
 
   return (
     <section>
-      <span className="kicker">Direction</span>
-      <h2>
-        One sentence.
+      <span className="kicker">
+        Powered by <a href="https://github.com/jamesondh/chimera-vocal-synth">CHIMERA</a>, the physical voice
+        model by <a href="https://github.com/jamesondh">Jameson Hodge</a>
+      </span>
+      <h1>
+        A voice you
         <br />
-        <em>Seven</em> meanings.
-      </h2>
-      <p>Other voices guess what you mean. This one does what it is told: click a word to lean on it.</p>
+        can <em>direct.</em>
+      </h1>
+      <p>
+        Speech that runs in the page, starts in milliseconds and does what your code says, down to the
+        syllable. Click a word: the same sentence means something else.
+      </p>
       <div className="sentence">
         {WORDS.map((w) => (
-          <button key={w} type="button" aria-pressed={word === w} onClick={() => void choose(w)}>
+          <button key={w} type="button" aria-pressed={word === w} onClick={() => choose(w)}>
             {w}
           </button>
         ))}
@@ -140,7 +150,7 @@ export function Direct() {
         }}
         onPointerUp={() => {
           drag.current = null;
-          if (score) void studio.speak(score);
+          if (score) void studio.speak(score, { label: "your curve" });
         }}
       >
         {score?.words?.map((w) => (
@@ -158,12 +168,15 @@ export function Direct() {
         <path d={path} fill="none" stroke="#ff5c36" strokeWidth="2.4" vectorEffect="non-scaling-stroke" />
       </svg>
       <div className="row">
-        <span className="kicker">Pull the line up or down. It is the pitch the voice will sing.</span>
+        <span className="kicker">Pull the line. It is the pitch, and it plays when you let go.</span>
+        <Latency />
         <button
           type="button"
           className="ghost-button"
           onClick={() => {
             setBends([]);
+            setWord(null);
+            setBase(planned.current);
           }}
         >
           Reset
@@ -172,7 +185,25 @@ export function Direct() {
       <div className="code">
         {'const t = take(voice.plan("I never said she stole my money."));\n'}
         <span className="hot">{`t.word("${word ?? "never"}").emphasize();`}</span>
-        {"\nvoice.render(t.score);"}
+        {"\nplay(voice.stream(t.score), voice.sampleRate);"}
+      </div>
+      <div className="stats">
+        <div className="stat">
+          <b>{firstSampleMs === null ? "..." : `${firstSampleMs.toFixed(1)} ms`}</b>
+          <span>to the first sample, measured just now</span>
+        </div>
+        <div className="stat">
+          <b>221 KB</b>
+          <span>of engine, gzipped</span>
+        </div>
+        <div className="stat">
+          <b>0</b>
+          <span>model weights</span>
+        </div>
+        <div className="stat">
+          <b>0</b>
+          <span>words sent to a server</span>
+        </div>
       </div>
     </section>
   );

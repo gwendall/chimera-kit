@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { studio } from "@/lib/studio";
+import { Latency } from "./Latency";
 
 // An original tune and words, written for this page.
 const SYLLABLES = "No- bo- dy taught me how to sing, I on- ly have a tube of air.".split(" ");
@@ -37,7 +38,7 @@ export function Sing() {
         It can carry
         <br />a <em>tune.</em>
       </h2>
-      <p>The same throat, on notes. Drag any note up or down and it sings the new melody straight away.</p>
+      <p>The same engine, on notes. Drag any note up or down and it sings the new melody straight away.</p>
       <svg
         className="roll"
         viewBox="0 0 1000 250"
@@ -102,6 +103,7 @@ export function Sing() {
             onChange={(event) => setVibrato(Number(event.target.value))}
           />
         </label>
+        <Latency />
       </div>
     </section>
   );
