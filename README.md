@@ -136,7 +136,9 @@ const score = voice.plan(song); // the same score, to transform or inspect
 Hyphens split a word's syllables as typed, and a lone `-` or `~` holds the previous vowel through
 one more note. The first beat comes just after the first consonants, or at `t0` seconds to line
 it up with an accompaniment. A song, like a score, refuses `rate`, `f0` and `accent`, and takes
-only the style given with its call. Worker voices and speakers do not sing yet.
+only the style given with its call (`delivery` on a worker voice or a speaker). A speaker that
+cannot sing (`supports.singing` is false: Kokoro, the device's voices) speaks the lyrics and says
+`notes` in `lost`.
 
 ## The device's voices
 

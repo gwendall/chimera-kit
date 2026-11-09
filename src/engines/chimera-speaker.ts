@@ -2,10 +2,11 @@
  * CHIMERA behind the shared `Speaker` interface (`../speaker.ts`). A thin wrapper: the worker and
  * its guarantees (samples straight to the audio thread, `stop()` before anything plays gives
  * silence, `queued` confirmed by the audio thread) are `createWorkerVoice`'s own, unchanged here.
- * CHIMERA honors a text request's body, rate, f0, accent and delivery exactly, so nothing is ever
- * lost.
+ * CHIMERA honors a text request's body, rate, f0, accent and delivery exactly, and sings a song's
+ * notes, so nothing is ever lost.
  */
 import type {
+  Song,
   Speaker,
   SpeakerSayOptions,
   SpeakerStreamOptions,
@@ -24,6 +25,7 @@ const SUPPORTS: Supports = {
   phones: true,
   langs: ["en"],
   bodies: ["male", "female", "child"],
+  singing: true,
 };
 
 /** CHIMERA has no gap for a text request: body, rate, f0 and accent are all honored exactly. */
@@ -38,12 +40,12 @@ export async function createChimeraSpeaker(options: ChimeraSpeakerOptions = {}):
     supports: SUPPORTS,
     sampleRate: voice.sampleRate,
 
-    async render(text: string, speakOptions?: SpeakerStreamOptions): Promise<SpokenRendered> {
+    async render(text: string | Song, speakOptions?: SpeakerStreamOptions): Promise<SpokenRendered> {
       const rendered = await voice.render(text, speakOptions);
       return { ...rendered, lost: NOTHING_LOST };
     },
 
-    async *stream(text: string, speakOptions?: SpeakerStreamOptions) {
+    async *stream(text: string | Song, speakOptions?: SpeakerStreamOptions) {
       for await (const chunk of voice.stream(text, speakOptions)) yield chunk;
       return NOTHING_LOST;
     },

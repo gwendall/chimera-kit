@@ -1,5 +1,6 @@
 import type { Engine, EngineUtterance, SpeakOptions } from "./engine.js";
 import type { Score, Song } from "./layers.js";
+import { isSong, refuseTiming } from "./song.js";
 import type { ScoreTransform } from "./transforms.js";
 
 /** One audio-worklet quantum: 2.7 ms of audio, so that the first sound leaves as soon as it exists. */
@@ -130,22 +131,12 @@ class EngineVoice implements Voice {
     }
     if (!this.engine.beginScore) throw new Error("intone: this engine cannot render a score");
     let score: Score;
-    if ("notes" in input) score = this.plan(input, options);
+    if (isSong(input)) score = this.plan(input, options);
     else {
       refuseTiming("a score", options);
       score = options?.style ? options.style(input) : input;
     }
     const body = options?.body ?? this.defaults.body;
     return this.engine.beginScore(body === undefined ? { score } : { score, body });
-  }
-}
-
-/** A score or a song already holds its timing and pitch: changing them is a transform. */
-function refuseTiming(what: string, options?: VoiceOptions): void {
-  const refused = (["rate", "f0", "accent"] as const).filter((key) => options?.[key] !== undefined);
-  if (refused.length > 0) {
-    throw new RangeError(
-      `intone: ${what} ignores ${refused.join(", ")}; transform it instead (stretch, shift, deliver)`,
-    );
   }
 }

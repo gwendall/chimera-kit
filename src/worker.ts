@@ -5,16 +5,18 @@
  */
 import { deliver } from "./delivery.js";
 import { createVoice } from "./index.js";
+import type { Song } from "./layers.js";
 import { pacedClause } from "./pace.js";
+import { isSong } from "./song.js";
 import type { StreamOptions, Voice } from "./voice.js";
 import type { DeliveryOptions, WorkerStreamOptions, WorkerVoiceOptions } from "./worker-voice.js";
 
 export type ToWorker =
   | { type: "open"; options: Omit<WorkerVoiceOptions, "worker"> }
-  | { type: "render" | "stream"; id: number; text: string; options: WorkerStreamOptions }
+  | { type: "render" | "stream"; id: number; text: string | Song; options: WorkerStreamOptions }
   /** Starts speaking into `port`, an AudioWorklet player's, the clauses that follow. */
   | { type: "say"; id: number; options: WorkerStreamOptions; port: MessagePort }
-  | { type: "clause"; id: number; text: string }
+  | { type: "clause"; id: number; text: string | Song }
   /** No more clauses for this `say`. */
   | { type: "said"; id: number }
   | { type: "cancel"; id: number }
@@ -49,7 +51,7 @@ const breathe = () =>
 
 /** A request that has arrived and not finished: its clauses so far, and whether it was cancelled. */
 interface Pending {
-  clauses: string[];
+  clauses: (string | Song)[];
   said: boolean;
   cancelled: boolean;
   wake?: (() => void) | undefined;
@@ -59,9 +61,13 @@ let voice: Voice | undefined;
 /** The voice's own delivery, which each request's may replace. */
 let delivering: DeliveryOptions = {};
 
-/** A request's options for the voice: its delivery, or the voice's, as a style. */
-function voiceOptions(options: WorkerStreamOptions): StreamOptions {
-  const { delivery = delivering.delivery, intensity = delivering.intensity, ...rest } = options;
+/**
+ * A request's options for the voice: its delivery, or the voice's, as a style. A song takes only
+ * its call's, as on the page: the voice's own would slow and detune the melody.
+ */
+function voiceOptions(options: WorkerStreamOptions, song = false): StreamOptions {
+  const own = song ? {} : delivering;
+  const { delivery = own.delivery, intensity = own.intensity, ...rest } = options;
   return delivery === undefined ? rest : { ...rest, style: deliver(delivery, intensity) };
 }
 const pending = new Map<number, Pending>();
@@ -108,14 +114,15 @@ async function serve(request: ToWorker): Promise<void> {
         if (!voice) throw new Error("intone: the worker has no voice");
         if (request.type === "render") {
           if (state.cancelled) return;
-          const { audio } = voice.render(request.text, voiceOptions(request.options));
+          const { text, options } = request;
+          const { audio } = voice.render(text, voiceOptions(options, isSong(text)));
           post({ type: "rendered", id, audio }, [audio.buffer]);
           return;
         }
         const send = port
           ? (chunk: Float32Array) => port.postMessage(chunk, [chunk.buffer])
           : (chunk: Float32Array) => post({ type: "chunk", id, chunk }, [chunk.buffer]);
-        if (await speak(voice, state, voiceOptions(request.options), send, request.type === "say")) {
+        if (await speak(voice, state, request.options, send, request.type === "say")) {
           if (port) port.postMessage("end");
           else post({ type: "end", id });
         }
@@ -137,11 +144,11 @@ async function serve(request: ToWorker): Promise<void> {
   }
 }
 
-/** Speaks a request's clauses as they come. False when it was cancelled. */
+/** Speaks a request's clauses (or its song) as they come. False when it was cancelled. */
 async function speak(
   voice: Voice,
   state: Pending,
-  options: StreamOptions,
+  options: WorkerStreamOptions,
   send: (chunk: Float32Array) => void,
   paced: boolean,
 ): Promise<boolean> {
@@ -158,8 +165,14 @@ async function speak(
       since = performance.now();
       continue;
     }
-    // `say` gives each clause the pause its last mark asks; `stream` is the engine's samples as is.
-    for (const chunk of paced ? pacedClause(voice, text, options) : voice.stream(text, options)) {
+    // `say` gives each clause the pause its last mark asks; `stream`, and a song, are the engine's
+    // samples as they are.
+    const chunks = isSong(text)
+      ? voice.stream(text, voiceOptions(options, true))
+      : paced
+        ? pacedClause(voice, text, voiceOptions(options))
+        : voice.stream(text, voiceOptions(options));
+    for (const chunk of chunks) {
       send(chunk);
       if (performance.now() - since > SLICE_MS) {
         await breathe();

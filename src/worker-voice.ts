@@ -5,7 +5,9 @@
 import { type ClauseOptions, clauses } from "./clauses.js";
 import type { Delivery, Mood } from "./delivery.js";
 import type { CreateVoiceOptions } from "./index.js";
+import type { Song } from "./layers.js";
 import { type Playback, type PlayOptions, playThrough } from "./player.js";
+import { isSong, refuseTiming } from "./song.js";
 import type { Rendered, StreamOptions } from "./voice.js";
 import type { FromWorker, ToWorker } from "./worker.js";
 
@@ -39,14 +41,15 @@ export interface SayOptions extends WorkerStreamOptions, Omit<PlayOptions, "ahea
 /** A voice whose samples arrive asynchronously. */
 export interface AsyncVoice {
   readonly sampleRate: number;
-  render(text: string, options?: WorkerStreamOptions): Promise<Rendered>;
+  /** Text or a song, as a voice on this thread renders it. A song takes only its call's delivery. */
+  render(text: string | Song, options?: WorkerStreamOptions): Promise<Rendered>;
   /** Chunks as the worker computes them. Ending the loop early cancels the rest. */
-  stream(text: string, options?: WorkerStreamOptions): AsyncGenerator<Float32Array, void, undefined>;
+  stream(text: string | Song, options?: WorkerStreamOptions): AsyncGenerator<Float32Array, void, undefined>;
   /**
-   * Speaks aloud. A string is one utterance; pieces of text that are still arriving (a language
-   * model's tokens) are spoken clause by clause, Markdown read as words.
+   * Speaks aloud. A string or a song is one utterance; pieces of text that are still arriving (a
+   * language model's tokens) are spoken clause by clause, Markdown read as words.
    */
-  say(text: string | Iterable<string> | AsyncIterable<string>, options?: SayOptions): Playback;
+  say(text: string | Song | Iterable<string> | AsyncIterable<string>, options?: SayOptions): Playback;
   /** Stops the worker. */
   free(): void;
 }
@@ -85,16 +88,18 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
 
   let next = 0;
   let freed = false;
-  const check = () => {
+  /** Throws now, on this thread, what the worker would refuse: a freed voice, a song's timing. */
+  const check = (text?: unknown, speak?: WorkerStreamOptions) => {
     if (freed) throw new Error("intone: this voice has been freed");
     if (failure) throw failure;
+    if (isSong(text)) refuseTiming("a song", speak);
   };
 
   return {
     sampleRate,
 
     render(text, speak = {}) {
-      check();
+      check(text, speak);
       const id = ++next;
       return new Promise<Rendered>((resolve, reject) => {
         listeners.set(id, (reply) => {
@@ -107,7 +112,7 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
     },
 
     async *stream(text, speak = {}) {
-      check();
+      check(text, speak);
       const id = ++next;
       const chunks: Float32Array[] = [];
       let ended = false;
@@ -141,7 +146,7 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
     },
 
     say(text, options = {}) {
-      check();
+      check(text, options);
       const id = ++next;
       const { context, destination, signal, clauses: cutting, ...speak } = options;
       let refuse: (error: Error) => void = () => {};
@@ -162,7 +167,7 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
           if (stopped()) return;
           send({ type: "say", id, options: speak, port }, [port]);
           try {
-            const pieces = typeof text === "string" ? [text] : clauses(text, cutting);
+            const pieces = typeof text === "string" || isSong(text) ? [text] : clauses(text, cutting);
             for await (const clause of pieces) {
               if (stopped()) return;
               send({ type: "clause", id, text: clause });

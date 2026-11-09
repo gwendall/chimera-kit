@@ -7,12 +7,15 @@
  * Kokoro has no input for pitch or per-sound timing at all (see `./kokoro.ts`'s module doc), and
  * its voice is fixed when the speaker is opened, not per call: a text request's `f0`, `accent` and
  * `body` are always lost when given, `rate` is honored exactly (mapped straight to Kokoro's own
- * `speed`), and a `chunkSize` is ignored (Kokoro's only granularity is a whole clause).
+ * `speed`), and a `chunkSize` is ignored (Kokoro's only granularity is a whole clause). Kokoro
+ * cannot sing: a song's lyrics are spoken, and its notes are lost.
  */
 import { clauses } from "../clauses.js";
 import { atIntensity, departures } from "../delivery.js";
 import type { Body } from "../engine.js";
+import type { Song } from "../layers.js";
 import { type PlayOptions, play } from "../player.js";
+import { isSong, refuseTiming, spokenLyrics, unsung } from "../song.js";
 import type {
   Speaker,
   SpeakerSayOptions,
@@ -41,6 +44,7 @@ const SUPPORTS: Supports = {
   phones: true,
   langs: ["en"],
   bodies: ["male", "female"],
+  singing: false,
 };
 
 /** Kokoro's own English voice ids nearest to the shared bodies. There is no child voice; the
@@ -90,6 +94,16 @@ export function forKokoro(
   return { speak, lost: [...lost, ...departures(d, ["rate"])] };
 }
 
+/** The text Kokoro speaks for a request, and what a song loses on the way: its notes. */
+export function spoken(
+  text: string | Song,
+  options?: SpeakerStreamOptions,
+): { words: string; lost: string[] } {
+  if (!isSong(text)) return { words: text, lost: [] };
+  refuseTiming("a song", options);
+  return { words: spokenLyrics(text), lost: unsung(text) };
+}
+
 async function* chunksOf(
   voice: KokoroVoice,
   text: string | Iterable<string> | AsyncIterable<string>,
@@ -111,16 +125,18 @@ export function speakerFromKokoro(voice: KokoroVoice): Speaker {
     supports: SUPPORTS,
     sampleRate: voice.sampleRate,
 
-    async render(text: string, speakOptions?: SpeakerStreamOptions): Promise<SpokenRendered> {
+    async render(text: string | Song, speakOptions?: SpeakerStreamOptions): Promise<SpokenRendered> {
+      const { words, lost: notes } = spoken(text, speakOptions);
       const { speak, lost } = forKokoro(speakOptions, voice.rate);
-      const rendered = await voice.render(text, speak);
-      return { ...rendered, lost };
+      const rendered = await voice.render(words, speak);
+      return { ...rendered, lost: [...notes, ...lost] };
     },
 
-    async *stream(text: string, speakOptions?: SpeakerStreamOptions) {
+    async *stream(text: string | Song, speakOptions?: SpeakerStreamOptions) {
+      const { words, lost: notes } = spoken(text, speakOptions);
       const { speak, lost } = forKokoro(speakOptions, voice.rate);
-      for await (const chunk of voice.stream(text, speak)) yield chunk;
-      return lost;
+      for await (const chunk of voice.stream(words, speak)) yield chunk;
+      return [...notes, ...lost];
     },
 
     say(text, speakOptions: SpeakerSayOptions = {}): SpokenPlayback {
@@ -129,12 +145,17 @@ export function speakerFromKokoro(voice: KokoroVoice): Speaker {
       if (context) playOptions.context = context;
       if (destination) playOptions.destination = destination;
       if (signal) playOptions.signal = signal;
+      const song = isSong(text) ? spoken(text, rest) : undefined;
       const { speak, lost } = forKokoro(rest, voice.rate);
-      const playback = play(chunksOf(voice, text, speak), KOKORO_SAMPLE_RATE, playOptions);
+      const playback = play(
+        chunksOf(voice, song?.words ?? (text as string), speak),
+        KOKORO_SAMPLE_RATE,
+        playOptions,
+      );
       return {
         queued: playback.queued,
         done: playback.done.then(() => undefined),
-        lost,
+        lost: song ? [...song.lost, ...lost] : lost,
         stop: playback.stop,
       };
     },

@@ -135,6 +135,25 @@ describe("speakerFromKokoro", () => {
     expect(result.value).toEqual(["accent"]);
   });
 
+  test("cannot sing: speaks a song's lyrics and says its notes are lost", async () => {
+    const voice = new FakeKokoroVoice();
+    const speaker = speakerFromKokoro(voice);
+    expect(speaker.supports.singing).toBe(false);
+    const song = { lyrics: "Twin-kle twin-kle ~", notes: [], bpm: 100, vibrato: 40 };
+    const sung = await speaker.render?.(song, { delivery: { rate: 0.8, pitch: 2 } });
+    expect(voice.calls[0]?.text).toBe("Twinkle twinkle");
+    expect(sung?.lost).toEqual(["notes", "vibrato", "pitch"]);
+    const gen = speaker.stream?.(song);
+    if (!gen) throw new Error("stream missing");
+    let result = await gen.next();
+    while (!result.done) result = await gen.next();
+    expect(result.value).toEqual(["notes", "vibrato"]);
+    // The same refusal as a backend that sings: a song's notes set its rate.
+    await expect(speaker.render?.(song, { rate: 1.2 }) ?? Promise.resolve()).rejects.toThrow(
+      "intone: a song ignores rate",
+    );
+  });
+
   test("free releases the underlying voice", () => {
     const voice = new FakeKokoroVoice();
     speakerFromKokoro(voice).free();

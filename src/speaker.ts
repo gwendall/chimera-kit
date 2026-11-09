@@ -17,11 +17,13 @@
 import type { ChimeraSpeakerOptions } from "./engines/chimera-speaker.js";
 import type { KokoroSpeakerOptions } from "./engines/kokoro-speaker.js";
 import type { WebSpeechSpeakerOptions } from "./engines/web-speech-speaker.js";
+import type { Song } from "./layers.js";
 import type { PlayOptions } from "./player.js";
 import type { Rendered, StreamOptions } from "./voice.js";
 import type { DeliveryOptions } from "./worker-voice.js";
 
 export type { Body, SpeakOptions } from "./engine.js";
+export type { Note, Song } from "./layers.js";
 
 /** The deepest layer the backend's own engine understands (`docs/design.md`'s layers 1 to 4). */
 export type Layer = "intent" | "phrasing" | "score" | "gestures";
@@ -39,6 +41,8 @@ export interface Supports {
   langs: string[];
   /** Named bodies the backend can render directly, without approximating. */
   bodies: string[];
+  /** Sings a song's notes. A backend that cannot speaks its lyrics, and says `notes` are lost. */
+  singing: boolean;
 }
 
 export interface SpokenRendered extends Rendered {
@@ -76,18 +80,25 @@ export interface Speaker {
   /** Only set when `output` is `"samples"`. */
   readonly sampleRate?: number;
   /** Renders the whole utterance at once. Only present when `output` is `"samples"`. */
-  render?(text: string, options?: SpeakerStreamOptions): Promise<SpokenRendered>;
+  render?(text: string | Song, options?: SpeakerStreamOptions): Promise<SpokenRendered>;
   /**
    * Renders chunk by chunk. Only present when `output` is `"samples"`. The generator's return
    * value is `lost`; a `for await` loop drops it, so read it from a manual `.next()` call when it
    * matters.
    */
-  stream?(text: string, options?: SpeakerStreamOptions): AsyncGenerator<Float32Array, string[], undefined>;
+  stream?(
+    text: string | Song,
+    options?: SpeakerStreamOptions,
+  ): AsyncGenerator<Float32Array, string[], undefined>;
   /**
-   * Speaks aloud. A string is one utterance; pieces of text that are still arriving (a language
-   * model's tokens) are spoken clause by clause, Markdown read as words.
+   * Speaks aloud. A string or a song is one utterance; pieces of text that are still arriving (a
+   * language model's tokens) are spoken clause by clause, Markdown read as words. A song refuses
+   * `rate`, `f0` and `accent` on every backend, as its notes set them.
    */
-  say(text: string | Iterable<string> | AsyncIterable<string>, options?: SpeakerSayOptions): SpokenPlayback;
+  say(
+    text: string | Song | Iterable<string> | AsyncIterable<string>,
+    options?: SpeakerSayOptions,
+  ): SpokenPlayback;
   /** Releases the backend's resources. It can't be used afterwards. */
   free(): void;
 }

@@ -71,6 +71,31 @@ describe("createChimeraSpeaker", () => {
     expect(join(chunks)).toEqual(expected);
   });
 
+  test("sings a song as createVoice does, nothing lost", async () => {
+    speaker = await createChimeraSpeaker({
+      worker: new Worker(new URL("../worker.ts", import.meta.url)),
+      wasm,
+      dictionary,
+      body: "female",
+    });
+    const song = {
+      lyrics: "la la",
+      notes: [60, 67].map((midi) => ({ midi, beats: 1 })),
+      bpm: 120,
+      vibrato: 30,
+    };
+    const here = await createVoice({ wasm, dictionary, body: "female" });
+    const expected = here.render(song).audio;
+    here.free();
+    expect(speaker.supports.singing).toBe(true);
+    const rendered = await speaker.render?.(song);
+    expect(rendered?.audio).toEqual(expected);
+    expect(rendered?.lost).toEqual([]);
+    const gen = speaker.stream?.(song);
+    if (!gen) throw new Error("stream missing");
+    expect(await collect(gen)).toEqual(expected);
+  });
+
   test("passes the engine's errors on", async () => {
     speaker = await createChimeraSpeaker({
       worker: new Worker(new URL("../worker.ts", import.meta.url)),

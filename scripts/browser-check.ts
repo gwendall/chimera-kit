@@ -44,6 +44,8 @@ interface Result {
   /** `intone/speaker`'s `createSpeaker("chimera", ...)`, against the same renders: it only wraps
    * `createWorkerVoice`, so it must keep the same guarantees. */
   speaker: { id: string; lost: string[]; renderError: number; sayError: number; stoppedPeak: number };
+  /** A song through the worker to the audio thread: the samples of its render, nothing lost. */
+  song: { lost: string[]; sayError: number };
 }
 
 let failed = false;
@@ -201,6 +203,16 @@ for (const name of wanted) {
       await speakerInterrupted.done;
       let speakerStoppedPeak = 0;
       for (const x of speakerStopOut) speakerStoppedPeak = Math.max(speakerStoppedPeak, Math.abs(x));
+      const song = { lyrics: "la la", notes: [60, 67].map((midi) => ({ midi, beats: 1 })), bpm: 120 };
+      const songExpected: Float32Array = (await chimeraSpeaker.render?.(song))?.audio ?? new Float32Array();
+      const songContext = new OfflineAudioContext(1, songExpected.length + 4096, sampleRate);
+      const sung = chimeraSpeaker.say(song, { context: songContext });
+      await sung.queued;
+      const songOut = (await songContext.startRendering()).getChannelData(0);
+      await sung.done;
+      let songError = songExpected.length === 0 ? 1 : 0;
+      for (let i = 0; i < songOut.length; i++)
+        songError = Math.max(songError, Math.abs(songOut[i] - (songExpected[i] ?? 0)));
       chimeraSpeaker.free();
 
       const { systemVoices } = await import(`${origin}/web-speech.js`);
@@ -231,6 +243,10 @@ for (const name of wanted) {
           sayError: speakerSayError,
           stoppedPeak: speakerStoppedPeak,
         },
+        song: {
+          lost: sung.lost,
+          sayError: songError,
+        },
       };
     }, ORIGIN);
     const problems = [
@@ -256,6 +272,8 @@ for (const name of wanted) {
         `createSpeaker("chimera")'s render differs from createVoice's by ${result.speaker.renderError}`,
       result.speaker.sayError > 0 &&
         `createSpeaker("chimera")'s say differs from speech() by ${result.speaker.sayError}`,
+      result.song.lost.length > 0 && `a sung say lost ${result.song.lost.join(", ")}`,
+      result.song.sayError > 0 && `a sung say differs from its render by ${result.song.sayError}`,
       result.speaker.stoppedPeak > 0 &&
         `createSpeaker("chimera")'s stopped say still sounded (peak ${result.speaker.stoppedPeak})`,
     ].filter(Boolean);

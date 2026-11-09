@@ -112,6 +112,18 @@ describe("createWebSpeechSpeaker", () => {
     expect(spoken.lost).toEqual(["f0"]);
   });
 
+  test("cannot sing: say speaks a song's lyrics and says its notes are lost", async () => {
+    const { synth, options } = setup();
+    const speaker = await createWebSpeechSpeaker(options);
+    expect(speaker.supports.singing).toBe(false);
+    const song = { lyrics: "Twin-kle lit-tle star", notes: [], bpm: 100, t0: 1 };
+    const spoken = speaker.say(song);
+    await spoken.done;
+    expect(synth.spoken.map((u) => u.text)).toEqual(["Twinkle little star"]);
+    expect(spoken.lost).toEqual(["notes", "t0"]);
+    expect(() => speaker.say(song, { rate: 1.2 })).toThrow("intone: a song ignores rate");
+  });
+
   test("say hands a delivery to the system voice at its intensity, its rate times the call's", async () => {
     const { synth, options } = setup();
     const speaker = await createWebSpeechSpeaker(options);

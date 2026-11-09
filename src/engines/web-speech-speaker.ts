@@ -6,10 +6,12 @@
  * The chosen voice is fixed when the speaker is opened: a text request's `body` is always lost
  * when given. The system has no absolute pitch or per-syllable accent control, so `f0` and
  * `accent` are always lost too; `rate` is honored exactly (one multiplier per utterance, same as
- * `SpeakOptions`' own).
+ * `SpeakOptions`' own). The device's voices cannot sing: a song's lyrics are spoken, and its
+ * notes are lost.
  */
 import { atIntensity } from "../delivery.js";
 import type { SpeakOptions } from "../engine.js";
+import { isSong, refuseTiming, spokenLyrics, unsung } from "../song.js";
 import type { Speaker, SpeakerSayOptions, SpokenPlayback, Supports } from "../speaker.js";
 import { createSystemVoice, type SayOptions, type SystemVoiceOptions } from "../web-speech.js";
 
@@ -34,6 +36,7 @@ export async function createWebSpeechSpeaker(options: WebSpeechSpeakerOptions = 
     phones: false,
     langs: [system.voice.lang],
     bodies: [system.voice.name],
+    singing: false,
   };
   return {
     id: "web-speech",
@@ -50,13 +53,14 @@ export async function createWebSpeechSpeaker(options: WebSpeechSpeakerOptions = 
         sayOptions.delivery = rate === undefined ? d : { ...d, rate: (d.rate ?? 1) * rate };
       }
       if (signal) sayOptions.signal = signal;
-      const speech = system.say(text, sayOptions);
+      if (isSong(text)) refuseTiming("a song", speakOptions);
+      const speech = system.say(isSong(text) ? spokenLyrics(text) : text, sayOptions);
       return {
         // Web Speech has no queueing step of its own to confirm against: the system has been told
         // to speak as soon as `say` returns.
         queued: Promise.resolve(),
         done: speech.done,
-        lost: [...new Set([...lostFor(speakOptions), ...speech.lost])],
+        lost: [...new Set([...(isSong(text) ? unsung(text) : []), ...lostFor(speakOptions), ...speech.lost])],
         stop: speech.stop,
       };
     },

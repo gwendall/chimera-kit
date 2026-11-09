@@ -91,6 +91,33 @@ describe("a worker voice", () => {
     expect(sad).not.toEqual((await voice.render(TEXT)).audio);
   });
 
+  test("sings a song as a voice here does, with only its call's delivery", async () => {
+    // A voice's own delivery would slow and detune the melody: on the page a song takes only its
+    // call's style, and the worker's delivery as data must do the same.
+    const song = { lyrics: "la la", notes: [60, 67].map((midi) => ({ midi, beats: 1 })), bpm: 120 };
+    const here = await createVoice({ wasm, dictionary, body: "female" });
+    const plain = here.render(song).audio;
+    const sad = here.render(song, { style: deliver("sad") }).audio;
+    here.free();
+    const moody = await createWorkerVoice({
+      worker: new Worker(new URL("./worker.ts", import.meta.url)),
+      wasm,
+      dictionary,
+      body: "female",
+      delivery: "sad",
+    });
+    try {
+      expect((await moody.render(song)).audio).toEqual(plain);
+      expect(await collect(moody.stream(song, { chunkSize: 512 }))).toEqual(plain);
+      expect((await moody.render(song, { delivery: "sad" })).audio).toEqual(sad);
+      expect(sad).not.toEqual(plain);
+      // Refused here, before a round trip, with the page voice's message.
+      expect(() => moody.render(song, { rate: 1.2 })).toThrow("intone: a song ignores rate");
+    } finally {
+      moody.free();
+    }
+  });
+
   test("passes the engine's errors on", async () => {
     await expect(collect(voice.stream(TEXT, { rate: 100 }))).rejects.toThrow("intone");
     expect((await collect(voice.stream(TEXT))).length).toBeGreaterThan(0);
