@@ -6,7 +6,7 @@
 import { type ChimeraSources, loadChimera } from "./engines/chimera.js";
 import { type Voice, type VoiceOptions, voiceFrom } from "./voice.js";
 
-export type { Body, SpeakOptions } from "./engine.js";
+export type { Body, BodySpec, SpeakOptions } from "./engine.js";
 export type { Source } from "./engines/chimera.js";
 export type {
   Curve,

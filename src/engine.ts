@@ -5,8 +5,40 @@
  */
 import type { Score, Song } from "./layers.js";
 
-/** Who speaks: a named body, or a blend (each weight from 0 to 1). */
-export type Body = "male" | "female" | "child" | { female: number; child: number };
+/** Who speaks: a named body, or a body anywhere in the voice space. */
+export type Body = "male" | "female" | "child" | BodySpec;
+
+/**
+ * A body by its dimensions; every field is optional and `{}` is the adult male. `female` and
+ * `child` place it between the three calibrated bodies, whose articulation it blends; the rest
+ * change it from there, as multiples of the blend's anatomy or as voice-source settings.
+ */
+export interface BodySpec {
+  /** 0 adult male to 1 adult female. */
+  female?: number;
+  /** 0 adult to 1 child. */
+  child?: number;
+  /** The airway's size, its lengths and widths (0.7 to 1.3). Above 1 sounds bigger and darker. */
+  size?: number;
+  /** The throat's (pharynx's) length against the mouth's (0.7 to 1.3). */
+  throat?: number;
+  /** The tongue's size (0.7 to 1.3). */
+  tongue?: number;
+  /** The lips' width (0.7 to 1.3). */
+  lips?: number;
+  /** Speaking pitch in semitones from the blend's own (-24 to 24). A request's `f0` wins. */
+  pitch?: number;
+  /** 0 clean to 1 breathy. */
+  breathiness?: number;
+  /** 0 lax to 1 pressed. A score's tension wins. */
+  tension?: number;
+  /** 0 dark to 1 bright. */
+  brightness?: number;
+  /** 0 none to 1 creaky (vocal fry). */
+  fry?: number;
+  /** 0 steady to 1 rough. */
+  roughness?: number;
+}
 
 export interface SpeakOptions {
   body?: Body;

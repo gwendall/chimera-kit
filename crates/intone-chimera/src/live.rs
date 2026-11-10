@@ -84,8 +84,15 @@ pub fn vowel_patch(
 }
 
 /// Sets the body; the performer's source and posture carry over (`Engine::set_body`'s own rule).
+/// Only a blend: the engine builds a live airway from the three calibrated bodies alone, and the
+/// performer sets the source directly.
 pub fn set_body(engine: &mut Engine, body: &Body) -> Result<(), String> {
     body.validate()?;
+    if !body.is_blend() {
+        return Err(
+            "a live body takes female and child only: shape the source with setSource".into(),
+        );
+    }
     engine.set_body(body.mix());
     Ok(())
 }

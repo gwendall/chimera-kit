@@ -30,6 +30,18 @@ fn json(value: serde_json::Value) -> String {
 }
 
 #[test]
+fn a_live_body_is_a_blend_and_anything_more_is_refused() {
+    unsafe {
+        let h = ic_live_new(SAMPLE_RATE);
+        let blend = json(serde_json::json!({ "female": 0.4, "child": 0.1 }));
+        assert_eq!(ic_live_set_body(h, blend.as_ptr(), blend.len()), 1);
+        let shaped = json(serde_json::json!({ "female": 0.4, "size": 1.1 }));
+        assert_eq!(ic_live_set_body(h, shaped.as_ptr(), shaped.len()), 0);
+        ic_live_free(h);
+    }
+}
+
+#[test]
 fn a_held_note_is_audible_within_a_few_milliseconds_and_finite() {
     unsafe {
         let h = ic_live_new(SAMPLE_RATE);

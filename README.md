@@ -76,7 +76,7 @@ the first sample.
 
 | Option   | Meaning                                                                   |
 | -------- | ------------------------------------------------------------------------- |
-| `body`   | `"male"`, `"female"`, `"child"`, or a blend `{ female: 0.5, child: 0.2 }` |
+| `body`   | `"male"`, `"female"`, `"child"`, or any body: see [Any voice](#any-voice) |
 | `rate`   | speaking-rate multiplier                                                  |
 | `f0`     | baseline pitch in Hz                                                      |
 | `accent` | pitch excursion on stressed syllables                                     |
@@ -84,6 +84,23 @@ the first sample.
 
 `createVoice({ dictionary: false })` skips the pronouncing dictionary and uses spelling rules
 alone: 223 KB in all, at a cost in pronunciation.
+
+### Any voice
+
+The three bodies are the calibrated points of a continuous space. A body can sit anywhere between
+them and change from there: the airway's size, the throat's length, the tongue and the lips, and
+the voice source's breathiness, tension, brightness, fry and roughness. Every field is optional.
+
+```ts
+const narrator = await createVoice({
+  body: { female: 0.2, size: 1.08, pitch: -2, breathiness: 0.3, fry: 0.2 },
+});
+```
+
+There is nothing to download and the first sound still comes in milliseconds. Each field goes as
+far as the limits in `BodySpec`. A live instrument takes a blend only.
+
+A physical model gives a kind of voice (deep, wide, breathy), not a person's: it clones nobody.
 
 ### Watching the throat
 

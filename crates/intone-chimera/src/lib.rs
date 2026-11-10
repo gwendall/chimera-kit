@@ -4,15 +4,16 @@
 //! It only uses the engine's public API, so `crates/chimera` can keep tracking upstream.
 
 pub mod abi;
+pub mod body;
 pub mod live;
 pub mod score;
 pub mod sing;
 
-use chimera::anatomy::human::{BodyMix, BodyName};
+pub use body::{Body, BodySpec, NamedBody};
 use chimera::control::score::GestureScore;
 use chimera::phonetics::english::EnglishG2P;
 use chimera::phonetics::planner::{PhraseInput, PlanOptions, plan_phrases};
-use chimera::voice::human_voice::{DEFAULT_SOURCE, HumanVoice, SourcePatch};
+use chimera::voice::human_voice::HumanVoice;
 use score::Score;
 use serde::Deserialize;
 
@@ -24,59 +25,6 @@ const BLOCK: usize = 128;
 const OVERSAMPLE: usize = 2;
 /// Time left after the last gesture for the sound to die away.
 pub(crate) const TAIL_SECONDS: f64 = 0.3;
-
-/// Who speaks: a named body, or a blend of them.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
-#[serde(untagged)]
-pub enum Body {
-    Named(NamedBody),
-    Mix { female: f64, child: f64 },
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum NamedBody {
-    Male,
-    Female,
-    Child,
-}
-
-impl Default for Body {
-    fn default() -> Self {
-        Body::Named(NamedBody::Male)
-    }
-}
-
-impl Body {
-    pub(crate) fn validate(&self) -> Result<(), String> {
-        if let Body::Mix { female, child } = self {
-            for (name, value) in [("female", *female), ("child", *child)] {
-                if !(0.0..=1.0).contains(&value) {
-                    return Err(format!("body.{name} must be between 0 and 1, got {value}"));
-                }
-            }
-        }
-        Ok(())
-    }
-
-    fn mix(self) -> BodyMix {
-        match self {
-            Body::Named(NamedBody::Male) => BodyName::Male.into(),
-            Body::Named(NamedBody::Female) => BodyName::Female.into(),
-            Body::Named(NamedBody::Child) => BodyName::Child.into(),
-            Body::Mix { female, child } => BodyMix::new(female, child),
-        }
-    }
-}
-
-/// The body's speaking pitch when the request doesn't set one.
-pub(crate) fn default_f0(mix: BodyMix) -> f64 {
-    mix.blend(|b| match b {
-        BodyName::Male => 112.0,
-        BodyName::Female => 205.0,
-        BodyName::Child => 250.0,
-    })
-}
 
 /// One thing to say. Unknown fields are refused, so a typo can't be silently ignored.
 #[derive(Clone, Debug, Deserialize)]
@@ -150,7 +98,7 @@ impl Speaker {
             return Err("nothing to say: the text has no pronounceable words".into());
         }
         let mix = request.body.mix();
-        let f0 = request.f0.unwrap_or_else(|| default_f0(mix));
+        let f0 = request.f0.unwrap_or_else(|| request.body.default_f0());
         let inputs: Vec<PhraseInput> = phrases
             .into_iter()
             .map(|p| PhraseInput {
@@ -175,14 +123,15 @@ impl Speaker {
         if plan.gestures.len() > GestureScore::CAPACITY {
             return Err("text too long for one utterance: split it into sentences".into());
         }
-        let mut voice = HumanVoice::new(SAMPLE_RATE, mix.body(), OVERSAMPLE);
-        voice.set_source(&SourcePatch::f0(f0));
+        let mut voice = HumanVoice::new(SAMPLE_RATE, request.body.anatomy(), OVERSAMPLE);
+        voice.set_source(&request.body.source(f0));
         voice.schedule(&plan.gestures);
         let total = ((plan.end + TAIL_SECONDS) * SAMPLE_RATE).round() as usize;
         Ok(Utterance {
             voice,
             left: total,
             total,
+            level: request.body.level(),
             loudness: None,
         })
     }
@@ -197,7 +146,7 @@ impl Speaker {
             return Err("nothing to say: the text has no pronounceable words".into());
         }
         let mix = request.body.mix();
-        let f0 = request.f0.unwrap_or_else(|| default_f0(mix));
+        let f0 = request.f0.unwrap_or_else(|| request.body.default_f0());
         let inputs: Vec<PhraseInput> = phrases
             .iter()
             .map(|p| PhraseInput {
@@ -224,7 +173,7 @@ impl Speaker {
             &plan,
             &phrases,
             f0,
-            DEFAULT_SOURCE.tension,
+            request.body.tension(),
         ))
     }
 
@@ -247,10 +196,12 @@ impl Speaker {
             .score
             .pitch
             .first()
-            .map_or_else(|| default_f0(mix), |p| p[1]);
-        let mut voice = HumanVoice::new(SAMPLE_RATE, mix.body(), OVERSAMPLE);
-        let mut patch = SourcePatch::f0(f0);
-        patch.tension = tension;
+            .map_or_else(|| request.body.default_f0(), |p| p[1]);
+        let mut voice = HumanVoice::new(SAMPLE_RATE, request.body.anatomy(), OVERSAMPLE);
+        let mut patch = request.body.source(f0);
+        if tension.is_some() {
+            patch.tension = tension;
+        }
         voice.set_source(&patch);
         voice.schedule(&plan.gestures);
         let total = (request.score.duration * SAMPLE_RATE).round() as usize;
@@ -258,6 +209,7 @@ impl Speaker {
             voice,
             left: total,
             total,
+            level: request.body.level(),
             loudness: request.score.loudness.clone(),
         })
     }
@@ -268,6 +220,8 @@ pub struct Utterance {
     voice: HumanVoice,
     left: usize,
     total: usize,
+    /// The body's level correction (`Body::level`), applied to every sample.
+    level: f64,
     /// A score's `loudness` curve (dB), applied as a gain on the rendered samples: CHIMERA has no
     /// per-time control for it, but any curve can be followed exactly this way.
     loudness: Option<score::Curve>,
@@ -307,6 +261,11 @@ impl Utterance {
         let n = out.len().min(self.left);
         for block in out[..n].chunks_mut(BLOCK) {
             self.voice.render(block);
+        }
+        if self.level != 1.0 {
+            for x in &mut out[..n] {
+                *x = (f64::from(*x) * self.level) as f32;
+            }
         }
         if let Some(curve) = &self.loudness {
             let start = self.total - self.left;

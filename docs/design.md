@@ -117,7 +117,7 @@ a playback handle instead, with the same events.
 
 ```ts
 interface VoiceSpec {
-  body: Body; // "male" | "female" | "child", a blend { female: 0.6, child: 0.4 }, a creature, or an engine's voice id
+  body: Body; // "male" | "female" | "child", a BodySpec anywhere in the voice space, a creature, or an engine's voice id
   source?: { f0?: number; range?: number; breath?: number; tension?: number }; // layer 2 defaults
   habits?: { rate?: number; pauses?: number; emphasis?: number; reduction?: number }; // layer 3 defaults
   lang?: string;

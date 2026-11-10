@@ -221,7 +221,7 @@ describe("profile", () => {
       for (const s of HELD_OUT.slice(0, 3)) {
         const { audio, sampleRate } = voice.render(s, { body: "male" });
         const p = profile(audio, sampleRate, { speakerAgreed: true });
-        expect(p.body === "male" || (typeof p.body === "object" && p.body.female < 0.4)).toBe(true);
+        expect(p.body === "male" || (typeof p.body === "object" && (p.body.female ?? 0) < 0.4)).toBe(true);
       }
     });
 
