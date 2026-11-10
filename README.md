@@ -339,11 +339,11 @@ is refused rather than dropped, which would move every later syllable onto the w
 
 |                                                | gzipped |
 | ---------------------------------------------- | ------- |
-| Engine (`intone_chimera.wasm`)                 | 221 KB  |
-| JavaScript: `createVoice` alone                | 1.9 KB  |
-| JavaScript: a chat (`speech`, `play`)          | 5.3 KB  |
-| JavaScript: everything                         | 9.3 KB  |
-| JavaScript: a voice in a Worker (both sides)   | 8.8 KB  |
+| Engine (`intone_chimera.wasm`)                 | 273 KB  |
+| JavaScript: `createVoice` alone                | 2.0 KB  |
+| JavaScript: a chat (`speech`, `play`)          | 5.5 KB  |
+| JavaScript: everything                         | 10.0 KB |
+| JavaScript: a voice in a Worker (both sides)   | 9.5 KB  |
 | JavaScript: the device's voices only           | 2.7 KB  |
 | JavaScript: `profile` (`intone/imitate`) alone | 2.9 KB  |
 | JavaScript: tool calls (`intone/tools`)        | 2.7 KB  |
