@@ -1224,10 +1224,10 @@ svg.pad {
 
 .throat-screen {
   position: relative;
-  height: clamp(320px, 48vw, 520px);
+  height: clamp(440px, 48vw, 560px);
   border-radius: 14px;
   overflow: hidden;
-  background: #15130f;
+  background: #000;
 }
 
 .throat-canvas {

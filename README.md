@@ -132,6 +132,24 @@ const chunks = voice.stream("Hello there.", {
 });
 ```
 
+The prefix remains `6 + 2 * (pharynx + mouth + nose)` floats. A drawing suffix follows it:
+
+- `geometryVersion` (currently 1), `hasFrame` (0 or 1).
+- 17 current articulation values: `jaw, tbX, tbY, ttX, ttY, ttCurl, root, lipAp, lipProt,
+  lipWidth, labiodental, velum, larynx, epilarynx, ventricular, lateral, dorsum`.
+- Four body dimensions: `scale, pharynx, tongueRadius, lipWidth`.
+- When `hasFrame` is 1: point counts for `outer, inner, tongue, velum, upperLip, lowerLip,
+  upperTeeth, lowerTeeth, jawBone, epiglottis, nasalCavity`, then the grid sample count.
+- 14 frame scalars: `glottis.x, glottis.y, length, pharynxLength, teethS, lipS, velumPort,
+  lipArea, tongueCenter.x, tongueCenter.y, tongueRadius, tip.x, tip.y, splitIndex`.
+- The outlines' `x, y` pairs in count order, then each grid sample as `inner.x, inner.y,
+  outer.x, outer.y, mid.x, mid.y, d, area, s, region, ray`.
+
+Coordinates and distances are cm, areas cm². `region` is 0 (epilarynx), 1 (pharynx),
+2 (oral), or 3 (front); `splitIndex` is the first oral grid sample, or -1. The data comes
+from the engine's retained geometry at the end of the chunk. Drawing it neither guesses
+mouth shapes from text nor runs another voice model. Keep only frames needed for playback.
+
 ### Shaping one reading
 
 `plan` gives the score the voice would speak: every sound with its timing, the pitch, and where
@@ -341,7 +359,7 @@ is refused rather than dropped, which would move every later syllable onto the w
 
 |                                                | gzipped |
 | ---------------------------------------------- | ------- |
-| Engine (`intone_chimera.wasm`)                 | 273 KB  |
+| Engine (`intone_chimera.wasm`)                 | 274 KB  |
 | JavaScript: `createVoice` alone                | 2.0 KB  |
 | JavaScript: a chat (`speech`, `play`)          | 5.5 KB  |
 | JavaScript: everything                         | 10.0 KB |

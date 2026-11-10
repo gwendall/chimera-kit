@@ -22,8 +22,14 @@ export interface StreamOptions extends VoiceOptions {
   /**
    * Called after each chunk with the simulated airway at that moment, on an engine that has one:
    * `[velum, pharynxLength, mouthLength, pharynxSections, mouthSections, noseSections, ...areas,
-   * ...pressures]`. Areas are cm², lengths cm, sections run from the glottis to the lips, then the
-   * nose. For drawing a throat or driving a mouth. Not available through a worker or a speaker.
+   * ...pressures, geometryVersion, hasFrame, ...articulation, ...body, ...frame]`. Areas are cm²,
+   * lengths cm, sections run from the glottis to the lips, then the nose. The prefix is unchanged.
+   * Geometry version 1: `hasFrame` is 0 or 1; 17 articulation values are ordered jaw, tbX, tbY,
+   * ttX, ttY, ttCurl, root, lipAp, lipProt, lipWidth, labiodental, velum, larynx, epilarynx,
+   * ventricular, lateral, dorsum; body is scale, pharynx, tongueRadius, lipWidth. When hasFrame=1,
+   * the frame starts with 11 outline point counts and a grid count, followed by 14 scalars,
+   * outline x/y pairs, then 11 floats per grid sample. The README defines their exact order.
+   * This copies the actual engine geometry. Not available through a worker or a speaker.
    */
   airway?: (state: Float32Array) => void;
 }

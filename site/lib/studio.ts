@@ -693,6 +693,13 @@ class Studio {
   }
 
   private record(sounding: Sounding, state: Float32Array, t: number) {
+    // Full geometry frames are larger than the old tube-only trace. Keep no hidden-view history.
+    if (!this.showThroat) {
+      sounding.frames.length = 0;
+      sounding.times.length = 0;
+      sounding.cursor = 0;
+      return;
+    }
     sounding.frames.push(state);
     sounding.times.push(t);
   }
@@ -717,10 +724,11 @@ class Studio {
       while (now.cursor + 1 < now.times.length && (now.times[now.cursor + 1] ?? 0) <= t) now.cursor++;
       const recent = now.frames.slice(passedFrom, now.cursor + 1);
       const frame = now.frames[now.cursor] ?? null;
-      if (now.cursor > 6000) {
-        now.frames.splice(0, 5000);
-        now.times.splice(0, 5000);
-        now.cursor -= 5000;
+      if (now.cursor > 128) {
+        const retired = now.cursor - 1;
+        now.frames.splice(0, retired);
+        now.times.splice(0, retired);
+        now.cursor -= retired;
       }
       return { mode: "live", frame, recent, t, score: now.score };
     }
