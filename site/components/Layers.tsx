@@ -52,7 +52,7 @@ export function Layers() {
         <h2>{"No neural network. A simulated throat."}</h2>
         <p>
           {
-            "Most modern text to speech runs a neural network trained on recordings of people. intone runs CHIMERA, a physical model of the human voice by Jameson Hodge: vocal folds, a throat, a tongue and lips, simulated sample by sample. Every sound comes from those movements. That is why each word can be moved exactly, and why the whole engine fits in 273 KB. Each step below is plain data you can read, change and hand back."
+            "Most modern text to speech runs a neural network trained on recordings of people. intone runs CHIMERA, a physical model of the human voice by Jameson Hodge: vocal folds, a throat, a tongue and lips, simulated sample by sample. Every sound comes from those movements. That is why each word can be moved exactly, and why the whole engine fits in 274 KB. Each step below is plain data you can read, change and hand back."
           }
         </p>
       </div>

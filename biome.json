@@ -28,5 +28,11 @@
     "rules": {
       "preset": "recommended"
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["site/lib/chimera-visual/vendor/**"],
+      "linter": { "enabled": false }
+    }
+  ]
 }
