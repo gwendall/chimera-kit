@@ -33,3 +33,12 @@ jobs:
       - run: bun run e2e:smoke -- --no-speed --json e2e/out/report.json
         env:
           BROWSER_CHANNEL: chrome
+      - name: Pack the qualified npm artifact
+        run: npm pack --ignore-scripts --json --pack-destination "$RUNNER_TEMP" > "$RUNNER_TEMP/npm-pack.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-package-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/chimera-kit-*.tgz
+            ${{ runner.temp }}/npm-pack.json
+          if-no-files-found: error

@@ -1,7 +1,7 @@
 // Canonical public origin. Keep package metadata and README links in sync when it changes.
 export const BRAND = {
   name: "Chimera Kit",
-  origin: "https://chimera-kit.vercel.app",
+  origin: "https://chimerakit.dev",
   title: "Chimera Kit: the JavaScript toolkit for Chimera",
   description:
     "Put Chimera in your app. Physical voice synthesis, singing, a live instrument, beatbox and creatures, with a small JavaScript API. Runs in the browser.",

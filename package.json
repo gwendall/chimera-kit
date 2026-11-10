@@ -1,16 +1,11 @@
 {
   "name": "chimera-kit",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "packageManager": "bun@1.3.11",
   "description": "The JavaScript toolkit for Chimera: physical voice synthesis, singing, live articulation, beatbox and creatures in the browser.",
-  "homepage": "https://chimera-kit.vercel.app/docs",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/gwendall/chimera-kit.git"
-  },
+  "homepage": "https://chimerakit.dev/docs",
   "bugs": {
-    "url": "https://chimera-kit.vercel.app/docs#troubleshooting"
+    "url": "https://chimerakit.dev/docs#troubleshooting"
   },
   "keywords": [
     "chimera",

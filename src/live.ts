@@ -84,7 +84,10 @@ const added = new WeakMap<BaseAudioContext, Promise<void>>();
 function addWorkletModule(context: BaseAudioContext, url: URL | string): Promise<void> {
   let adding = added.get(context);
   if (!adding) {
-    adding = context.audioWorklet.addModule(String(url));
+    adding = context.audioWorklet.addModule(String(url)).catch((error: unknown) => {
+      added.delete(context);
+      throw error;
+    });
     added.set(context, adding);
   }
   return adding;
@@ -115,52 +118,79 @@ export async function createInstrument(options: CreateInstrumentOptions = {}): P
   const { body, context: given, destination, worklet, onError, wasm } = options;
   const context = given ?? new AudioContext({ latencyHint: "interactive" });
   const owned = given === undefined;
-  // Before anything is awaited: on iOS only code still inside the tap may start an AudioContext.
-  if (context instanceof AudioContext) unlockAudio(context);
-
-  const workletUrl = worklet ?? new URL("./worklet-live.js", import.meta.url);
-  const [, { module, bytes }] = await Promise.all([
-    addWorkletModule(context, workletUrl),
-    compileLiveWasm(wasm),
-  ]);
-  if (context instanceof AudioContext && context.state !== "running") void context.resume();
-
-  const node = createNode(context, module, bytes);
-  node.connect(destination ?? context.destination);
-  const send = (message: ToLive) => node.port.postMessage(message);
-  // Queued on the worklet's own side until the engine is ready, same as any other control call
-  // made before `createInstrument` resolves: applied before the first real render either way.
-  if (body !== undefined) send({ type: "setBody", body });
-
-  let lastTelemetry: LiveTelemetry | null = null;
-  let onReady: (() => void) | undefined;
-  let onReadyFail: ((error: Error) => void) | undefined;
-  const ready = new Promise<void>((resolve, reject) => {
-    onReady = resolve;
-    onReadyFail = reject;
-  });
-  node.port.onmessage = ({ data }: MessageEvent<FromLive>) => {
-    if (data.type === "ready") {
-      onReady?.();
-      onReady = onReadyFail = undefined;
-    } else if (data.type === "telemetry") {
-      lastTelemetry = data.data;
-    } else if (data.type === "error") {
-      if (onReadyFail) {
-        onReadyFail(new Error(`chimera-kit: ${data.message}`));
-        onReady = onReadyFail = undefined;
-      } else {
-        onError?.(data.message);
+  let node: AudioWorkletNode | undefined;
+  let released = false;
+  const release = async (): Promise<void> => {
+    if (released) return;
+    released = true;
+    const current = node;
+    if (current) {
+      for (const clean of [
+        () => current.port.postMessage({ type: "free" } satisfies ToLive),
+        () => current.disconnect(),
+        () => {
+          current.port.onmessage = null;
+          current.port.close();
+        },
+      ]) {
+        try {
+          clean();
+        } catch {
+          /* Each resource must be released even if another cleanup fails. */
+        }
+      }
+    }
+    if (owned) {
+      try {
+        await (context as AudioContext).close();
+      } catch {
+        /* Preserve the initialization error. */
       }
     }
   };
+  let lastTelemetry: LiveTelemetry | null = null;
   try {
+    // Before anything is awaited: on iOS only code still inside the tap may start an AudioContext.
+    if (context instanceof AudioContext) unlockAudio(context);
+    const workletUrl = worklet ?? new URL("./worklet-live.js", import.meta.url);
+    const [, { module, bytes }] = await Promise.all([
+      addWorkletModule(context, workletUrl),
+      compileLiveWasm(wasm),
+    ]);
+    if (context instanceof AudioContext && context.state !== "running") void context.resume().catch(() => {});
+
+    node = createNode(context, module, bytes);
+    node.connect(destination ?? context.destination);
+    // Queued until the engine is ready, so the initial body precedes its first real render.
+    if (body !== undefined) node.port.postMessage({ type: "setBody", body } satisfies ToLive);
+    let onReady: (() => void) | undefined;
+    let onReadyFail: ((error: Error) => void) | undefined;
+    const ready = new Promise<void>((resolve, reject) => {
+      onReady = resolve;
+      onReadyFail = reject;
+    });
+    node.port.onmessage = ({ data }: MessageEvent<FromLive>) => {
+      if (data.type === "ready") {
+        onReady?.();
+        onReady = onReadyFail = undefined;
+      } else if (data.type === "telemetry") {
+        lastTelemetry = data.data;
+      } else if (data.type === "error") {
+        if (onReadyFail) {
+          onReadyFail(new Error(`chimera-kit: ${data.message}`));
+          onReady = onReadyFail = undefined;
+        } else {
+          onError?.(data.message);
+        }
+      }
+    };
     await ready;
   } catch (error) {
-    node.disconnect();
-    if (owned) await (context as AudioContext).close();
+    await release();
     throw error;
   }
+  const readyNode = node;
+  const send = (message: ToLive) => readyNode.port.postMessage(message);
 
   const instrument: Instrument = {
     setBody(body) {
@@ -208,11 +238,9 @@ export async function createInstrument(options: CreateInstrumentOptions = {}): P
       return lastTelemetry;
     },
     free() {
-      send({ type: "free" });
-      node.disconnect();
-      if (owned) void (context as AudioContext).close();
+      void release();
     },
-    node,
+    node: readyNode,
   };
   return instrument;
 }

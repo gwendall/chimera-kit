@@ -35,7 +35,7 @@ export function Speed() {
   const press = (index: number) => {
     setHit(index);
     setTimeout(() => setHit((now) => (now === index ? null : now)), 130);
-    void studio.speak(WORDS[index] ?? "", { label: WORDS[index] ?? "" });
+    void studio.speak(WORDS[index] ?? "", { label: WORDS[index] ?? "" }).catch(studio.reportError);
   };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: press only reads state setters and the studio
@@ -61,29 +61,34 @@ export function Speed() {
     setBurst(null);
     const times: number[] = [];
     const started = performance.now();
-    for (let i = 0; i < BURST && !cancelled.current; i++) {
-      await studio.speak(WORDS[i % WORDS.length] ?? "", {
-        label: `burst ${i + 1}`,
-        onFirstSample: (ms) => times.push(ms),
-      });
-      await new Promise((resolve) => setTimeout(resolve, 30));
+    try {
+      for (let i = 0; i < BURST && !cancelled.current; i++) {
+        await studio.speak(WORDS[i % WORDS.length] ?? "", {
+          label: `burst ${i + 1}`,
+          onFirstSample: (ms) => times.push(ms),
+        });
+        await new Promise((resolve) => setTimeout(resolve, 30));
+      }
+      const seconds = (performance.now() - started) / 1000;
+      studio.stop();
+      setBurst({ spoken: times.length, seconds, median: median(times), worst: Math.max(...times, 0) });
+    } catch (cause) {
+      studio.reportError(cause);
+    } finally {
+      setFiring(false);
     }
-    const seconds = (performance.now() - started) / 1000;
-    studio.stop();
-    setBurst({ spoken: times.length, seconds, median: median(times), worst: Math.max(...times, 0) });
-    setFiring(false);
   };
 
   const speak = () => {
     const line = text.trim();
-    if (line) void studio.speak(line, { label: "typed" });
+    if (line) void studio.speak(line, { label: "typed" }).catch(studio.reportError);
   };
 
   const typed = (value: string) => {
     setText(value);
     if (!asTyped || !/[\s.,!?]$/.test(value)) return;
     const word = value.trim().split(/\s+/).pop() ?? "";
-    if (word && word !== lastWord.current) void studio.speak(word, { label: word });
+    if (word && word !== lastWord.current) void studio.speak(word, { label: word }).catch(studio.reportError);
     lastWord.current = word;
   };
 

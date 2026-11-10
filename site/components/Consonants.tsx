@@ -80,7 +80,9 @@ export function Consonants() {
           <button
             type="button"
             className="go"
-            onClick={() => void studio.speak(SENTENCE, { body: "female", label: "consonants" })}
+            onClick={() =>
+              void studio.speak(SENTENCE, { body: "female", label: "consonants" }).catch(studio.reportError)
+            }
           >
             {ready ? "Say the sentence" : "Loading..."}
           </button>
@@ -100,7 +102,11 @@ export function Consonants() {
                       if (node) cells.current.set(sound, node);
                       else cells.current.delete(sound);
                     }}
-                    onClick={() => void studio.speak(between(sound), { body: "female", label: sound })}
+                    onClick={() =>
+                      void studio
+                        .speak(between(sound), { body: "female", label: sound })
+                        .catch(studio.reportError)
+                    }
                   >
                     {sound}
                   </button>

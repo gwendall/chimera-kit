@@ -36,11 +36,14 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
   // plays nothing. Two hangs of `play` fixed (`queued` when the worklet can't load, `done` when the
   // caller closes its own context mid-stream) took the chat from 5,466 to 5,541 and everything from
   // 9,549 to 9,623.
-  "a chat (createVoice, speech, play)": { imports: ["createVoice", "speech", "play"], limit: 5_600 },
+  // Cancellation of stalled async inputs and retry after a worklet download failure: 5,762 bytes
+  // measured with the normal dist/ build (2026-11-10). The engine and sound budgets stay unchanged.
+  "a chat (createVoice, speech, play)": { imports: ["createVoice", "speech", "play"], limit: 5_850 },
   // The `airway` stream option, which reads the simulated tube, took everything from 9,178 to 9,237.
   // `bodyFromSeed` (a voice of its own per seed: a small RNG, a string hash, twelve draws) took
   // everything from 9,623 to 10,021; an app that doesn't import it ships none of it.
-  "everything (index.js)": { imports: [], limit: 10_100 },
+  // The same lifecycle repairs plus failed-worker cleanup: 10,345 bytes (2026-11-10).
+  "everything (index.js)": { imports: [], limit: 10_400 },
   // `say` is a method, so its clause cutter stays in: this is a chat's page side.
   "a voice in a Worker, page side (createWorkerVoice, play)": {
     imports: ["createWorkerVoice", "play"],

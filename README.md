@@ -3,7 +3,7 @@
 A JavaScript library for speech that runs in the browser, starts in milliseconds and follows your
 code down to the syllable. No neural weights or synthesis server.
 
-[Live demos](https://chimera-kit.vercel.app) · [Get started](https://chimera-kit.vercel.app/docs#get-started) · [Documentation](https://chimera-kit.vercel.app/docs)
+[Live demos](https://chimerakit.dev) · [Get started](https://chimerakit.dev/docs#get-started) · [Documentation](https://chimerakit.dev/docs)
 
 Chimera Kit is a JavaScript toolkit dedicated to [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth),
 the physical voice model by [Jameson Hodge](https://github.com/jamesondh). Use its speech, singing,
@@ -13,9 +13,14 @@ loading, workers, playback, interruption and streaming answers.
 Every sound comes from a simulated airway. You can control each word's timing, pitch, breath and
 articulation through plain-data scores. It sounds synthetic, and currently speaks English.
 
-> **Status: private, pre-release.** Not on npm yet, and the API will change.
+> **Version 0.1.** The API may change before 1.0. Synthesis is local, English-only and deliberately
+> synthetic. See the documentation for supported browsers and setup.
 
 ## Usage
+
+```sh
+npm install chimera-kit
+```
 
 ```ts
 import { createVoice, play } from "chimera-kit";
@@ -304,9 +309,9 @@ is refused rather than dropped, which would move every later syllable onto the w
 | --------------------------------------------------- | ------- |
 | Engine (`chimera.wasm`)                             | 274 KB  |
 | JavaScript: `createVoice` alone                     | 2.1 KB  |
-| JavaScript: a chat (`speech`, `play`)               | 5.5 KB  |
-| JavaScript: everything                              | 10.1 KB |
-| JavaScript: a voice in a Worker (both sides)        | 9.6 KB  |
+| JavaScript: a chat (`speech`, `play`)               | 5.8 KB  |
+| JavaScript: everything                              | 10.4 KB |
+| JavaScript: a voice in a Worker (both sides)        | 9.9 KB  |
 | JavaScript: `profile` (`chimera-kit/imitate`) alone | 2.9 KB  |
 | JavaScript: tool calls (`chimera-kit/tools`)        | 2.7 KB  |
 | JavaScript: songs (`chimera-kit/singing`)           | 2.1 KB  |

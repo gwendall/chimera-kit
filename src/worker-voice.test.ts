@@ -1,8 +1,41 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
 import { deliver } from "./delivery.ts";
 import { createVoice } from "./index.ts";
 import { shift } from "./transforms.ts";
+import type { FromWorker, ToWorker } from "./worker.ts";
 import { type AsyncVoice, createWorkerVoice } from "./worker-voice.ts";
+
+const real = {
+  Worker: globalThis.Worker,
+  AudioContext: globalThis.AudioContext,
+  AudioWorkletNode: globalThis.AudioWorkletNode,
+};
+afterEach(() => Object.assign(globalThis, real));
+
+class FakeWorker {
+  onmessage: ((event: MessageEvent<FromWorker>) => void) | null = null;
+  onerror: ((event: ErrorEvent) => void) | null = null;
+  requests: ToWorker[] = [];
+  terminated = 0;
+  constructor(private readonly opening: "ready" | "error" | "throw" = "ready") {}
+  postMessage(request: ToWorker) {
+    this.requests.push(request);
+    if (request.type !== "open") return;
+    if (this.opening === "throw") throw new DOMException("cannot clone", "DataCloneError");
+    queueMicrotask(() =>
+      this.onmessage?.({
+        data:
+          this.opening === "error"
+            ? { type: "error", message: "cannot open" }
+            : { type: "ready", sampleRate: 48_000 },
+      } as MessageEvent<FromWorker>),
+    );
+  }
+  terminate() {
+    this.terminated++;
+    for (const request of this.requests) if (request.type === "say") request.port.close();
+  }
+}
 
 const wasm = new URL("../dist/chimera.wasm", import.meta.url);
 const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
@@ -33,6 +66,130 @@ async function collect(chunks: AsyncIterable<Float32Array>): Promise<Float32Arra
 }
 
 describe("a worker voice", () => {
+  for (const supplied of [true, false]) {
+    for (const opening of ["error", "throw"] as const) {
+      test(`cleans up ${supplied ? "supplied" : "created"} workers after ${opening} during initialization`, async () => {
+        let worker: FakeWorker | undefined;
+        class OpeningWorker extends FakeWorker {
+          constructor() {
+            super(opening);
+            worker = this;
+          }
+        }
+        Object.assign(globalThis, { Worker: OpeningWorker });
+        const options = supplied ? { worker: new OpeningWorker() as unknown as Worker } : {};
+        await expect(createWorkerVoice(options)).rejects.toThrow(
+          opening === "error" ? "cannot open" : "cannot clone",
+        );
+        expect(worker?.terminated).toBe(1);
+        expect(worker?.onmessage).toBeNull();
+        expect(worker?.onerror).toBeNull();
+      });
+    }
+  }
+
+  for (const interruption of ["stop", "abort", "close", "free", "source error", "worker error"] as const) {
+    test(`${interruption} finishes stalled tokens without waiting for the source`, async () => {
+      class FakeContext extends EventTarget {
+        state = "running";
+        destination = {};
+        audioWorklet = { addModule: async () => {} };
+        async resume() {}
+      }
+      let disconnected = false;
+      class FakeNode {
+        port = {
+          onmessage: null,
+          postMessage(message: unknown) {
+            if (message && typeof message === "object" && "port" in message)
+              (message.port as MessagePort).close();
+          },
+        };
+        connect() {}
+        disconnect() {
+          disconnected = true;
+        }
+      }
+      Object.assign(globalThis, { AudioContext: FakeContext, AudioWorkletNode: FakeNode });
+      const worker = new FakeWorker();
+      const voice = await createWorkerVoice({ worker: worker as unknown as Worker });
+      let began: () => void = () => {};
+      const reading = new Promise<void>((resolve) => {
+        began = resolve;
+      });
+      let late: (value: IteratorResult<string>) => void = () => {};
+      let fail: (error: Error) => void = () => {};
+      const pending = new Promise<IteratorResult<string>>((resolve, reject) => {
+        late = resolve;
+        fail = reject;
+      });
+      let returned = 0;
+      const tokens: AsyncIterableIterator<string> = {
+        [Symbol.asyncIterator]() {
+          return this;
+        },
+        next() {
+          began();
+          return pending;
+        },
+        return() {
+          returned++;
+          return interruption === "abort"
+            ? Promise.reject(new Error("teardown failed"))
+            : new Promise(() => {});
+        },
+      };
+      const context = new FakeContext();
+      const controller = new AbortController();
+      const playback = voice.say(tokens, {
+        context: context as unknown as BaseAudioContext,
+        signal: controller.signal,
+      });
+      const done = playback.done.then(
+        () => "done",
+        (error: Error) => error.message,
+      );
+      try {
+        await reading;
+        if (interruption === "stop") playback.stop();
+        else if (interruption === "abort") controller.abort();
+        else if (interruption === "free") voice.free();
+        else if (interruption === "source error") fail(new Error("token failed"));
+        else if (interruption === "worker error")
+          worker.onerror?.({ message: "worker crashed", preventDefault() {} } as ErrorEvent);
+        else {
+          context.state = "closed";
+          context.dispatchEvent(new Event("statechange"));
+        }
+        const [, result] = await Promise.race([
+          Promise.all([playback.queued, done]),
+          Bun.sleep(100).then((): never => {
+            throw new Error("playback stayed pending after interruption");
+          }),
+        ]);
+        expect(result).toBe(
+          interruption === "worker error"
+            ? "chimera-kit: the worker failed: worker crashed"
+            : interruption === "free"
+              ? "chimera-kit: this voice has been freed"
+              : interruption === "source error"
+                ? "token failed"
+                : "done",
+        );
+        expect(returned).toBe(1);
+        expect(disconnected).toBe(true);
+        expect(worker.requests.some((request) => request.type === "cancel")).toBe(true);
+        if (interruption === "close") fail(new Error("late token rejection"));
+        else late({ value: "Late words.", done: false });
+        await Bun.sleep(0);
+        expect(worker.requests.some((request) => request.type === "clause")).toBe(false);
+      } finally {
+        playback.stop();
+        voice.free();
+      }
+    });
+  }
+
   test("sings a score transformed on the page, sample for sample, as a style can't be posted", async () => {
     const here = await createVoice({ wasm, dictionary, body: "female" });
     const song = {

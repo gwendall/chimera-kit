@@ -148,12 +148,14 @@ export function Sing() {
         </p>
       </IllustratedIntro>
       <div className="panel">
+        {/* biome-ignore lint/a11y/useSemanticElements: a fieldset cannot group interactive SVG notes. */}
         <svg
           className="roll"
           viewBox="0 0 1000 250"
           preserveAspectRatio="none"
-          role="img"
+          role="group"
           aria-label="Melody editor"
+          aria-describedby="melody-keys"
           data-playing={playing}
         >
           <rect ref={trail} className="song-trail" width="1000" height="250" />
@@ -168,6 +170,36 @@ export function Sing() {
                 // biome-ignore lint/suspicious/noArrayIndexKey: notes never reorder, dragging only changes their pitch
                 key={`${i}-${length}`}
                 className="song-note"
+                role="slider"
+                tabIndex={0}
+                aria-label={`Note ${i + 1}, ${SYLLABLES[i]?.replace(/-$/, "")}`}
+                aria-valuemin={TOP - ROWS + 1}
+                aria-valuemax={TOP}
+                aria-valuenow={note}
+                aria-valuetext={`MIDI ${note}`}
+                aria-orientation="vertical"
+                onKeyDown={(event) => {
+                  const next =
+                    event.key === "Home"
+                      ? TOP - ROWS + 1
+                      : event.key === "End"
+                        ? TOP
+                        : event.key === "ArrowUp" || event.key === "ArrowRight"
+                          ? Math.min(TOP, note + 1)
+                          : event.key === "ArrowDown" || event.key === "ArrowLeft"
+                            ? Math.max(TOP - ROWS + 1, note - 1)
+                            : null;
+                  if (next === null) {
+                    if (event.key === "Escape") stop();
+                    return;
+                  }
+                  event.preventDefault();
+                  setMidi((old) => old.map((n, at) => (at === i ? next : n)));
+                }}
+                onKeyUp={(event) => {
+                  if (["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft", "Home", "End"].includes(event.key))
+                    void sing();
+                }}
                 data-active={current === i}
                 data-played={playing && current > i}
                 style={{ cursor: "ns-resize", touchAction: "none" }}
@@ -204,6 +236,9 @@ export function Sing() {
             <circle cx="0" cy="5" r="4" />
           </g>
         </svg>
+        <p id="melody-keys" className="kicker">
+          Keyboard: focus a note and use the arrow keys to change its pitch. Escape stops playback.
+        </p>
         <p className="song-lyrics">
           {SYLLABLES.map((syllable, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: each syllable stays on its original note
