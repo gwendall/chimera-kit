@@ -74,7 +74,13 @@ interface Sounding {
   startedAt: number | null;
 }
 
-interface SpeakOptions {
+interface PlaybackOptions {
+  signal?: AbortSignal;
+  /** A clock in seconds, started when samples reach playback, after any preparation. */
+  onStart?: (elapsed: () => number) => void;
+}
+
+interface SpeakOptions extends PlaybackOptions {
   body?: Body;
   style?: Mood;
   intensity?: number;
@@ -375,6 +381,7 @@ class Studio {
   async speak(input: string | Song | Score, options: SpeakOptions = {}) {
     const { context, output } = this.audio();
     const voice = this.voice ?? (await this.load());
+    options.signal?.throwIfAborted();
     const calledAt = performance.now();
     const { body, style, intensity, label, f0, rate, accent, onFirstSample } = options;
     const voiced = {
@@ -400,9 +407,17 @@ class Studio {
       (n) => {
         samples = n;
       },
-      onFirstSample,
+      (ms) => {
+        onFirstSample?.(ms);
+        const startedAt = sounding.startedAt ?? context.currentTime;
+        options.onStart?.(() => Math.max(0, context.currentTime - startedAt));
+      },
     );
-    const playback = play(timed, voice.sampleRate, { context, destination: output });
+    const playback = play(timed, voice.sampleRate, {
+      context,
+      destination: output,
+      ...(options.signal ? { signal: options.signal } : {}),
+    });
     this.watch(sounding, playback);
     return playback;
   }
@@ -595,13 +610,15 @@ class Studio {
    * The parts of one song together, each a real simulation in its own worker. Each holds its first
    * samples until every part has some, so that they come in on the same beat.
    */
-  async parts(parts: { input: Song | Score; body: Body }[]): Promise<void> {
+  async parts(parts: { input: Song | Score; body: Body }[], options: PlaybackOptions = {}): Promise<void> {
     const { context, output } = this.audio();
     this.stop();
     const calledAt = performance.now();
-    const pool = await this.spawn(parts.length);
     const run = new AbortController();
     this.crowdRun = run;
+    const abort = () => run.abort();
+    options.signal?.addEventListener("abort", abort, { once: true });
+    if (options.signal?.aborted) run.abort();
     this.scopeUntil = 0;
     const bus = context.createGain();
     bus.gain.value = 1 / Math.sqrt(parts.length);
@@ -610,58 +627,68 @@ class Studio {
     limiter.connect(output);
     this.set({ speaking: true, label: `${parts.length} parts`, voices: parts.length });
 
-    let waiting = parts.length;
-    let open: () => void = () => {};
-    const gate = new Promise<void>((resolve) => {
-      open = resolve;
-    });
-    run.signal.addEventListener("abort", () => open());
-    const note = (ms: number) => this.note(ms);
-    let timed = false;
+    try {
+      const pool = await this.spawn(parts.length);
+      if (run.signal.aborted) return;
+      let waiting = parts.length;
+      let open: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        open = resolve;
+      });
+      run.signal.addEventListener("abort", () => open());
+      const note = (ms: number) => this.note(ms);
+      let timed = false;
 
-    await Promise.allSettled(
-      parts.map(({ input, body }, index) => {
-        const voice = pool[index] as AsyncVoice;
-        const chunks = voice.stream(input, { body });
-        const held = async function* () {
-          const early: Float32Array[] = [];
-          let samples = 0;
-          let waited = false;
-          const arrive = async () => {
-            waited = true;
-            waiting -= 1;
-            if (waiting === 0) open();
-            await gate;
+      await Promise.allSettled(
+        parts.map(({ input, body }, index) => {
+          const voice = pool[index] as AsyncVoice;
+          const chunks = voice.stream(input, { body });
+          const held = async function* () {
+            const early: Float32Array[] = [];
+            let samples = 0;
+            let waited = false;
+            const arrive = async () => {
+              waited = true;
+              waiting -= 1;
+              if (waiting === 0) {
+                const startedAt = context.currentTime + context.baseLatency + (context.outputLatency || 0);
+                options.onStart?.(() => Math.max(0, context.currentTime - startedAt));
+                open();
+              }
+              await gate;
+            };
+            for await (const chunk of chunks) {
+              if (!timed) {
+                timed = true;
+                note(performance.now() - calledAt);
+              }
+              if (waited) {
+                yield chunk;
+                continue;
+              }
+              early.push(chunk);
+              samples += chunk.length;
+              if (samples < CROWD_CUSHION * voice.sampleRate) continue;
+              await arrive();
+              yield* early;
+            }
+            if (!waited) {
+              await arrive();
+              yield* early;
+            }
           };
-          for await (const chunk of chunks) {
-            if (!timed) {
-              timed = true;
-              note(performance.now() - calledAt);
-            }
-            if (waited) {
-              yield chunk;
-              continue;
-            }
-            early.push(chunk);
-            samples += chunk.length;
-            if (samples < CROWD_CUSHION * voice.sampleRate) continue;
-            await arrive();
-            yield* early;
-          }
-          if (!waited) {
-            await arrive();
-            yield* early;
-          }
-        };
-        return play(held(), voice.sampleRate, { context, destination: bus, signal: run.signal }).done;
-      }),
-    );
-    bus.disconnect();
-    limiter.disconnect();
-    if (this.crowdRun === run) {
-      this.crowdRun = null;
-      this.scopeUntil = performance.now() + 900;
-      this.set({ speaking: false, voices: 0 });
+          return play(held(), voice.sampleRate, { context, destination: bus, signal: run.signal }).done;
+        }),
+      );
+    } finally {
+      options.signal?.removeEventListener("abort", abort);
+      bus.disconnect();
+      limiter.disconnect();
+      if (this.crowdRun === run) {
+        this.crowdRun = null;
+        this.scopeUntil = performance.now() + 900;
+        this.set({ speaking: false, voices: 0 });
+      }
     }
   }
 
