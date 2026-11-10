@@ -32,11 +32,13 @@ fn the_airway_reads_the_live_tube_and_closes_on_a_stop() {
     while utterance.render(&mut chunk) > 0 {
         utterance.airway(&mut airway);
         let [ph, or, na] = [airway[3], airway[4], airway[5]].map(|n| n as usize);
-        assert_eq!(
-            airway.len(),
-            6 + 2 * (ph + or + na),
-            "the layout is 6 + areas + pressures"
-        );
+        let prefix = 6 + 2 * (ph + or + na);
+        let drawing = &airway[prefix..];
+        assert_eq!(&drawing[..2], &[1.0, 1.0], "drawing version and presence");
+        let points: usize = drawing[23..34].iter().map(|x| *x as usize).sum();
+        let grid = drawing[34] as usize;
+        assert_eq!(drawing.len(), 49 + 2 * points + 11 * grid);
+        assert!(grid > 10 && points > 50, "real engine geometry is present");
         assert!(
             airway[1] > 0.0 && airway[2] > 0.0,
             "tube lengths are positive"
@@ -184,4 +186,23 @@ fn the_abi_reports_errors_and_renders() {
         ic_utterance_free(u);
         ic_speaker_free(s);
     }
+}
+
+#[test]
+fn reading_geometry_never_changes_the_samples() {
+    let speaker = Speaker::new();
+    let json = r#"{"text":"The quick fox.","body":"female"}"#;
+    let expected = render(&speaker, json, 128);
+    let mut observed = speaker.utterance(&request(json)).unwrap();
+    let mut audio = Vec::new();
+    let mut state = Vec::new();
+    let mut chunk = [0.0; 128];
+    while let n @ 1.. = observed.render(&mut chunk) {
+        observed.airway(&mut state);
+        audio.extend_from_slice(&chunk[..n]);
+    }
+    assert_eq!(
+        audio, expected,
+        "optional geometry reads must be acoustically inert"
+    );
 }

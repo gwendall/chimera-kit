@@ -12,7 +12,7 @@ use std::slice;
 
 /// Bump when a signature below changes, along with `ABI_VERSION` in `src/engines/chimera.ts`
 /// and in `src/engines/chimera-live.ts`.
-const ABI_VERSION: u32 = 4;
+const ABI_VERSION: u32 = 5;
 /// The most samples one `ic_utterance_render` or `ic_live_render` call can hand over.
 const CHUNK: usize = 4096;
 
