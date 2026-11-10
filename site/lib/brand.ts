@@ -18,8 +18,12 @@ export const BRAND = {
     "singing synthesis",
     "browser TTS",
   ],
-  // The share card and the icons keep the first look until their own lot redraws them.
-  background: "#0c0a09",
-  ink: "#f4efe8",
-  heat: "#ff5c36",
+  // The page's light tokens (app/globals.css), for the share card and the icons.
+  paper: "#ffffff",
+  ink: "#111110",
+  muted: "#6f6b65",
+  line: "#d4d0c9",
+  accent: "#e5461b",
+  accentFill: "#c13a13",
+  onAccent: "#ffffff",
 } as const;
