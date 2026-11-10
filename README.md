@@ -13,10 +13,14 @@ loading, workers, playback, interruption and streaming answers.
 Every sound comes from a simulated airway. You can control each word's timing, pitch, breath and
 articulation through plain-data scores. It sounds synthetic, and currently speaks English.
 
-> **Status: 0.1 release candidate.** The first npm publication is being prepared. The API may change
-> before 1.0. See the documentation for the current published version.
+> **Version 0.1.** The API may change before 1.0. Synthesis is local, English-only and deliberately
+> synthetic. See the documentation for supported browsers and setup.
 
 ## Usage
+
+```sh
+npm install chimera-kit
+```
 
 ```ts
 import { createVoice, play } from "chimera-kit";
