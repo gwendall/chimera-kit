@@ -26,6 +26,7 @@
   --fs-num: clamp(22px, 2.4vw, 28px);
   --gutter: clamp(16px, 4vw, 40px);
   --width: 1040px;
+  --section-space: clamp(56px, 8vw, 96px);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -302,7 +303,7 @@ section {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: clamp(56px, 8vw, 96px) 0;
+  padding: var(--section-space) 0;
   border-top: 1px solid var(--line);
   scroll-margin-top: 16px;
 }
@@ -551,8 +552,11 @@ label.toggle {
 
 /* The director: words, the pitch line, the mood. */
 
+/* The director is the hero's own panel, not a section: without this room, the next section's top
+   rule sat flush against the panel's border and read as a double line. */
 .director {
   gap: 20px;
+  margin-bottom: var(--section-space);
 }
 
 .field {
