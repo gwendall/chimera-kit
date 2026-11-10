@@ -100,6 +100,109 @@ describe("unlockAudio", () => {
 });
 
 describe("play", () => {
+  test("queues normal PCM unchanged and completes after the worklet acknowledges it", async () => {
+    browser({});
+    class FakeContext {
+      state = "running";
+      currentTime = 0;
+      destination = {};
+      audioWorklet = { addModule: async () => {} };
+      async resume() {}
+    }
+    const posted: Float32Array[] = [];
+    class FakeNode {
+      port = {
+        onmessage: null as ((event: { data: object }) => void) | null,
+        postMessage: (message: unknown) => {
+          if (message instanceof Float32Array) posted.push(message);
+          else if (message === "end")
+            queueMicrotask(() => this.port.onmessage?.({ data: { queued: 3, done: true, underruns: 0 } }));
+        },
+      };
+      connect() {}
+      disconnect() {}
+    }
+    Object.assign(globalThis, { AudioContext: FakeContext, AudioWorkletNode: FakeNode });
+    const chunks = [new Float32Array([0.25, -0.5]), new Float32Array([1])];
+    const playback = play(chunks, 48_000, { context: new FakeContext() as unknown as BaseAudioContext });
+    expect(await playback.done).toEqual({ underruns: 0 });
+    await playback.queued;
+    expect(posted).toEqual(chunks);
+    expect(posted[0]).not.toBe(chunks[0]);
+  });
+
+  for (const interruption of ["stop", "abort", "close"] as const) {
+    test(`${interruption} finishes a stalled source and requests teardown without awaiting it`, async () => {
+      browser({});
+      class FakeContext extends EventTarget {
+        state = "running";
+        currentTime = 0;
+        destination = {};
+        audioWorklet = { addModule: async () => {} };
+        async resume() {}
+      }
+      const posted: unknown[] = [];
+      let disconnected = false;
+      class FakeNode {
+        port = { postMessage: (message: unknown) => posted.push(message), onmessage: null };
+        connect() {}
+        disconnect() {
+          disconnected = true;
+        }
+      }
+      Object.assign(globalThis, { AudioContext: FakeContext, AudioWorkletNode: FakeNode });
+      let began: () => void = () => {};
+      const reading = new Promise<void>((resolve) => {
+        began = resolve;
+      });
+      let late: (value: IteratorResult<Float32Array>) => void = () => {};
+      let fail: (error: Error) => void = () => {};
+      const pending = new Promise<IteratorResult<Float32Array>>((resolve, reject) => {
+        late = resolve;
+        fail = reject;
+      });
+      let returned = 0;
+      const source: AsyncIterableIterator<Float32Array> = {
+        [Symbol.asyncIterator]() {
+          return this;
+        },
+        next() {
+          began();
+          return pending;
+        },
+        return() {
+          returned++;
+          return new Promise(() => {});
+        },
+      };
+      const context = new FakeContext();
+      const controller = new AbortController();
+      const playback = play(source, 48_000, {
+        context: context as unknown as BaseAudioContext,
+        signal: controller.signal,
+      });
+      await reading;
+      if (interruption === "stop") playback.stop();
+      else if (interruption === "abort") controller.abort();
+      else {
+        context.state = "closed";
+        context.dispatchEvent(new Event("statechange"));
+      }
+      await Promise.race([
+        Promise.all([playback.queued, playback.done]),
+        Bun.sleep(100).then(() => {
+          throw new Error("playback stayed pending after interruption");
+        }),
+      ]);
+      expect(returned).toBe(1);
+      expect(disconnected).toBe(true);
+      if (interruption === "abort") fail(new Error("late source rejection"));
+      else late({ value: new Float32Array([1]), done: false });
+      await Bun.sleep(0);
+      expect(posted.some((message) => message instanceof Float32Array)).toBe(false);
+    });
+  }
+
   test("wakes the context before its first await, while still inside the tap", () => {
     browser({ audioSession: { type: "auto" } });
     class FakeContext {

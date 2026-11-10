@@ -6,7 +6,7 @@ import { type ClauseOptions, clauses } from "./clauses.js";
 import type { Delivery, Mood } from "./delivery.js";
 import type { CreateVoiceOptions } from "./index.js";
 import type { Score, Song } from "./layers.js";
-import { type Playback, type PlayOptions, playThrough } from "./player.js";
+import { type Playback, type PlayOptions, playThrough, readUntilAborted } from "./player.js";
 import { isScore, isSong, refuseTiming } from "./song.js";
 import type { Rendered, StreamOptions } from "./voice.js";
 import type { FromWorker, ToWorker } from "./worker.js";
@@ -28,7 +28,8 @@ export type WorkerStreamOptions = Omit<StreamOptions, "style" | "airway"> & Deli
 export interface WorkerVoiceOptions extends Omit<CreateVoiceOptions, "style">, DeliveryOptions {
   /**
    * The worker to use, running chimera-kit's `worker.js`. Defaults to a new module worker next to this
-   * file, which bundlers that follow `new URL(..., import.meta.url)` pick up.
+   * file, which bundlers that follow `new URL(..., import.meta.url)` pick up. The voice owns this
+   * worker and stops it on initialization failure or `free()`.
    */
   worker?: Worker;
 }
@@ -71,7 +72,10 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
   let refused: ((error: Error) => void) | undefined;
 
   const fail = (error: Error) => {
+    if (failure) return;
     failure = error;
+    worker.onmessage = worker.onerror = null;
+    worker.terminate();
     refused?.(error);
     for (const listener of listeners.values()) listener({ type: "error", message: error.message });
   };
@@ -86,11 +90,17 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
     else listeners.get(data.id)?.(data);
   };
 
-  const sampleRate = await new Promise<number>((resolve, reject) => {
-    opened = resolve;
-    refused = reject;
-    send({ type: "open", options: cloneable(rest) });
-  });
+  let sampleRate: number;
+  try {
+    sampleRate = await new Promise<number>((resolve, reject) => {
+      opened = resolve;
+      refused = reject;
+      send({ type: "open", options: cloneable(rest) });
+    });
+  } catch (error) {
+    fail(error instanceof Error ? error : new Error(String(error)));
+    throw error;
+  }
   refused = undefined;
 
   let next = 0;
@@ -165,7 +175,10 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
         refuse = reject;
       });
       listeners.set(id, (reply) => {
-        if (reply.type === "error") refuse(new Error(reply.message));
+        if (reply.type === "error") {
+          playback.stop();
+          refuse(new Error(reply.message));
+        }
       });
       const playOptions: PlayOptions = {};
       if (context) playOptions.context = context;
@@ -174,18 +187,21 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
       const playback = playThrough(
         sampleRate,
         playOptions,
-        async (port, stopped) => {
-          if (stopped()) return;
+        async (port, signal) => {
+          if (signal.aborted) return;
           send({ type: "say", id, options: speak, port }, [port]);
           try {
-            const pieces = typeof text === "string" || isSong(text) ? [text] : clauses(text, cutting);
+            const pieces =
+              typeof text === "string" || isSong(text)
+                ? [text]
+                : clauses(readUntilAborted(text, signal), cutting);
             for await (const clause of pieces) {
-              if (stopped()) return;
+              if (signal.aborted) return;
               send({ type: "clause", id, text: clause });
             }
           } finally {
             // A stop that came before the worker knew this request is repeated here.
-            send({ type: stopped() ? "cancel" : "said", id });
+            send({ type: signal.aborted ? "cancel" : "said", id });
           }
         },
         () => send({ type: "cancel", id }),
@@ -197,7 +213,7 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
     free() {
       if (freed) return;
       freed = true;
-      send({ type: "free" });
+      fail(new Error("chimera-kit: this voice has been freed"));
     },
   };
 }
