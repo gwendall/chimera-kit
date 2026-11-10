@@ -45,6 +45,7 @@ export function SiteFooter() {
             <Link href={LINKS.start}>Get started</Link>
             <Link href={LINKS.docs}>Documentation</Link>
             <a href={LINKS.examples}>Live demos</a>
+            <a href={LINKS.source}>GitHub</a>
             {RELEASE.npmVersion ? <a href={LINKS.npm}>npm</a> : <span>npm release coming soon</span>}
           </nav>
         </div>

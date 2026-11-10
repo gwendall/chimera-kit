@@ -85,6 +85,9 @@ export default function Docs() {
               trigger beatbox patterns and render animal calls. Control scores and articulation directly, with
               synthesis running locally in the browser.
             </p>
+            <p>
+              <a href={LINKS.source}>Source code on GitHub</a> · <a href={LINKS.issues}>Report an issue</a>
+            </p>
           </div>
 
           <section id="get-started">
