@@ -462,8 +462,13 @@ fn recover_words(plan: &Plan, phrases: &[Phrase]) -> Option<Vec<WordSpan>> {
 
 /// A score from the planner's own output: sounds from the timed segments (silence filled in
 /// explicitly between them), pitch and breath sampled from the plan's `F0` and `Breath` source
-/// controls every `step` seconds, and words when the G2P's markers recover cleanly.
-pub fn from_plan(plan: &Plan, phrases: &[Phrase], base_f0: f64) -> Score {
+/// controls every `step` seconds, the voice's constant `tension`, and words when the G2P's markers
+/// recover cleanly.
+///
+/// The tension is stated rather than left out: a transform that presses or relaxes the voice
+/// (`tenser` in TS) then starts from the tension the voice really has. Left out, it started from 0,
+/// and every mood meant to press the voice relaxed it below the engine's own 0.5.
+pub fn from_plan(plan: &Plan, phrases: &[Phrase], base_f0: f64, tension: f64) -> Score {
     const STEP: f64 = 0.01;
 
     let mut sounds = Vec::with_capacity(plan.segments.len() + phrases.len() + 1);
@@ -526,7 +531,7 @@ pub fn from_plan(plan: &Plan, phrases: &[Phrase], base_f0: f64) -> Score {
         pitch,
         loudness: None,
         breath: Some(breath),
-        tension: None,
+        tension: Some(vec![[0.0, tension]]),
         vibrato: None,
         words,
     }

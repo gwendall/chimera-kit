@@ -281,7 +281,12 @@ pub fn sing(g2p: &EnglishG2P, request: &SingRequest) -> Result<Score, String> {
         ));
     }
     let f0 = midi_to_hz(notes[0].midi);
-    let mut score = crate::score::from_plan(&plan, &[], f0);
+    let mut score = crate::score::from_plan(
+        &plan,
+        &[],
+        f0,
+        chimera::voice::human_voice::DEFAULT_SOURCE.tension,
+    );
     score.words = word_spans(&notes, &plan);
     score.vibrato = Some(sample_source(&plan, ControlKey::VIBRATO, score.duration));
     Ok(score)

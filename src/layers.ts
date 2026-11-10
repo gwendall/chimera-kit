@@ -39,7 +39,7 @@ export interface Score {
   loudness?: Curve;
   /** 0 clean, 1 all air. */
   breath?: Curve;
-  /** 0 lax, 1 pressed. */
+  /** 0 lax, 1 pressed. Absent, the voice's own (0.5 for CHIMERA's bodies). */
   tension?: Curve;
   /** Vibrato depth in cents, as a sung score has it. Absent, the voice adds none. */
   vibrato?: Curve;

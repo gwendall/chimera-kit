@@ -14,6 +14,7 @@ import {
   rate,
   shift,
   stretch,
+  tenser,
   valueAt,
 } from "./transforms.ts";
 
@@ -135,6 +136,15 @@ describe("level and voice quality", () => {
     const airy = breathier(2)(hello());
     expect(valueAt(airy.breath ?? [], 0.4)).toBe(1);
     expect(hello().loudness).toBeUndefined();
+  });
+
+  // The bug: a score without a tension curve started from 0, so tenser(0.1) gave 0.1, laxer than
+  // the engine's neutral 0.5, and every mood meant to press the voice relaxed it instead.
+  test("tenser presses from the neutral 0.5 when the score has no tension, and from its own", () => {
+    expect(valueAt(tenser(0.2)(hello()).tension ?? [], 0.4)).toBeCloseTo(0.7, 9);
+    expect(valueAt(tenser(-0.2)(hello()).tension ?? [], 0.4)).toBeCloseTo(0.3, 9);
+    const own: Score = { ...hello(), tension: [[0, 0.8]] };
+    expect(valueAt(tenser(0.1)(own).tension ?? [], 0.4)).toBeCloseTo(0.9, 9);
   });
 });
 

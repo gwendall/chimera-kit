@@ -12,7 +12,7 @@ use chimera::anatomy::human::{BodyMix, BodyName};
 use chimera::control::score::GestureScore;
 use chimera::phonetics::english::EnglishG2P;
 use chimera::phonetics::planner::{PhraseInput, PlanOptions, plan_phrases};
-use chimera::voice::human_voice::{HumanVoice, SourcePatch};
+use chimera::voice::human_voice::{DEFAULT_SOURCE, HumanVoice, SourcePatch};
 use score::Score;
 use serde::Deserialize;
 
@@ -220,7 +220,12 @@ impl Speaker {
         if plan.gestures.len() > GestureScore::CAPACITY {
             return Err("text too long for one utterance: split it into sentences".into());
         }
-        Ok(score::from_plan(&plan, &phrases, f0))
+        Ok(score::from_plan(
+            &plan,
+            &phrases,
+            f0,
+            DEFAULT_SOURCE.tension,
+        ))
     }
 
     /// Plans a melody with lyrics into a score, the way [`Speaker::plan`] plans text: see

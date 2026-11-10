@@ -244,9 +244,12 @@ export function breathier(amount: number): ScoreTransform {
   return (score, scope) => modulate(score, scope, "breath", 0, (v, w) => clamp01(v + amount * w));
 }
 
-/** Presses the voice, from -1 (laxer) to 1 (a score without a tension curve starts from 0). */
+/**
+ * Presses the voice, from -1 (laxer) to 1. A score without a tension curve starts from the
+ * engine's neutral 0.5; a planned score states its voice's own.
+ */
 export function tenser(amount: number): ScoreTransform {
-  return (score, scope) => modulate(score, scope, "tension", 0, (v, w) => clamp01(v + amount * w));
+  return (score, scope) => modulate(score, scope, "tension", 0.5, (v, w) => clamp01(v + amount * w));
 }
 
 /** Longer, higher and louder, by `amount` from 0 to 1 and more. */

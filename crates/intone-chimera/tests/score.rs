@@ -106,6 +106,25 @@ fn a_planned_score_recovers_word_boundaries() {
     );
 }
 
+/// A planned score states the tension its voice renders with, so that a transform pressing or
+/// relaxing the voice starts from it. Without it, TS started from 0: every "tenser" mood relaxed
+/// the voice below the engine's neutral 0.5.
+#[test]
+fn a_planned_score_states_its_voices_tension() {
+    let speaker = Speaker::new();
+    let said = speaker
+        .plan(&request(r#"{"text":"Hello there."}"#))
+        .unwrap();
+    assert_eq!(said.tension, Some(vec![[0.0, 0.5]]));
+    let sung = speaker
+        .sing(
+            &serde_json::from_str(r#"{"lyrics":"la la","notes":[{"midi":60,"beats":1},{"midi":62,"beats":1}],"bpm":100}"#)
+                .unwrap(),
+        )
+        .unwrap();
+    assert_eq!(sung.tension, Some(vec![[0.0, 0.5]]));
+}
+
 // --- chunk-size independence for score rendering --------------------------------------------
 
 #[test]
