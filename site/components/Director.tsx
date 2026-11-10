@@ -219,6 +219,18 @@ export function Director() {
       }),
     );
 
+  // Arrow keys on a word chip do what a drag on the curve does, a semitone at a time.
+  const nudge = (i: number, by: number) =>
+    change(() =>
+      setEdits((old) => {
+        const next = words.map((_, k) => old[k] ?? NONE);
+        const current = next[i] ?? NONE;
+        const semitones = Math.max(-LIMIT, Math.min(LIMIT, current.semitones + by));
+        next[i] = { ...current, semitones };
+        return next;
+      }),
+    );
+
   const timeAt = (clientX: number) => {
     const box = svg.current?.getBoundingClientRect();
     if (!box) return 0;
@@ -308,6 +320,12 @@ export function Director() {
                 onPointerEnter={() => setHover(i)}
                 onPointerLeave={() => setHover(-1)}
                 onClick={() => toggle(i)}
+                onKeyDown={(event) => {
+                  if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+                  event.preventDefault();
+                  nudge(i, event.key === "ArrowUp" ? 1 : -1);
+                }}
+                aria-describedby="director-hint"
               >
                 {labels[i]}
                 {edits[i]?.semitones ? <sup>{interval(edits[i]?.semitones ?? 0)}</sup> : null}
@@ -459,7 +477,9 @@ export function Director() {
                 before your changes
               </span>
             ) : null}
-            <span>Drag a word up or down to move its pitch. Tap it to stress it.</span>
+            <span id="director-hint">
+              Drag a word up or down to move its pitch, or use the arrow keys on it. Tap it to stress it.
+            </span>
           </div>
         </div>
       </div>

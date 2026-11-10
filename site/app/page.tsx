@@ -57,20 +57,20 @@ function More() {
         <span className="label">More from the same engine</span>
         <h2>{"Latency, crowds, an instrument, and animals."}</h2>
       </div>
-      <div className="tabs" role="tablist">
+      <fieldset className="tabs">
+        <legend className="sr-only">Demo to show</legend>
         {MORE.map((item, i) => (
           <button
             key={item.name}
             type="button"
-            role="tab"
             className="chip"
-            aria-selected={open === i}
+            aria-pressed={open === i}
             onClick={() => setOpen(i)}
           >
             {item.name}
           </button>
         ))}
-      </div>
+      </fieldset>
       <div className="more">{shown?.render()}</div>
     </section>
   );
@@ -132,10 +132,16 @@ function Numbers() {
 
 export default function Page() {
   useEffect(() => {
-    void studio.load();
+    // The engine and its dictionary (about 1.1 MB) wait for the page's own fonts and scripts: on a
+    // slow phone they would otherwise share the line with the first paint. A tap loads them at once.
+    const idle =
+      window.requestIdleCallback ??
+      ((run: () => void, _options?: IdleRequestOptions) => window.setTimeout(run, 200));
+    idle(() => void studio.load(), { timeout: 1500 });
     // pointerdown doesn't count as a gesture on iOS: these do. A scroll's touchend is refused, so keep trying.
     const events = ["pointerup", "touchend", "click", "keydown"];
     const wake = () => {
+      void studio.load();
       if (!studio.unlock()) return;
       for (const name of events) document.removeEventListener(name, wake, true);
     };
@@ -147,21 +153,26 @@ export default function Page() {
 
   return (
     <>
-      <header className="wrap top">
-        <a className="wordmark" href="#direct">
-          intone
-        </a>
-        <span className="badge">Private preview</span>
-        <nav aria-label="Sections">
-          <a href="#direct">Direct</a>
-          <a href="#stream">Streaming</a>
-          <a href="#voices">Voices</a>
-          <a href="#sing">Singing</a>
-          <a href="#agents">Agents</a>
-          <a href="#how">How it works</a>
-        </nav>
+      <a className="skip" href="#main">
+        Skip to content
+      </a>
+      <header className="top-bar">
+        <div className="wrap top">
+          <a className="wordmark" href="#direct">
+            intone
+          </a>
+          <span className="badge">Private preview</span>
+          <nav aria-label="Sections">
+            <a href="#direct">Direct</a>
+            <a href="#stream">Streaming</a>
+            <a href="#voices">Voices</a>
+            <a href="#sing">Singing</a>
+            <a href="#agents">Agents</a>
+            <a href="#how">How it works</a>
+          </nav>
+        </div>
       </header>
-      <main className="wrap">
+      <main className="wrap" id="main">
         <div className="hero" id="direct">
           <h1>Text to speech you can direct, word by word.</h1>
           <p className="lead">

@@ -517,6 +517,7 @@ export function Throat() {
     fonts.mono = style.getPropertyValue("--font-mono").trim() || "monospace";
     fonts.sans = style.getPropertyValue("--font-sans").trim() || "sans-serif";
     const scope = new Scope();
+    studio.wantGhost();
 
     const draw = () => {
       frameId = requestAnimationFrame(draw);
