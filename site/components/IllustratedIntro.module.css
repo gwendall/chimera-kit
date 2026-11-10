@@ -50,7 +50,7 @@
     grid-column: 1;
   }
 
-  .copy > p {
+  .copy > :is(p, div) {
     grid-column: 1 / -1;
   }
 
@@ -65,6 +65,6 @@
   }
 
   .hero .art {
-    grid-row: 1;
+    grid-row: 1 / span 2;
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
 import { Agent } from "@/components/Agent";
 import { Anyone } from "@/components/Anyone";
@@ -13,8 +14,10 @@ import { Instrument } from "@/components/Instrument";
 import { Layers } from "@/components/Layers";
 import { Live } from "@/components/Live";
 import { Sing } from "@/components/Sing";
+import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { Speed } from "@/components/Speed";
 import { useStudio } from "@/components/useStudio";
+import { LINKS } from "@/lib/links";
 import { studio } from "@/lib/studio";
 
 const MORE: { name: string; render: () => ReactNode }[] = [
@@ -154,34 +157,22 @@ export default function Page() {
 
   return (
     <>
-      <a className="skip" href="#main">
-        Skip to content
-      </a>
-      <header className="top-bar">
-        <div className="wrap top">
-          <a className="wordmark" href="#direct">
-            intone
-          </a>
-          <span className="badge">Private preview</span>
-          <nav aria-label="Sections">
-            <a href="#direct">Direct</a>
-            <a href="#stream">Streaming</a>
-            <a href="#voices">Voices</a>
-            <a href="#sing">Singing</a>
-            <a href="#agents">Agents</a>
-            <a href="#how">How it works</a>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
       <main className="wrap" id="main">
         <div className="hero" id="direct">
           <IllustratedIntro scene="direct">
+            <span className="label">A JavaScript library for controllable speech</span>
             <h1>Text to speech you can direct, word by word.</h1>
             <p className="lead">
-              intone is a JavaScript library that reads text aloud, inside the browser. You choose the words
-              that carry the stress, move the pitch, and set the mood and the voice. It starts talking a few
-              milliseconds after you ask, with no server and no AI model to download.
+              Add speech to your app with a few lines of JavaScript. Choose the voice, shape each word, or
+              speak a language model's answer as it arrives. Everything runs in the browser.
             </p>
+            <div className="row">
+              <Link href={LINKS.start} className="go" style={{ textDecoration: "none" }}>
+                Get started
+              </Link>
+              <Link href={LINKS.docs}>Read the documentation</Link>
+            </div>
           </IllustratedIntro>
           <Facts />
         </div>
@@ -195,13 +186,7 @@ export default function Page() {
         <More />
         <Numbers />
       </main>
-      <footer className="wrap">
-        <p>
-          The voice is <a href="https://github.com/jamesondh/chimera-vocal-synth">CHIMERA</a> by{" "}
-          <a href="https://github.com/jamesondh">Jameson Hodge</a>, MIT licensed. intone is the library that
-          puts it in products. Nothing you type on this page leaves it.
-        </p>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

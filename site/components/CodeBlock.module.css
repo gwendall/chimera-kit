@@ -1,0 +1,31 @@
+.block {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--code-bg);
+}
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+.bar button {
+  padding: 5px 0 5px 12px;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+.block pre {
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+}
+.block code {
+  font: inherit;
+}

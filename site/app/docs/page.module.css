@@ -1,0 +1,131 @@
+.layout {
+  display: grid;
+  grid-template-columns: 175px minmax(0, 1fr);
+  gap: 48px;
+  padding-top: 48px;
+  padding-bottom: 72px;
+}
+.sidebar {
+  align-self: start;
+  position: sticky;
+  top: 100px;
+  font-size: var(--fs-ui);
+}
+.back {
+  display: block;
+  margin-bottom: 28px;
+  color: var(--muted);
+}
+.sidebar nav {
+  display: grid;
+  gap: 10px;
+}
+.sidebar nav a {
+  text-decoration: none;
+}
+.sidebar nav a:hover {
+  color: var(--accent-ink);
+}
+.article {
+  min-width: 0;
+}
+.intro h1 {
+  font-size: clamp(36px, 5vw, 52px);
+  max-width: none;
+  margin: 12px 0 20px;
+}
+.intro .lead {
+  font-size: var(--fs-lg);
+}
+.article section {
+  display: block;
+  padding: 40px 0 0;
+  margin-top: 40px;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 96px;
+}
+.article h2 {
+  font-size: 28px;
+  margin: 0 0 20px;
+}
+.article h3 {
+  font-size: var(--fs-lg);
+  margin: 28px 0 12px;
+  font-weight: 550;
+}
+.article p {
+  color: var(--ink-2);
+  margin: 16px 0;
+}
+.article :is(p, dd) code {
+  overflow-wrap: anywhere;
+}
+.notice {
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  padding: 16px 20px;
+  font-size: var(--fs-ui);
+}
+.table {
+  overflow-x: auto;
+  margin: 24px 0;
+}
+.table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-ui);
+}
+.table :is(th, td) {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  min-width: 130px;
+}
+.table :is(th, td):first-child {
+  padding-left: 0;
+}
+.table td code {
+  overflow-wrap: anywhere;
+}
+.reference {
+  margin: 0;
+}
+.reference div {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.reference dt {
+  overflow-wrap: anywhere;
+}
+.reference dd {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: var(--fs-ui);
+}
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding-top: 28px;
+  }
+  .sidebar {
+    position: static;
+  }
+  .back {
+    margin-bottom: 16px;
+  }
+  .sidebar nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+  .sidebar nav span {
+    flex-basis: 100%;
+  }
+  .article section {
+    margin-top: 32px;
+    padding: 32px 0 0;
+    scroll-margin-top: 24px;
+  }
+}
