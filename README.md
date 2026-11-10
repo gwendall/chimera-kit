@@ -276,9 +276,10 @@ which is an optional peer dependency: only code that imports `intone/speaker` an
 ## Imitating a voice
 
 `intone/imitate` reads a recording and returns a small, plain-data profile for CHIMERA to speak
-with: a caricature (pitch, its range, speaking rate, pauses, a formant-based body size, and a
-rough breathiness), not a neural clone of the speaker. It is pure TypeScript with no engine
-import, so it carries nothing of the rest of the package (see Cost, below).
+with: a caricature (pitch, its range, speaking rate, pauses, a formant-based body blend, the
+voice's brightness and, when it is clearly breathy, its breathiness), not a neural clone of the
+speaker. It is pure TypeScript with no engine import, so it carries nothing of the rest of the
+package (see Cost, below).
 
 ```ts
 import { profile } from "intone/imitate";
@@ -295,13 +296,14 @@ recording of a real person is ever shipped in this repository; every test render
 CHIMERA audio.
 
 `profile()` does not estimate timbre: it does not try to match a speaker's particular vocal
-texture or resonance, only five coarse, independently measured dials. The mappings are fit
+texture or resonance, only a few coarse, independently measured dials. The mappings are fit
 against CHIMERA's own renders (each constant in `src/imitate.ts` says how), and recovery degrades
-honestly by parameter: pitch, its range, and the body-size estimate hold up well; speaking rate
-and pauses need several seconds of actual speech to average out one sentence's own shape, and
-read a short clip noisily; breathiness only distinguishes a clearly breathy voice from a clear
-one, not fine shades near clear. See the round-trip tests in `src/imitate.test.ts` for the
-measured numbers behind each of those claims.
+honestly by parameter: pitch, its range, and the body blend hold up well; speaking rate and
+pauses need several seconds of actual speech to average out one sentence's own shape, and read a
+short clip noisily; brightness comes back within about 0.1 on each body; breathiness is only set
+for a clearly breathy voice (a clear one keeps the body's own), and a rough voice reads as breathy.
+The airway's size, fry and tension are not measured. See the round-trip tests in
+`src/imitate.test.ts` for the measured numbers behind each of those claims.
 
 ## Letting a language model use the voice
 
@@ -343,7 +345,7 @@ is refused rather than dropped, which would move every later syllable onto the w
 | JavaScript: everything                         | 9.3 KB  |
 | JavaScript: a voice in a Worker (both sides)   | 8.8 KB  |
 | JavaScript: the device's voices only           | 2.7 KB  |
-| JavaScript: `profile` (`intone/imitate`) alone | 2.6 KB  |
+| JavaScript: `profile` (`intone/imitate`) alone | 2.9 KB  |
 | JavaScript: tool calls (`intone/tools`)        | 2.7 KB  |
 | JavaScript: songs (`intone/singing`)           | 2.0 KB  |
 | Pronouncing dictionary (CMUdict, English)      | 869 KB  |
