@@ -48,11 +48,6 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
   // deliveries as data (`deliver` and the transforms it applies), which a worker must carry since a
   // style cannot be posted to it. The worker loads 207 KB of wasm and 869 KB of dictionary besides.
   "a voice in a Worker, worker side (worker.js)": { imports: [], from: "worker.js", limit: 5_000 },
-  "the device's voices (web-speech.js)": {
-    imports: ["createSystemVoice"],
-    from: "web-speech.js",
-    limit: 3_500,
-  },
   // 1,752 bytes measured: loadCreatures alone, nothing speech-related pulled in.
   "the creatures (loadCreatures)": { imports: ["loadCreatures"], from: "creatures.js", limit: 2_000 },
   // `profile` is pure TypeScript with no engine import (type-only imports of Body and Delivery

@@ -32,7 +32,7 @@ const sections = [
   ["streaming", "Streaming answers"],
   ["singing", "Singing"],
   ["tools", "Agent tools"],
-  ["backends", "Workers & backends"],
+  ["backends", "Worker playback"],
   ["more", "Live voices & creatures"],
   ["reference", "API reference"],
   ["troubleshooting", "Troubleshooting"],
@@ -44,7 +44,6 @@ const entrypoints = [
     "createVoice, createWorkerVoice, play, speech, take, deliver, bodyFromSeed",
     "Speech, playback and score direction.",
   ],
-  ["intone/speaker", "createSpeaker", "One asynchronous interface for CHIMERA, Kokoro and Web Speech."],
   ["intone/singing", "melody, harmony, keyOf, scoop, fall", "Notes, harmonies and singing transforms."],
   [
     "intone/tools",
@@ -54,8 +53,6 @@ const entrypoints = [
   ["intone/live", "createInstrument", "A sustained voice and beat sequencer in an AudioWorklet."],
   ["intone/creatures", "loadCreatures", "A separate engine for birds, seals, alligators and elephants."],
   ["intone/imitate", "profile", "Coarse voice measurements from a mono recording."],
-  ["intone/web-speech", "createSystemVoice", "The voices available on the device."],
-  ["intone/kokoro", "createKokoroVoice", "Local neural speech with optional model dependencies."],
 ];
 
 export default function Docs() {
@@ -217,14 +214,14 @@ const upperPart = harmony(song, "third-above");
               runner validates arguments, speaks concurrent calls in order, and returns readable success or
               error data.
             </p>
-            <CodeBlock>{`import { createSpeaker } from "intone/speaker";
+            <CodeBlock>{`import { createWorkerVoice } from "intone";
 import { createToolRunner, forAnthropic, forOpenAI } from "intone/tools";
 
-const speaker = await createSpeaker();
-const runner = createToolRunner(speaker, { body: "female" });
+const voice = await createWorkerVoice();
+const runner = createToolRunner(voice, { body: "female" });
 
 const result = await runner.run("say", { text: "Hello there." });
-// { ok: true, lost: [] }, or { ok: false, error: "..." }
+// { ok: true }, or { ok: false, error: "..." }
 
 const anthropicTools = forAnthropic();
 const chatCompletionsTools = forOpenAI();
@@ -232,19 +229,20 @@ const chatCompletionsTools = forOpenAI();
 // Send each returned tool name and arguments to runner.run().
 
 runner.stop(); // Interrupt audio and discard queued calls.
-speaker.free();`}</CodeBlock>
+voice.free();`}</CodeBlock>
             <p>
               The adapters provide tool definitions, not model API clients. <code>forOpenAI()</code> returns
               the Chat Completions tool format. <code>TOOLS</code> contains provider-neutral JSON Schema
-              definitions. <code>lost</code> lists requested controls the chosen backend could not apply.
+              definitions. Calls run against the Chimera voice and return when playback finishes.
             </p>
           </section>
 
           <section id="backends">
-            <h2>Workers & backends</h2>
+            <h2>Worker playback</h2>
             <p>
-              A worker keeps synthesis off the main thread. Its <code>render</code> and <code>stream</code>{" "}
-              methods are asynchronous; <code>say</code> returns a playback handle immediately.
+              A worker keeps Chimera synthesis off the main thread. Its <code>render</code> and{" "}
+              <code>stream</code> methods are asynchronous; <code>say</code> returns a playback handle
+              immediately.
             </p>
             <CodeBlock>{`import { createWorkerVoice } from "intone";
 
@@ -254,50 +252,9 @@ await playback.done;
 voice.free();`}</CodeBlock>
             <p>
               Workers take <code>delivery</code> and <code>intensity</code> as data instead of a{" "}
-              <code>style</code> function. For interchangeable engines, use{" "}
-              <code>createSpeaker(backend, options)</code> from <code>intone/speaker</code>.
-            </p>
-            <div className={styles.table}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Backend</th>
-                    <th>Runs with</th>
-                    <th>Control</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <code>chimera</code> (default)
-                    </td>
-                    <td>Local WebAssembly</td>
-                    <td>Pitch curves, sound timing, body, delivery and singing</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <code>kokoro</code>
-                    </td>
-                    <td>Local neural model, about 88 MB</td>
-                    <td>
-                      Natural speech and rate; unsupported controls appear in <code>lost</code>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <code>web-speech</code>
-                    </td>
-                    <td>Device voices</td>
-                    <td>System-dependent voices, rate, pitch and level</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p>
-              For Kokoro, also install the optional peers <code>kokoro-js</code> and{" "}
-              <code>@huggingface/transformers</code>. Check <code>speaker.supports</code> before showing
-              advanced controls, then inspect each result's <code>lost</code>. Call{" "}
-              <code>speaker.free()</code> when finished.
+              <code>style</code> function. They accept text, songs and edited scores, with samples sent
+              directly to the audio thread. Call <code>playback.stop()</code> to interrupt and{" "}
+              <code>voice.free()</code> on teardown.
             </p>
           </section>
 
@@ -327,8 +284,8 @@ voice.free();`}</CodeBlock>
           <section id="reference">
             <h2>API reference</h2>
             <p>
-              Each entry point ships TypeScript declarations. Import only the part your app needs; Kokoro and
-              creatures are optional.
+              Each entry point ships TypeScript declarations. Import the Chimera features your app needs;
+              creatures load their own small WASM artifact.
             </p>
             <div className={styles.table}>
               <table>
@@ -438,11 +395,11 @@ voice.free();`}</CodeBlock>
               Create voices in a client-side effect or event handler. The documentation's module example
               assumes a browser entry point. Release voices in your component's cleanup.
             </p>
-            <h3>A control seems ignored</h3>
+            <h3>A score rejects timing options</h3>
             <p>
-              Check <code>supports</code> and <code>lost</code> on a speaker. System voices and Kokoro cannot
-              follow CHIMERA's sound timing or sing a melody. CHIMERA is controllable but synthetic; English
-              is its current language, and phone latency has not yet been measured.
+              Songs and scores already specify pitch and timing. Use score transforms to edit them instead of
+              passing <code>rate</code>, <code>f0</code> or <code>accent</code>. Chimera currently speaks
+              English, sounds synthetic, and phone latency has not yet been measured.
             </p>
           </section>
         </article>

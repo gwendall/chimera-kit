@@ -38,26 +38,14 @@ interface Result {
   renderedSeconds: number;
   exact: { maxError: number; trailingMax: number; underruns: number };
   resampled: { rate: number; lengthRatio: number; rmsRatio: number; underruns: number };
-  /** The device-voice entry loads next to the main one, and how many voices the browser lists. */
-  systemVoices: number;
   /** A voice in the default Worker: its samples against render's, and its first chunk's delay. */
   worker: { maxError: number; length: number; firstChunkMs: number };
   /** `say` from the worker straight to the audio thread, a string then tokens, against renders. */
   say: { maxError: number; tokensMaxError: number; clauses: number; underruns: number; stoppedPeak: number };
-  /** `intone/speaker`'s `createSpeaker("chimera", ...)`, against the same renders: it only wraps
-   * `createWorkerVoice`, so it must keep the same guarantees. */
-  speaker: {
-    id: string;
-    lost: string[];
-    renderError: number;
-    sayError: number;
-    underruns: number | undefined;
-    stoppedPeak: number;
-  };
   /** The creatures' own wasm, loaded and heard in a browser. */
   creature: { kinds: number; samples: number; peak: number };
   /** A song through the worker to the audio thread: the samples of its render, nothing lost. */
-  song: { lost: string[]; sayError: number };
+  song: { sayError: number };
   /** `intone/live`: a held voice through the real `AudioWorkletNode` + `addModule` pipeline (not
    * just the bare engine the bun tests exercise), and its beatbox. */
   live: {
@@ -219,7 +207,6 @@ try {
           await interrupted.done;
           let stoppedPeak = 0;
           for (const x of stopOut) stoppedPeak = Math.max(stoppedPeak, Math.abs(x));
-          remote.free();
           let workerError = 0;
           let at = 0;
           for (const part of parts) {
@@ -228,46 +215,17 @@ try {
             at += part.length;
           }
 
-          // The unified Speaker interface (`intone/speaker`): CHIMERA through it must keep the same
-          // guarantees as `createWorkerVoice` directly, since it only wraps it.
-          const { createSpeaker } = await import(`${origin}/speaker.js`);
-          const chimeraSpeaker = await createSpeaker("chimera", { body: "female" });
-          const speakerRendered = await chimeraSpeaker.render?.(text);
-          let speakerRenderError = 0;
-          for (let i = 0; i < audio.length; i++)
-            speakerRenderError = Math.max(
-              speakerRenderError,
-              Math.abs((speakerRendered?.audio[i] ?? 0) - audio[i]),
-            );
-          const speakerSayContext = new OfflineAudioContext(1, sayExpected.length + 4096, sampleRate);
-          const speakerSaid = chimeraSpeaker.say(text, { context: speakerSayContext });
-          await speakerSaid.queued;
-          const speakerSayOut = (await speakerSayContext.startRendering()).getChannelData(0);
-          const speakerSayEnd = await speakerSaid.done;
-          let speakerSayError = 0;
-          for (let i = 0; i < sayExpected.length; i++)
-            speakerSayError = Math.max(speakerSayError, Math.abs(speakerSayOut[i] - sayExpected[i]));
-          // Stopped before it plays, through the unified interface too: nothing is heard.
-          const speakerStopContext = new OfflineAudioContext(1, sampleRate, sampleRate);
-          const speakerInterrupted = chimeraSpeaker.say(`${text} ${text}`, { context: speakerStopContext });
-          speakerInterrupted.stop();
-          await speakerInterrupted.queued;
-          const speakerStopOut = (await speakerStopContext.startRendering()).getChannelData(0);
-          await speakerInterrupted.done;
-          let speakerStoppedPeak = 0;
-          for (const x of speakerStopOut) speakerStoppedPeak = Math.max(speakerStoppedPeak, Math.abs(x));
           const song = { lyrics: "la la", notes: [60, 67].map((midi) => ({ midi, beats: 1 })), bpm: 120 };
-          const songExpected: Float32Array =
-            (await chimeraSpeaker.render?.(song))?.audio ?? new Float32Array();
+          const songExpected: Float32Array = (await remote.render(song)).audio;
           const songContext = new OfflineAudioContext(1, songExpected.length + 4096, sampleRate);
-          const sung = chimeraSpeaker.say(song, { context: songContext });
+          const sung = remote.say(song, { context: songContext });
           await sung.queued;
           const songOut = (await songContext.startRendering()).getChannelData(0);
           await sung.done;
           let songError = songExpected.length === 0 ? 1 : 0;
           for (let i = 0; i < songOut.length; i++)
             songError = Math.max(songError, Math.abs(songOut[i] - (songExpected[i] ?? 0)));
-          chimeraSpeaker.free();
+          remote.free();
 
           const { loadCreatures } = await import(`${origin}/creatures.js`);
           const creatures = await loadCreatures();
@@ -277,8 +235,6 @@ try {
           for (const x of cry) creaturePeak = Math.max(creaturePeak, Math.abs(x));
           creature.free();
 
-          const { systemVoices } = await import(`${origin}/web-speech.js`);
-          const listed = await systemVoices(speechSynthesis, 500);
           return {
             loadMs,
             renderedSeconds: audio.length / sampleRate,
@@ -289,7 +245,6 @@ try {
               rmsRatio: rms(resampledOut, expected) / rms(audio, audio.length),
               underruns: resampledEnd.underruns,
             },
-            systemVoices: listed.length,
             worker: { maxError: workerError, length: at, firstChunkMs },
             say: {
               maxError: sayError,
@@ -298,17 +253,8 @@ try {
               underruns: sayEnd.underruns,
               stoppedPeak,
             },
-            speaker: {
-              id: chimeraSpeaker.id,
-              lost: speakerRendered?.lost ?? ["render missing"],
-              renderError: speakerRenderError,
-              sayError: speakerSayError,
-              underruns: speakerSayEnd.underruns,
-              stoppedPeak: speakerStoppedPeak,
-            },
             creature: { kinds: creatures.list.length, samples: cry.length, peak: creaturePeak },
             song: {
-              lost: sung.lost,
               sayError: songError,
             },
           };
@@ -395,20 +341,9 @@ try {
         result.say.stoppedPeak > 0 && `a stopped say still sounded (peak ${result.say.stoppedPeak})`,
         result.worker.length !== Math.round(result.renderedSeconds * 48_000) &&
           `the worker gave ${result.worker.length} samples`,
-        result.speaker.id !== "chimera" && `createSpeaker("chimera") reported id ${result.speaker.id}`,
-        result.speaker.lost.length > 0 && `createSpeaker("chimera") lost ${result.speaker.lost.join(", ")}`,
-        result.speaker.renderError > 0 &&
-          `createSpeaker("chimera")'s render differs from createVoice's by ${result.speaker.renderError}`,
-        result.speaker.sayError > 0 &&
-          `createSpeaker("chimera")'s say differs from speech() by ${result.speaker.sayError}`,
-        result.speaker.underruns !== 0 &&
-          `createSpeaker("chimera")'s say reported ${result.speaker.underruns} underruns (0 expected, a count required)`,
         !(result.creature.kinds > 0 && result.creature.samples > 0 && result.creature.peak > 0.001) &&
           `a creature was not heard: ${JSON.stringify(result.creature)}`,
-        result.song.lost.length > 0 && `a sung say lost ${result.song.lost.join(", ")}`,
         result.song.sayError > 0 && `a sung say differs from its render by ${result.song.sayError}`,
-        result.speaker.stoppedPeak > 0 &&
-          `createSpeaker("chimera")'s stopped say still sounded (peak ${result.speaker.stoppedPeak})`,
         !result.live.offline.finite && "intone/live produced a non-finite sample",
         result.live.offline.peak <= 1e-3 && "intone/live's held note was not heard",
         (result.live.offline.firstSampleMs < 0 || result.live.offline.firstSampleMs > 50) &&

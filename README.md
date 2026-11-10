@@ -5,14 +5,13 @@ code down to the syllable. No model weights, no server for the default engine.
 
 [Live demos](https://intone-one.vercel.app) · [Get started](https://intone-one.vercel.app/docs#get-started) · [Documentation](https://intone-one.vercel.app/docs)
 
-intone is how you use [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth), the physical
-voice model by [Jameson Hodge](https://github.com/jamesondh), in a real product: streaming, clause
-cutting for language models, direction, workers, and one interface that also drives other engines
-([`intone/speaker`](#one-interface-three-backends)).
+intone is a JavaScript toolkit dedicated to [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth),
+the physical voice model by [Jameson Hodge](https://github.com/jamesondh). Use its speech, singing,
+live instrument, beatbox, creatures and real airway data in your app. The library handles browser
+loading, workers, playback, interruption and streaming answers.
 
-CHIMERA doesn't sound natural, and it isn't trying to. It sounds uncanny, it fits in a few hundred
-kilobytes, and because every sound comes from an articulation, the delivery can be controlled by a
-program. When you want a natural voice instead, change one line and keep the rest of your code.
+Every sound comes from a simulated airway. You can control each word's timing, pitch, breath and
+articulation through plain-data scores. It sounds synthetic, and currently speaks English.
 
 > **Status: private, pre-release.** Not on npm yet, and the API will change.
 
@@ -210,9 +209,7 @@ const score = voice.plan(song); // the same score, to transform or inspect
 Hyphens split a word's syllables as typed, and a lone `-` or `~` holds the previous vowel through
 one more note. The first beat comes just after the first consonants, or at `t0` seconds to line
 it up with an accompaniment. A song, like a score, refuses `rate`, `f0` and `accent`, and takes
-only the style given with its call (`delivery` on a worker voice or a speaker). A speaker that
-cannot sing (`supports.singing` is false: Kokoro, the device's voices) speaks the lyrics and says
-`notes` in `lost`.
+only the style given with its call (`delivery` on a worker voice).
 
 `intone/singing` has the rest of a singer's kit, all pure functions. `melody` writes notes as text,
 `harmony` makes a second part for another voice, and `scoop` and `fall` slide into a note and off
@@ -234,64 +231,11 @@ its own voice. Thirds stay in the key, which is worked out from the notes (`keyO
 (`harmony(song, "third-above", { key: "Eb" })`, `"A minor"`). Two keys that cover a melody equally
 are told apart by the note it ends on.
 
-## The device's voices
-
-The same calls can speak through the voices the device already has (Web Speech): nothing to
-download, natural-sounding, but the system decides almost everything. It takes one rate, pitch
-and volume per clause, and `lost` says what of a delivery it could not apply.
-
-```ts
-import { createSystemVoice } from "intone/web-speech";
-
-const voice = await createSystemVoice({ lang: "en" });
-const speech = voice.say(answer, { delivery: "calm" }); // a string, or tokens as they arrive
-speech.lost; // ["pitch range", "breath", "tension", "pause length"]
-await speech.done;
-```
-
 ## Sound on phones
 
 iOS mutes Web Audio with the silent switch and only starts audio from code running inside a tap.
 `play` handles both when it is called from the tap. If your handler awaits something first, call
 `unlockAudio(context)` at the top of it, or give `play` a context you resumed yourself.
-
-## One interface, three backends
-
-`intone/speaker` is one asynchronous interface that CHIMERA, Kokoro (a neural TTS model, run
-locally through `kokoro-js`) and the device's own voices (Web Speech) all speak through, so an
-app can switch backends without changing its call sites. Every call reports what that backend
-could not honor in `lost`.
-
-```ts
-import { createSpeaker } from "intone/speaker";
-
-const speaker = await createSpeaker("kokoro", { body: "female" });
-speaker.id; // "kokoro"
-speaker.supports; // { pitchCurve: false, soundTiming: false, breath: false, phones: true, ... }
-const spoken = speaker.say("Hello there.");
-spoken.lost; // what this call asked for that Kokoro could not do
-await spoken.done; // { underruns: 0 }, or {} from the system voice, which can't tell
-speaker.free();
-```
-
-A `Speaker` describes itself (`accepts` the layer it reads, `supports`, `output`) and every
-`render`/`stream`/`say` call reports `lost`, so a caller never has to know an engine's name to
-degrade gracefully:
-
-|              | accepts  | output   | honors                                  | typical `lost`                                 |
-| ------------ | -------- | -------- | --------------------------------------- | ---------------------------------------------- |
-| `chimera`    | gestures | samples  | everything (f0, accent, body, delivery) | nothing                                        |
-| `kokoro`     | phrasing | samples  | rate, a delivery's rate                 | `f0`, `accent`, `body`, chunk size, the rest   |
-| `web-speech` | intent   | playback | rate, a delivery's rate, pitch, level   | `f0`, `accent`, `body`, range, breath, tension |
-
-A delivery's parts a backend cannot apply are named in `lost` ("pitch range", "breath"...), and
-its rate multiplies the call's `rate`, or else the voice's own.
-
-`createSpeaker("chimera", ...)` is a thin wrapper over `createWorkerVoice` and keeps its
-guarantees (samples straight to the audio thread, `stop()` before anything plays gives silence).
-`createSpeaker("kokoro", ...)` downloads the model on first use (about 88 MB) through `kokoro-js`,
-which is an optional peer dependency: only code that imports `intone/speaker` and asks for
-`"kokoro"` pulls it in.
 
 ## Imitating a voice
 
@@ -332,24 +276,23 @@ The airway's size, fry and tension are not measured. See the round-trip tests in
 comes back as a result the model can read and correct, never as an exception:
 
 ```ts
-import { createSpeaker } from "intone/speaker";
+import { createWorkerVoice } from "intone";
 import { createToolRunner, forAnthropic } from "intone/tools";
 
-const speaker = await createSpeaker();
-const tools = createToolRunner(speaker, { body: "female" });
+const voice = await createWorkerVoice();
+const tools = createToolRunner(voice, { body: "female" });
 
 const reply = await anthropic.messages.create({ model, messages, max_tokens, tools: forAnthropic() });
 for (const block of reply.content) {
   if (block.type === "tool_use") {
-    const result = await tools.run(block.name, block.input); // { ok: true, lost: [] } when it has finished
+    const result = await tools.run(block.name, block.input); // { ok: true } when it has finished
   }
 }
 tools.stop(); // the user interrupted: silence now, and drop the calls still waiting
 ```
 
 `forOpenAI()` gives the same tools for Chat Completions, and `TOOLS` the neutral definitions. Calls
-made at once speak one after the other. `lost` says what the backend could not do, such as `notes`
-on one that cannot sing. It works on a `createWorkerVoice` too.
+made at once speak one after the other. The worker voice supports speech and singing directly.
 
 A melody is `melody("C4:1 D#4:0.5 Bb3:2")`: pitch and beats, one beat when left out, a MIDI number
 accepted as a pitch, `|` ignored so it can be written in bars. A song has no silent notes, so a rest
@@ -364,7 +307,6 @@ is refused rather than dropped, which would move every later syllable onto the w
 | JavaScript: a chat (`speech`, `play`)          | 5.5 KB  |
 | JavaScript: everything                         | 10.0 KB |
 | JavaScript: a voice in a Worker (both sides)   | 9.5 KB  |
-| JavaScript: the device's voices only           | 2.7 KB  |
 | JavaScript: `profile` (`intone/imitate`) alone | 2.9 KB  |
 | JavaScript: tool calls (`intone/tools`)        | 2.7 KB  |
 | JavaScript: songs (`intone/singing`)           | 2.0 KB  |
@@ -459,7 +401,7 @@ carries here, each measured and meant for upstream, are listed in
 
 ## Where it is going
 
-One API for speech, singing and sounds that are not words, over any engine, local first. See
+Complete browser access to Chimera: speech, scores, singing, live voices, beatbox and creatures. See
 [docs/design.md](docs/design.md).
 
 ## Contributing

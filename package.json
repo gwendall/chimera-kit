@@ -33,10 +33,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./web-speech": {
-      "types": "./dist/web-speech.d.ts",
-      "import": "./dist/web-speech.js"
-    },
     "./worker.js": "./dist/worker.js",
     "./live": {
       "types": "./dist/live.d.ts",
@@ -45,14 +41,6 @@
     "./worklet-live.js": "./dist/worklet-live.js",
     "./intone_chimera.wasm": "./dist/intone_chimera.wasm",
     "./cmudict.txt.gz": "./dist/cmudict.txt.gz",
-    "./speaker": {
-      "types": "./dist/speaker.d.ts",
-      "import": "./dist/speaker.js"
-    },
-    "./kokoro": {
-      "types": "./dist/kokoro.d.ts",
-      "import": "./dist/kokoro.js"
-    },
     "./creatures": {
       "types": "./dist/creatures.d.ts",
       "import": "./dist/creatures.js"
@@ -80,7 +68,7 @@
   },
   "scripts": {
     "build:wasm": "cargo build -p intone-chimera -p intone-creatures --release --target wasm32-unknown-unknown && mkdir -p dist && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_chimera.wasm -o dist/intone_chimera.wasm && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_creatures.wasm -o dist/intone_creatures.wasm",
-    "build:js": "bun scripts/clean-dist.ts && bun build src/index.ts src/web-speech.ts src/worker.ts src/live.ts src/speaker.ts src/kokoro.ts src/creatures.ts src/imitate.ts src/tools.ts src/singing.ts --root src --outdir dist --format esm --target browser --minify --splitting --external kokoro-js --external @huggingface/transformers && bun build src/worklet-live.ts --root src --outdir dist --format esm --target browser --minify && tsc -p tsconfig.build.json",
+    "build:js": "bun scripts/clean-dist.ts && bun build src/index.ts src/worker.ts src/live.ts src/creatures.ts src/imitate.ts src/tools.ts src/singing.ts --root src --outdir dist --format esm --target browser --minify --splitting && bun build src/worklet-live.ts --root src --outdir dist --format esm --target browser --minify && tsc -p tsconfig.build.json",
     "build": "bun run build:wasm && bun run build:js && cp public/data/cmudict.txt.gz dist/",
     "test": "bun run build && cargo test --workspace && bun test --timeout 30000 src eval",
     "check:browser": "bun scripts/browser-check.ts",
@@ -92,24 +80,10 @@
     "e2e:smoke": "bun e2e/run.ts --smoke",
     "sync-upstream": "scripts/sync-upstream.sh"
   },
-  "peerDependencies": {
-    "@huggingface/transformers": "^3.5.1",
-    "kokoro-js": "^1.2.1"
-  },
-  "peerDependenciesMeta": {
-    "@huggingface/transformers": {
-      "optional": true
-    },
-    "kokoro-js": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@biomejs/biome": "2.6.6",
-    "@huggingface/transformers": "^3.5.1",
     "@types/bun": "1.4.4",
     "binaryen": "132.0.0",
-    "kokoro-js": "^1.2.1",
     "playwright-core": "1.64.1",
     "typescript": "7.0.2"
   }

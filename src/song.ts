@@ -1,6 +1,5 @@
 /**
- * What every backend does with a song the same way, whether it sings it or can only speak its
- * lyrics: the same refusals, so a call that one backend refuses is refused by all of them.
+ * Song and score recognition and timing validation for Chimera voices.
  */
 import type { Score, Song } from "./layers.js";
 
@@ -25,21 +24,4 @@ export function refuseTiming(
       `intone: ${what} ignores ${refused.join(", ")}; transform it instead (stretch, shift, deliver)`,
     );
   }
-}
-
-/** A song's lyrics as plain text, for a backend that can only speak them: "twin-kle ~" is "twinkle". */
-export function spokenLyrics(song: Song): string {
-  return song.lyrics
-    .replace(/(?<=\S)-(?=\S)/g, "")
-    .replace(/(^|\s)[-~](?=\s|$)/g, "$1")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/** What a backend that only speaks a song's lyrics loses of it. */
-export function unsung(song: Song): string[] {
-  const lost = ["notes"];
-  if (song.vibrato) lost.push("vibrato");
-  if (song.t0 !== undefined) lost.push("t0");
-  return lost;
 }

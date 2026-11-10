@@ -4,7 +4,7 @@
  * the model can read and correct instead of an exception, as a model repairs its own arguments
  * when told what was wrong with them.
  *
- * Works on anything with the `say` of a worker voice or a speaker, whichever engine is behind it.
+ * Uses the `say` interface of a Chimera worker voice or a page-owned playback target.
  * A separate entry so that an app that only speaks ships none of it.
  */
 import { MOODS, type Mood } from "./delivery.js";
@@ -150,7 +150,7 @@ export function forOpenAI(tools: readonly ToolDefinition[] = TOOLS) {
   }));
 }
 
-/** The voice a runner speaks with. Every field is optional; absent means the backend's default. */
+/** The voice a runner speaks with. Every field is optional; absent means the voice's default. */
 export interface VoiceSettings {
   body?: Extract<Body, string>;
   f0?: number;
@@ -175,7 +175,7 @@ interface SingArguments {
   intensity?: number;
 }
 
-/** Options a runner passes to `say`: data only, so they suit a worker and every backend. */
+/** Options a runner passes to `say`: data only, so they can be sent to a worker. */
 export interface ToolSayOptions {
   body?: Extract<Body, string>;
   f0?: number;
@@ -184,20 +184,18 @@ export interface ToolSayOptions {
   intensity?: number;
 }
 
-/** What a runner needs of a voice: a worker voice and a speaker both fit. */
+/** What a runner needs of a voice: a worker voice or a page-owned playback target fits. */
 export interface ToolTarget {
   say(
     input: string | Song,
     options?: ToolSayOptions,
-  ): { queued: Promise<unknown>; done: Promise<unknown>; stop(): void; lost?: string[] | undefined };
+  ): { queued: Promise<unknown>; done: Promise<unknown>; stop(): void };
 }
 
 /** A tool call's outcome, ready for `JSON.stringify` and the model. */
 export type ToolResult =
   | {
       ok: true;
-      /** What the backend could not do of this call, such as `notes` on one that cannot sing. */
-      lost?: string[];
       /** Stopped before the end, by `stop`. */
       interrupted?: true;
       /** The voice now in effect, after `set_voice`. */
@@ -271,7 +269,7 @@ function refuseValue(key: string, value: unknown, field: Field): void {
 /** Fields that may be explicitly undefined. */
 type Loose<T> = { [K in keyof T]: T[K] | undefined };
 
-/** Without the absent fields, so that a backend sees only what the call asked for. */
+/** Without the absent fields, so that the voice sees only what the call asked for. */
 function present<T extends object>(options: Loose<T>): T {
   return Object.fromEntries(Object.entries(options).filter(([, value]) => value !== undefined)) as T;
 }
@@ -280,7 +278,7 @@ function present<T extends object>(options: Loose<T>): T {
  * Carries out a model's tool calls on a voice. `defaults` is the voice `set_voice` goes back to.
  *
  * ```ts
- * const tools = createToolRunner(await createSpeaker());
+ * const tools = createToolRunner(await createWorkerVoice());
  * // for each tool call in the model's reply:
  * const result = await tools.run(call.name, call.input);
  * ```
@@ -302,7 +300,6 @@ export function createToolRunner(target: ToolTarget, defaults: VoiceSettings = {
         await Promise.all([playback.queued, playback.done]);
         return {
           ok: true,
-          lost: playback.lost ?? [],
           ...(asked === generation ? {} : { interrupted: true as const }),
         };
       } catch (error) {

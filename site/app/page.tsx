@@ -8,7 +8,6 @@ import { Beasts } from "@/components/Beasts";
 import { Consonants } from "@/components/Consonants";
 import { Crowd } from "@/components/Crowd";
 import { Director } from "@/components/Director";
-import { Engines } from "@/components/Engines";
 import { IllustratedIntro } from "@/components/IllustratedIntro";
 import { Instrument } from "@/components/Instrument";
 import { Layers } from "@/components/Layers";
@@ -45,8 +44,8 @@ function Facts() {
         <dd>servers, accounts or models to download</dd>
       </div>
       <div>
-        <dt>1 line</dt>
-        <dd>to switch to a natural-sounding engine</dd>
+        <dt>1 engine</dt>
+        <dd>speech, singing, beatbox and creatures</dd>
       </div>
     </dl>
   );
@@ -181,7 +180,6 @@ export default function Page() {
         <Anyone />
         <Sing />
         <Agent />
-        <Engines />
         <Layers />
         <More />
         <Numbers />

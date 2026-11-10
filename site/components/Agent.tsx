@@ -61,7 +61,6 @@ function outcome(result: ToolResult, name: string) {
       : result.error;
   }
   if (result.interrupted) return "Playback stopped before the end.";
-  if (result.lost?.length) return `Finished without support for: ${result.lost.join(", ")}.`;
   if (result.voice) return `Voice changed to ${result.voice.body ?? "the default"}.`;
   return name === "sing" ? "The corrected melody was sung." : "The sentence was spoken.";
 }

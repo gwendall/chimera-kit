@@ -92,25 +92,6 @@ export function atIntensity(delivery: Delivery | Mood, intensity = 1): Delivery 
   return out;
 }
 
-/** How each part of a delivery is named when an engine reports it `lost`. */
-export const DELIVERY_PARTS: Readonly<Record<keyof Delivery, string>> = {
-  rate: "rate",
-  pitch: "pitch",
-  range: "pitch range",
-  gain: "level",
-  breath: "breath",
-  tension: "tension",
-  pauses: "pause length",
-};
-
-/** The parts of a delivery that depart from neutral, other than those an engine honors, by name. */
-export function departures(delivery: Delivery, honored: readonly (keyof Delivery)[] = []): string[] {
-  const neutral: Delivery = { rate: 1, pitch: 0, range: 1, gain: 0, breath: 0, tension: 0, pauses: 1 };
-  return (Object.keys(DELIVERY_PARTS) as (keyof Delivery)[])
-    .filter((key) => delivery[key] !== undefined && delivery[key] !== neutral[key] && !honored.includes(key))
-    .map((key) => DELIVERY_PARTS[key]);
-}
-
 /** A delivery between two others: `t` 0 is `a`, 1 is `b`. Multipliers blend geometrically. */
 export function blend(a: Delivery | Mood, b: Delivery | Mood, t: number): Delivery {
   const x = typeof a === "string" ? lookup(a) : a;

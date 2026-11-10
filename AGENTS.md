@@ -31,9 +31,9 @@ fine programmatic control of the delivery is what it is for. Natural is not a go
   `chimera::math`, no allocation while rendering, output independent of block size.
 - **Any engine change moves the sound.** Golden tests fail by design; re-bless with
   `CHIMERA_BLESS=1 cargo test --workspace --no-fail-fast`, run twice. Then run the evaluation.
-- **No engine name outside its adapter.** The public API, `voice.ts` and `engine.ts` speak of voices
-  and utterances, so that the engine can be replaced. `engine.ts` stays internal until a second
-  engine exists.
+- **Chimera only.** Public entries expose Chimera speech, scores, singing, live control and creatures.
+  Do not add alternate synthesis providers or capability fallbacks. The internal engine contract
+  stays private for rendering and tests, not as a public multi-provider interface.
 - **The ABI is defined twice**, in `abi.rs` and `src/engines/chimera.ts`. Change both, and bump `ABI_VERSION`
   in both.
 - **`bun test` tests `dist/`**, which is a build product: run `bun run build` after a Rust change.
