@@ -1,0 +1,84 @@
+/* Tool calls: the action and outcome first, the exact payload on request. */
+
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.steps > li {
+  display: flex;
+  gap: 14px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+
+.number {
+  flex: 0 0 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.steps [data-state="running"] .number {
+  color: var(--accent-ink);
+  border-color: currentColor;
+  background: var(--accent-soft);
+}
+
+.step {
+  flex: 1;
+  min-width: 0;
+}
+
+.heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.heading h3 {
+  font-size: var(--fs-md);
+}
+
+.status,
+.step p,
+.step summary {
+  font-size: var(--fs-ui);
+}
+
+.status {
+  color: var(--muted);
+}
+
+.steps [data-state="refused"] .status,
+.steps [data-state="running"] .status {
+  color: var(--accent-ink);
+}
+
+.step .outcome {
+  color: var(--ink);
+  margin-top: 8px;
+}
+
+.step details {
+  margin-top: 8px;
+}
+
+.step summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 3px 0;
+}
+
+.step pre {
+  margin: 10px 0 0;
+}
