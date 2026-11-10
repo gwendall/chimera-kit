@@ -1,7 +1,37 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, spyOn, test } from "bun:test";
 import { type Creatures, loadCreatures } from "./creatures.ts";
 
 const wasm = new URL("../dist/creatures.wasm", import.meta.url);
+
+/** Observe ownership and reject zero/fractional native calls before the old loop could hang. */
+async function observedCreatures() {
+  const instantiate = WebAssembly.instantiate;
+  const freed: number[] = [];
+  const rendered: number[] = [];
+  const observing = spyOn(WebAssembly, "instantiate").mockImplementation((async (...args: unknown[]) => {
+    const instance = (await Reflect.apply(instantiate, WebAssembly, args)) as WebAssembly.Instance;
+    const exports = instance.exports;
+    return {
+      exports: {
+        ...exports,
+        cc_creature_free(handle: number) {
+          freed.push(handle);
+          (exports.cc_creature_free as CallableFunction)(handle);
+        },
+        cc_creature_render(handle: number, samples: number) {
+          rendered.push(samples);
+          if (!Number.isInteger(samples) || samples < 1) throw new Error("invalid native render request");
+          return (exports.cc_creature_render as CallableFunction)(handle, samples);
+        },
+      },
+    };
+  }) as unknown as typeof WebAssembly.instantiate);
+  try {
+    return { zoo: await loadCreatures({ wasm }), freed, rendered };
+  } finally {
+    observing.mockRestore();
+  }
+}
 
 describe("loadCreatures", () => {
   let zoo: Creatures;
@@ -24,6 +54,44 @@ describe("loadCreatures", () => {
   });
 
   describe("a creature", () => {
+    test("invalid sample counts and zero never reach or advance the native voice", async () => {
+      const { zoo, rendered } = await observedCreatures();
+      const bird = zoo.create("songbird");
+      const control = zoo.create("songbird");
+      try {
+        bird.gate(1);
+        control.gate(1);
+        for (const samples of [-1, 0.5, 1.5, Number.NaN, Infinity, -Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+          expect(() => bird.render(samples)).toThrow(RangeError);
+        }
+        expect(bird.render(0)).toEqual(new Float32Array(0));
+        expect(rendered).toHaveLength(0);
+        const audio = bird.render(10_000);
+        expect(audio).toEqual(control.render(10_000));
+        expect(audio.every((sample) => Number.isFinite(sample) && Math.abs(sample) <= 1.5)).toBe(true);
+      } finally {
+        bird.free();
+        control.free();
+      }
+    });
+
+    test("invalid initial parameters free their allocated native handles", async () => {
+      const { zoo, freed } = await observedCreatures();
+      const key = zoo.list.find((creature) => creature.id === "songbird")?.params[0]?.key;
+      if (!key) throw new Error("songbird parameter missing");
+      expect(() => zoo.create("songbird", { nope: 1 })).toThrow("no parameter 'nope'");
+      expect(freed).toHaveLength(1);
+      expect(() => zoo.create("songbird", { [key]: Number.NaN })).toThrow(RangeError);
+      expect(freed).toHaveLength(2);
+      const bird = zoo.create("songbird");
+      try {
+        expect(bird.render(128)).toHaveLength(128);
+      } finally {
+        bird.free();
+      }
+      expect(freed).toHaveLength(3);
+    });
+
     test("unknown call ids throw, naming the known ones", () => {
       const bird = zoo.create("songbird");
       expect(() => bird.call("roar")).toThrow(/chimera-kit: songbird has no call 'roar'.*flute/s);

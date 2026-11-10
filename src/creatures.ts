@@ -107,12 +107,12 @@ export interface StreamOptions extends CallOptions {
 
 export interface Creature {
   readonly info: CreatureInfo;
-  /** Sets performer parameters by key, clamped to each one's range. Unknown keys are ignored. */
+  /** Sets performer parameters by key, clamped to each one's range. Unknown keys throw. */
   set(params: Record<string, number>): void;
   /** Sets the breath gate, 0 to 1 (clamped to 1.5 to allow a small overdrive). */
   gate(level: number): void;
   /** Renders `samples` of continuous audio at the current parameters and gate, for playing the
-   * creature live, like an instrument. */
+   * creature live, like an instrument. `samples` must be a nonnegative safe integer. */
   render(samples: number): Float32Array;
   /**
    * Plays a call to completion and returns every sample: the call itself, plus its release tail
@@ -233,6 +233,9 @@ class CreatureImpl implements Creature {
 
   render(samples: number): Float32Array {
     this.check();
+    if (!Number.isSafeInteger(samples) || samples < 0) {
+      throw new RangeError(`chimera-kit: samples must be a nonnegative safe integer, got ${samples}`);
+    }
     const { x, handle } = this;
     const out = new Float32Array(samples);
     let at = 0;
@@ -372,7 +375,12 @@ export async function loadCreatures(sources: CreaturesSources = {}): Promise<Cre
       // The catalog and the wasm agree in practice; this only guards drift between them.
       if (handle === 0) throw unknownCreatureError(id);
       const creature = new CreatureImpl(x, handle, sampleRate, info);
-      creature.set(params);
+      try {
+        creature.set(params);
+      } catch (error) {
+        creature.free();
+        throw error;
+      }
       return creature;
     },
   };
