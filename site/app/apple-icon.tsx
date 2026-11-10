@@ -14,21 +14,15 @@ export default function AppleIcon() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: BRAND.background,
+        background: BRAND.ink,
       }}
     >
       {/* biome-ignore lint/a11y/noSvgWithoutTitle: an icon's only content */}
       <svg width="180" height="180" viewBox="0 0 32 32">
-        <defs>
-          <linearGradient id="heat" x1="1" y1="1" x2="0" y2="0">
-            <stop offset="0" stopColor={BRAND.heat} />
-            <stop offset="1" stopColor="#ffd9b8" />
-          </linearGradient>
-        </defs>
         <path
           d="M22.5 26V14.5A6 6 0 0 0 16.5 8.5H6.5"
           fill="none"
-          stroke="url(#heat)"
+          stroke={BRAND.accent}
           strokeWidth="5.5"
           strokeLinecap="round"
         />
