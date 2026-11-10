@@ -39,28 +39,37 @@ export function Live() {
   };
 
   return (
-    <section>
-      <span className="kicker">For conversations</span>
-      <h2>
-        It speaks while
-        <br />
-        the answer is <em>being written.</em>
-      </h2>
-      <p>
-        Below, tokens arrive at the pace of a language model. Sound starts after the first few, not after the
-        last, and Interrupt really stops it: nothing was queued on a server.
-      </p>
-      <div className="tokens">
-        {shown}
-        {running ? <i>▍</i> : null}
+    <section id="stream">
+      <div className="intro">
+        <span className="label">Streaming</span>
+        <h2>{"It starts talking before the text is finished."}</h2>
+        <p>
+          {
+            "Plug it into a chatbot: intone cuts the answer at each comma and full stop while it is still being written, and speaks each piece as soon as it is complete. Below, words arrive at a language model's pace, 40 tokens a second. Interrupt stops the sound at once: nothing is queued on a server."
+          }
+        </p>
       </div>
-      <div className="row">
-        <button type="button" className="go" onClick={running ? stop : start}>
-          {running ? "Interrupt" : "Stream an answer"}
-        </button>
-        <span className="kicker">
-          {firstMs === null ? " " : `first sound ${Math.round(firstMs)} ms after the first token`}
-        </span>
+      <div className="panel">
+        <div className="tokens">
+          {shown || running ? (
+            shown
+          ) : (
+            <span className="placeholder">
+              {
+                "A scripted answer will arrive here token by token, as a language model writes it, and be spoken as it comes."
+              }
+            </span>
+          )}
+          {running ? <i>▍</i> : null}
+        </div>
+        <div className="row">
+          <button type="button" className="go" onClick={running ? stop : start}>
+            {running ? "Interrupt" : "Stream an answer"}
+          </button>
+          <span className="kicker">
+            {firstMs === null ? " " : `first sound ${Math.round(firstMs)} ms after the first token`}
+          </span>
+        </div>
       </div>
     </section>
   );

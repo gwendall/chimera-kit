@@ -140,61 +140,67 @@ export function Instrument() {
 
   return (
     <section>
-      <span className="kicker">Play it</span>
-      <h2>
-        Not a recording.
-        <br />
-        <em>An instrument.</em>
-      </h2>
-      <p>
-        The same throat, held open and played by hand. Press and drag on the pad: across is two octaves of
-        pitch, up opens the jaw. Pick a vowel while you hold. The same engine also beatboxes, with lips and
-        tongue rather than samples.
-      </p>
-      <div
-        ref={pad}
-        className="pad"
-        role="application"
-        aria-label="A pad: press to sing, drag across for pitch and up to open the jaw"
-        onPointerEnter={() => void load().catch(() => {})}
-        onPointerDown={press}
-        onPointerMove={move}
-        onPointerUp={release}
-        onPointerCancel={release}
-      >
-        {shown ? (
-          <span className="pad-dot" style={{ left: `${shown.x * 100}%`, top: `${(1 - shown.y) * 100}%` }} />
-        ) : (
-          <span className="pad-hint">
-            {state === "loading"
-              ? "Loading the throat..."
-              : state === "failed"
-                ? "No audio worklet here"
-                : "Press and drag"}
-          </span>
-        )}
+      <div className="intro">
+        <span className="label">Instrument</span>
+        <h2>{"Play the voice live."}</h2>
+        <p>
+          {
+            "The same throat, played by hand: across the pad is two octaves of pitch, up opens the jaw. Pick a vowel while you hold. It also beatboxes, with lips and tongue rather than samples."
+          }
+        </p>
       </div>
-      <div className="row">
-        {VOWELS.map((v) => (
-          <button key={v} type="button" className="chip" aria-pressed={chosen === v} onClick={() => pick(v)}>
-            {v}
+      <div className="panel">
+        <div
+          ref={pad}
+          className="pad"
+          role="application"
+          aria-label="A pad: press to sing, drag across for pitch and up to open the jaw"
+          onPointerEnter={() => void load().catch(() => {})}
+          onPointerDown={press}
+          onPointerMove={move}
+          onPointerUp={release}
+          onPointerCancel={release}
+        >
+          {shown ? (
+            <span className="pad-dot" style={{ left: `${shown.x * 100}%`, top: `${(1 - shown.y) * 100}%` }} />
+          ) : (
+            <span className="pad-hint">
+              {state === "loading"
+                ? "Loading the throat..."
+                : state === "failed"
+                  ? "No audio worklet here"
+                  : "Press and drag"}
+            </span>
+          )}
+        </div>
+        <div className="row">
+          {VOWELS.map((v) => (
+            <button
+              key={v}
+              type="button"
+              className="chip"
+              aria-pressed={chosen === v}
+              onClick={() => pick(v)}
+            >
+              {v}
+            </button>
+          ))}
+          {quantumMs === null ? null : (
+            <span className="latency">
+              the engine reacts within <b>{quantumMs.toFixed(1)} ms</b>
+            </span>
+          )}
+        </div>
+        <div className="row">
+          <button type="button" className="go" aria-pressed={beat} onClick={toggleBeat}>
+            {beat ? "Stop the beat" : "Start a beat"}
           </button>
-        ))}
-        {quantumMs === null ? null : (
-          <span className="latency">
-            the engine reacts within <b>{quantumMs.toFixed(1)} ms</b>
-          </span>
-        )}
-      </div>
-      <div className="row">
-        <button type="button" className="go" aria-pressed={beat} onClick={toggleBeat}>
-          {beat ? "Stop the beat" : "Start a beat"}
-        </button>
-        {HITS.map((name) => (
-          <button key={name} type="button" className="ghost-button" onClick={() => hit(name)}>
-            {name}
-          </button>
-        ))}
+          {HITS.map((name) => (
+            <button key={name} type="button" className="ghost-button" onClick={() => hit(name)}>
+              {name}
+            </button>
+          ))}
+        </div>
       </div>
     </section>
   );

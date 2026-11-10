@@ -66,48 +66,49 @@ export function Consonants() {
 
   return (
     <section>
-      <span className="kicker">Consonants</span>
-      <h2>
-        The hard part,
-        <br />
-        <em>simulated</em> too.
-      </h2>
-      <p>
-        A stop is a closure and a burst, a hiss is air forced through a gap. None of these is a recording.
-        Press one to hear it between two vowels, or say the sentence and watch it reach all twenty-four.
-      </p>
-      <div className="row">
-        <button
-          type="button"
-          className="go"
-          onClick={() => void studio.speak(SENTENCE, { body: "female", label: "consonants" })}
-        >
-          {ready ? "Say the sentence" : "Loading..."}
-        </button>
-        <Latency />
+      <div className="intro">
+        <span className="label">Consonants</span>
+        <h2>{"Every consonant is simulated."}</h2>
+        <p>
+          {
+            "A stop is a closure and a burst, a hiss is air forced through a gap. None of them is a recording. Press one to hear it between two vowels, or say the sentence that uses all twenty-four."
+          }
+        </p>
       </div>
-      <div className="phones">
-        {GROUPS.map(({ name, sounds }) => (
-          <Fragment key={name}>
-            <span>{name}</span>
-            <div>
-              {sounds.map((sound) => (
-                <button
-                  key={sound}
-                  type="button"
-                  aria-label={`Hear ${sound}`}
-                  ref={(node) => {
-                    if (node) cells.current.set(sound, node);
-                    else cells.current.delete(sound);
-                  }}
-                  onClick={() => void studio.speak(between(sound), { body: "female", label: sound })}
-                >
-                  {sound}
-                </button>
-              ))}
-            </div>
-          </Fragment>
-        ))}
+      <div className="panel">
+        <div className="row">
+          <button
+            type="button"
+            className="go"
+            onClick={() => void studio.speak(SENTENCE, { body: "female", label: "consonants" })}
+          >
+            {ready ? "Say the sentence" : "Loading..."}
+          </button>
+          <Latency />
+        </div>
+        <div className="phones">
+          {GROUPS.map(({ name, sounds }) => (
+            <Fragment key={name}>
+              <span>{name}</span>
+              <div>
+                {sounds.map((sound) => (
+                  <button
+                    key={sound}
+                    type="button"
+                    aria-label={`Hear ${sound}`}
+                    ref={(node) => {
+                      if (node) cells.current.set(sound, node);
+                      else cells.current.delete(sound);
+                    }}
+                    onClick={() => void studio.speak(between(sound), { body: "female", label: sound })}
+                  >
+                    {sound}
+                  </button>
+                ))}
+              </div>
+            </Fragment>
+          ))}
+        </div>
       </div>
     </section>
   );

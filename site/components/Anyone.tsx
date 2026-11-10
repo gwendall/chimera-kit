@@ -167,109 +167,101 @@ export function Anyone() {
   };
 
   return (
-    <section>
-      <span className="kicker">Voices</span>
-      <h2>
-        A voice is
-        <br />a <em>few numbers.</em>
-      </h2>
-      <p>
-        Not a model and not a recording, so a thousand characters can each have their own. Drag between the
-        bodies, draw a new one, or type a name: it is a kind of voice, not a person's, and the line below is
-        all of it.
-      </p>
-      <svg
-        className="pad"
-        viewBox="0 0 100 100"
-        role="img"
-        aria-label={`Body blend: ${Math.round(male * 100)} percent man, ${Math.round(female * 100)} percent woman, ${Math.round(child * 100)} percent child`}
-        onPointerDown={(event) => {
-          event.currentTarget.setPointerCapture(event.pointerId);
-          dragging.current = true;
-          move(event);
-        }}
-        onPointerMove={(event) => {
-          if (dragging.current) move(event);
-        }}
-        onPointerUp={(event) => {
-          dragging.current = false;
-          say(move(event));
-        }}
-      >
-        <polygon points="50,12 8,92 92,92" fill="#15120f" stroke="#3a332c" strokeWidth="0.4" />
-        <text x="50" y="7" textAnchor="middle" fontSize="4" fill="#c9c1b5">
-          man
-        </text>
-        <text x="4" y="98" fontSize="4" fill="#c9c1b5">
-          woman
-        </text>
-        <text x="96" y="98" textAnchor="end" fontSize="4" fill="#c9c1b5">
-          child
-        </text>
-        <circle cx={point[0]} cy={point[1]} r="3" fill="#ff5c36" />
-      </svg>
-      <div className="row">
-        <button type="button" className="go" onClick={() => draw(Math.floor(Math.random() * 1e9))}>
-          New voice
-        </button>
-        <form className="row" onSubmit={askName}>
+    <section id="voices">
+      <div className="intro">
+        <span className="label">Voices</span>
+        <h2>{"A different voice for every user, from a name or a number."}</h2>
+        <p>
+          {
+            "A voice is a dozen numbers: body size, throat, tongue, lips, breathiness, tension. bodyFromSeed turns any name or number into one, the same on every device, so each user, agent or game character gets a voice of its own with nothing to download. It describes a kind of voice, not a real person's."
+          }
+        </p>
+      </div>
+      <div className="panel">
+        <svg
+          className="pad"
+          viewBox="0 0 100 100"
+          role="img"
+          aria-label={`Body blend: ${Math.round(male * 100)} percent man, ${Math.round(female * 100)} percent woman, ${Math.round(child * 100)} percent child`}
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            dragging.current = true;
+            move(event);
+          }}
+          onPointerMove={(event) => {
+            if (dragging.current) move(event);
+          }}
+          onPointerUp={(event) => {
+            dragging.current = false;
+            say(move(event));
+          }}
+        >
+          <polygon
+            points="50,12 8,92 92,92"
+            fill="var(--surface)"
+            stroke="var(--line-strong)"
+            strokeWidth="0.4"
+          />
+          <text x="50" y="7" textAnchor="middle" fontSize="4" fill="var(--muted)">
+            man
+          </text>
+          <text x="4" y="98" fontSize="4" fill="var(--muted)">
+            woman
+          </text>
+          <text x="96" y="98" textAnchor="end" fontSize="4" fill="var(--muted)">
+            child
+          </text>
+          <circle cx={point[0]} cy={point[1]} r="3" fill="var(--accent)" />
+        </svg>
+        <div className="row">
+          <button type="button" className="go" onClick={() => draw(Math.floor(Math.random() * 1e9))}>
+            New voice
+          </button>
+          <form className="row" onSubmit={askName}>
+            <input
+              type="text"
+              className="name-field"
+              placeholder="a name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              maxLength={40}
+              aria-label="A name to hear as a voice"
+            />
+            <button type="submit" className="chip">
+              that voice
+            </button>
+          </form>
+          <Latency />
+        </div>
+        <div className="row">
+          {MOOD_NAMES.map((moodName) => (
+            <button
+              key={moodName}
+              type="button"
+              className="chip"
+              aria-pressed={mood === moodName}
+              onClick={() => {
+                setMood(moodName);
+                say(point, body, moodName);
+              }}
+            >
+              {moodName}
+            </button>
+          ))}
+        </div>
+        <label className="slider">
+          intensity
           <input
-            type="text"
-            className="name-field"
-            placeholder="a name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            maxLength={40}
-            aria-label="A name to hear as a voice"
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={strength}
+            onChange={(event) => setStrength(Number(event.target.value))}
           />
-          <button type="submit" className="chip">
-            that voice
-          </button>
-        </form>
-        <Latency />
-      </div>
-      <div className="row">
-        {MOOD_NAMES.map((moodName) => (
-          <button
-            key={moodName}
-            type="button"
-            className="chip"
-            aria-pressed={mood === moodName}
-            onClick={() => {
-              setMood(moodName);
-              say(point, body, moodName);
-            }}
-          >
-            {moodName}
-          </button>
-        ))}
-      </div>
-      <label className="slider">
-        intensity
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.05"
-          value={strength}
-          onChange={(event) => setStrength(Number(event.target.value))}
-        />
-      </label>
-      <div className="dials">
-        {MAIN_DIALS.map((dial) => (
-          <Dial
-            key={dial.key}
-            dial={dial}
-            value={body[dial.key] ?? 0}
-            onChange={(value) => setBody((current) => ({ ...current, [dial.key]: value }))}
-            onCommit={() => say()}
-          />
-        ))}
-      </div>
-      <details className="dials-more">
-        <summary>More of the body</summary>
+        </label>
         <div className="dials">
-          {MORE_DIALS.map((dial) => (
+          {MAIN_DIALS.map((dial) => (
             <Dial
               key={dial.key}
               dial={dial}
@@ -279,10 +271,24 @@ export function Anyone() {
             />
           ))}
         </div>
-      </details>
-      <div className="code">
-        {json}
-        <span className="hot">{`\n${bytes} bytes. That is the whole voice.`}</span>
+        <details className="dials-more">
+          <summary>More of the body</summary>
+          <div className="dials">
+            {MORE_DIALS.map((dial) => (
+              <Dial
+                key={dial.key}
+                dial={dial}
+                value={body[dial.key] ?? 0}
+                onChange={(value) => setBody((current) => ({ ...current, [dial.key]: value }))}
+                onCommit={() => say()}
+              />
+            ))}
+          </div>
+        </details>
+        <div className="code">
+          {json}
+          <span className="hot">{`\n${bytes} bytes. That is the whole voice.`}</span>
+        </div>
       </div>
     </section>
   );

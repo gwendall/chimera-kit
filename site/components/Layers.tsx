@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Score } from "@/lib/intone/index.js";
 import { studio } from "@/lib/studio";
 import { Latency } from "./Latency";
+import { Throat } from "./Throat";
 import { useStudio } from "./useStudio";
 
 const LINE = "Hello there.";
@@ -11,6 +12,7 @@ const LINE = "Hello there.";
 export function Layers() {
   const { ready } = useStudio();
   const [score, setScore] = useState<Score | null>(null);
+  const [visible, setVisible] = useState(false);
   const section = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -18,12 +20,17 @@ export function Layers() {
     if (!node) return;
     const seen = new IntersectionObserver(
       (entries) => {
-        studio.showThroat = entries.some((entry) => entry.isIntersecting);
+        const on = entries.some((entry) => entry.isIntersecting);
+        studio.showThroat = on;
+        setVisible(on);
       },
-      { threshold: 0.25 },
+      { threshold: 0.1 },
     );
     seen.observe(node);
-    return () => seen.disconnect();
+    return () => {
+      seen.disconnect();
+      studio.showThroat = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -37,24 +44,17 @@ export function Layers() {
     .join(", ");
 
   return (
-    <section ref={section}>
-      <span className="kicker">How it works</span>
-      <h2>
-        Plain data,
-        <br />
-        all the way <em>down.</em>
-      </h2>
-      <p>
-        Each step is a value you can read, change and hand back. Stay at the top and it is one line of code;
-        drop as low as you want and you are moving a tongue.
-      </p>
-      <p>
-        The monitor has switched to what is underneath:{" "}
-        <a href="https://github.com/jamesondh/chimera-vocal-synth">CHIMERA</a>, by{" "}
-        <a href="https://github.com/jamesondh">Jameson Hodge</a>, simulates air moving through a vocal tract,
-        one cell per slice. intone is what makes that usable in a product: streaming, clause cutting for
-        language models, direction, workers, and an interface that also drives other engines.
-      </p>
+    <section id="how" ref={section}>
+      <div className="intro">
+        <span className="label">How it works</span>
+        <h2>{"No neural network. A simulated throat."}</h2>
+        <p>
+          {
+            "Most modern text to speech runs a neural network trained on recordings of people. intone runs CHIMERA, a physical model of the human voice by Jameson Hodge: vocal folds, a throat, a tongue and lips, simulated sample by sample. Every sound comes from those movements. That is why each word can be moved exactly, and why the whole engine fits in 273 KB. Each step below is plain data you can read, change and hand back."
+          }
+        </p>
+      </div>
+      <div className="throat-screen">{visible ? <Throat /> : null}</div>
       <div className="row">
         <button type="button" className="go" disabled={!ready} onClick={() => void studio.speak(LINE)}>
           Say it and watch the tract
@@ -94,10 +94,9 @@ export function Layers() {
         }
       </div>
       <p>
-        Honest numbers: speech recognizers miss about 23 % of its words, far more than for a neural voice. It
-        is not trying to pass for a person. What it gives you instead is a voice that starts at once, weighs
-        almost nothing and does exactly what a program tells it. The optional pronouncing dictionary adds 869
-        KB.
+        Speech recognizers miss about 23 % of its words, far more than for a neural voice: it is not trying to
+        pass for a person. In exchange it starts at once, weighs almost nothing and does exactly what the
+        program tells it.
       </p>
     </section>
   );

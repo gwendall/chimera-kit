@@ -5,9 +5,9 @@ const production = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 export const BRAND = {
   name: "intone",
   origin: production ? `https://${production}` : "http://localhost:3000",
-  title: "intone: a voice you can direct",
+  title: "intone: text to speech you can direct, word by word",
   description:
-    "Speech that runs in the page, starts in milliseconds and does what your code says, down to the syllable. Powered by CHIMERA.",
+    "A JavaScript text to speech library that runs in the browser. Choose the stressed words, move the pitch, set the mood and the voice. First sound in about 10 ms, 273 KB, no server.",
   keywords: [
     "text to speech",
     "speech synthesis",
@@ -18,6 +18,7 @@ export const BRAND = {
     "singing synthesis",
     "browser TTS",
   ],
+  // The share card and the icons keep the first look until their own lot redraws them.
   background: "#0c0a09",
   ink: "#f4efe8",
   heat: "#ff5c36",

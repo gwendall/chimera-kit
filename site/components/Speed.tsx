@@ -93,103 +93,106 @@ export function Speed() {
 
   return (
     <section>
-      <span className="kicker">Speed</span>
-      <h2>
-        Press. It has
-        <br />
-        <em>already</em> started.
-      </h2>
-      <p>
-        Every press computes a word from nothing, on your device. Each bar is how long the first sample took.
-        Keys 1 to 8 work too.
-      </p>
-      <div className="keys">
-        {WORDS.map((word, index) => (
-          <button
-            key={word}
-            type="button"
-            className="key"
-            data-hit={hit === index}
-            onPointerDown={() => press(index)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                press(index);
-              }
-            }}
-          >
-            <span>{index + 1}</span>
-            {word}
-          </button>
-        ))}
-      </div>
-      <div
-        className="bars"
-        role="img"
-        aria-label={`The last ${bars.length} first-sample times. Median ${median(bars).toFixed(1)} milliseconds, worst ${Math.max(...bars, 0).toFixed(1)}.`}
-        onPointerLeave={() => setHover(null)}
-      >
-        <span className="bars-scale">{top} ms</span>
-        {SLOTS.map((slot) => {
-          const at = slot - (SHOWN - bars.length);
-          const value = bars[at];
-          return (
-            <div
-              key={slot}
-              className="bar-slot"
-              onPointerEnter={() => setHover(value === undefined ? null : at)}
-            >
-              {value === undefined ? null : <i style={{ height: `${Math.max(2, (value / top) * 100)}%` }} />}
-            </div>
-          );
-        })}
-      </div>
-      <div className="row readout">
-        <span>
-          {shownValue === null ? "median" : "this press"}{" "}
-          <b>{bars.length ? `${(shownValue ?? median(bars)).toFixed(1)} ms` : "..."}</b>
-        </span>
-        <span>
-          worst <b>{bars.length ? `${Math.max(...bars).toFixed(1)} ms` : "..."}</b>
-        </span>
-        <span>
-          presses <b>{history.length}</b>
-        </span>
-      </div>
-      <div className="row">
-        <button type="button" className="go" disabled={!ready} onClick={() => void fire()}>
-          {firing ? "Stop the burst" : `Fire ${BURST}`}
-        </button>
-        {burst ? (
-          <span className="latency">
-            {burst.spoken} words in <b>{burst.seconds.toFixed(1)} s</b>, median{" "}
-            <b>{burst.median.toFixed(1)} ms</b>, worst <b>{burst.worst.toFixed(1)} ms</b>
-          </span>
-        ) : null}
-      </div>
-      <textarea
-        className="say"
-        value={text}
-        rows={1}
-        spellCheck={false}
-        aria-label="Text to speak"
-        placeholder="Say something."
-        onChange={(event) => typed(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            speak();
+      <div className="intro">
+        <span className="label">Latency</span>
+        <h2>{"Measured on your device, every time."}</h2>
+        <p>
+          {
+            "Each press computes a word from nothing, on this device. Each bar is the time to its first sample. Keys 1 to 8 work too."
           }
-        }}
-      />
-      <div className="row">
-        <button type="button" className="ghost-button" onClick={speaking ? () => studio.stop() : speak}>
-          {speaking ? "Stop" : ready ? "Speak" : "Warming up"}
-        </button>
-        <label className="toggle">
-          <input type="checkbox" checked={asTyped} onChange={(event) => setAsTyped(event.target.checked)} />
-          speak each word as I type it
-        </label>
+        </p>
+      </div>
+      <div className="panel">
+        <div className="keys">
+          {WORDS.map((word, index) => (
+            <button
+              key={word}
+              type="button"
+              className="key"
+              data-hit={hit === index}
+              onPointerDown={() => press(index)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  press(index);
+                }
+              }}
+            >
+              <span>{index + 1}</span>
+              {word}
+            </button>
+          ))}
+        </div>
+        <div
+          className="bars"
+          role="img"
+          aria-label={`The last ${bars.length} first-sample times. Median ${median(bars).toFixed(1)} milliseconds, worst ${Math.max(...bars, 0).toFixed(1)}.`}
+          onPointerLeave={() => setHover(null)}
+        >
+          <span className="bars-scale">{top} ms</span>
+          {SLOTS.map((slot) => {
+            const at = slot - (SHOWN - bars.length);
+            const value = bars[at];
+            return (
+              <div
+                key={slot}
+                className="bar-slot"
+                onPointerEnter={() => setHover(value === undefined ? null : at)}
+              >
+                {value === undefined ? null : (
+                  <i style={{ height: `${Math.max(2, (value / top) * 100)}%` }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="row readout">
+          <span>
+            {shownValue === null ? "median" : "this press"}{" "}
+            <b>{bars.length ? `${(shownValue ?? median(bars)).toFixed(1)} ms` : "..."}</b>
+          </span>
+          <span>
+            worst <b>{bars.length ? `${Math.max(...bars).toFixed(1)} ms` : "..."}</b>
+          </span>
+          <span>
+            presses <b>{history.length}</b>
+          </span>
+        </div>
+        <div className="row">
+          <button type="button" className="go" disabled={!ready} onClick={() => void fire()}>
+            {firing ? "Stop the burst" : `Fire ${BURST}`}
+          </button>
+          {burst ? (
+            <span className="latency">
+              {burst.spoken} words in <b>{burst.seconds.toFixed(1)} s</b>, median{" "}
+              <b>{burst.median.toFixed(1)} ms</b>, worst <b>{burst.worst.toFixed(1)} ms</b>
+            </span>
+          ) : null}
+        </div>
+        <textarea
+          className="say"
+          value={text}
+          rows={1}
+          spellCheck={false}
+          aria-label="Text to speak"
+          placeholder="Say something."
+          onChange={(event) => typed(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              speak();
+            }
+          }}
+        />
+        <div className="row">
+          <button type="button" className="ghost-button" onClick={speaking ? () => studio.stop() : speak}>
+            {speaking ? "Stop" : ready ? "Speak" : "Warming up"}
+          </button>
+          <label className="toggle">
+            <input type="checkbox" checked={asTyped} onChange={(event) => setAsTyped(event.target.checked)} />
+            speak each word as I type it
+          </label>
+        </div>
       </div>
     </section>
   );
