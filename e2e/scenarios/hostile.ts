@@ -8,7 +8,7 @@ import { withBrowser } from "../lib/browsers.ts";
 import { serveDir } from "../lib/serve.ts";
 import type { Measurement, Scenario, ScenarioContext } from "../lib/types.ts";
 
-const ORIGIN = "https://intone.e2e";
+const ORIGIN = "https://chimera-kit.e2e";
 const GUARD_MS = 5000;
 
 const HOSTILE_TEXTS: Record<string, string> = {
@@ -136,10 +136,10 @@ export const scenario: Scenario = {
         probe: "createVoice" | "noWorklet" | "offline";
       }> = [
         { label: "dictionary404", serveOptions: { missing: ["cmudict.txt.gz"] }, probe: "createVoice" },
-        { label: "wasm404", serveOptions: { missing: ["intone_chimera.wasm"] }, probe: "createVoice" },
+        { label: "wasm404", serveOptions: { missing: ["chimera.wasm"] }, probe: "createVoice" },
         {
           label: "wasmWrongMime",
-          serveOptions: { wrongMime: { "intone_chimera.wasm": "text/plain" } },
+          serveOptions: { wrongMime: { "chimera.wasm": "text/plain" } },
           probe: "createVoice",
         },
         {
@@ -265,7 +265,7 @@ export const scenario: Scenario = {
             const race = Promise.race([
               (async () => {
                 const { createVoice } = await import(`${origin}/index.js`);
-                await createVoice({ body: "female", wasm: `${origin}/intone_chimera.wasm?fresh=1` });
+                await createVoice({ body: "female", wasm: `${origin}/chimera.wasm?fresh=1` });
                 return "resolved";
               })(),
               new Promise((resolve) => setTimeout(() => resolve("hang"), guardMs)),

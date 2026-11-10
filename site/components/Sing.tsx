@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { compose, type Song } from "@/lib/intone/index.js";
-import { fall, harmony, type Part, scoop } from "@/lib/intone/singing.js";
+import { compose, type Song } from "@/lib/chimera-kit/index.js";
+import { fall, harmony, type Part, scoop } from "@/lib/chimera-kit/singing.js";
 import { studio } from "@/lib/studio";
 import { IllustratedIntro } from "./IllustratedIntro";
 import { Latency } from "./Latency";

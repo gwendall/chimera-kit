@@ -2,7 +2,7 @@
 // "stole", the middle of the sentence, so it survives a square crop of the card.
 // Regenerate after a change to the planner: `bun run sync && bun scripts/og-curve.ts`.
 import { writeFileSync } from "node:fs";
-import { createVoice, take } from "../lib/intone/index.js";
+import { createVoice, take } from "../lib/chimera-kit/index.js";
 
 const voice = await createVoice({ body: "female" });
 const plain = voice.plan("I never said she stole my money.");

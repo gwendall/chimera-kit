@@ -1,7 +1,7 @@
 "use client";
 
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import type { Score } from "@/lib/intone/index.js";
+import type { Score } from "@/lib/chimera-kit/index.js";
 import { studio } from "@/lib/studio";
 import { Latency } from "./Latency";
 import { useStudio } from "./useStudio";
@@ -52,7 +52,7 @@ export function Layers() {
         <h2>{"No neural network. A simulated throat."}</h2>
         <p>
           {
-            "Most modern text to speech runs a neural network trained on recordings of people. intone runs CHIMERA, a physical model of the human voice by Jameson Hodge: vocal folds, a throat, a tongue and lips, simulated sample by sample. Every sound comes from those movements. That is why each word can be moved exactly, and why the whole engine fits in 274 KB. Each step below is plain data you can read, change and hand back."
+            "Most modern text to speech runs a neural network trained on recordings of people. Chimera Kit runs CHIMERA, a physical model of the human voice by Jameson Hodge: vocal folds, a throat, a tongue and lips, simulated sample by sample. Every sound comes from those movements. That is why each word can be moved exactly, and why the whole engine fits in 274 KB. Each step below is plain data you can read, change and hand back."
           }
         </p>
       </div>
@@ -98,7 +98,7 @@ export function Layers() {
       </div>
       <div className="code">
         {
-          'import { createVoice, play } from "intone";\n\nconst voice = await createVoice({ body: "female" });\nawait play(voice.stream("Hello there."), voice.sampleRate).done;'
+          'import { createVoice, play } from "chimera-kit";\n\nconst voice = await createVoice({ body: "female" });\nawait play(voice.stream("Hello there."), voice.sampleRate).done;'
         }
       </div>
       <p>

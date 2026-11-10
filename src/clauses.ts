@@ -57,7 +57,7 @@ export class ClauseCutter {
       !(Number.isInteger(minWords) && minWords >= 1 && Number.isInteger(maxWords) && maxWords >= minWords)
     ) {
       throw new RangeError(
-        `intone: need whole numbers 1 <= minWords <= maxWords, got ${minWords} and ${maxWords}`,
+        `chimera-kit: need whole numbers 1 <= minWords <= maxWords, got ${minWords} and ${maxWords}`,
       );
     }
     this.minWords = minWords;

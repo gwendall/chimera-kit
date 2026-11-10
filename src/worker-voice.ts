@@ -27,7 +27,7 @@ export type WorkerStreamOptions = Omit<StreamOptions, "style" | "airway"> & Deli
 
 export interface WorkerVoiceOptions extends Omit<CreateVoiceOptions, "style">, DeliveryOptions {
   /**
-   * The worker to use, running intone's `worker.js`. Defaults to a new module worker next to this
+   * The worker to use, running chimera-kit's `worker.js`. Defaults to a new module worker next to this
    * file, which bundlers that follow `new URL(..., import.meta.url)` pick up.
    */
   worker?: Worker;
@@ -77,11 +77,12 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
   };
   worker.onerror = (event) => {
     event.preventDefault?.();
-    fail(new Error(`intone: the worker failed${event.message ? `: ${event.message}` : ""}`));
+    fail(new Error(`chimera-kit: the worker failed${event.message ? `: ${event.message}` : ""}`));
   };
   worker.onmessage = ({ data }: MessageEvent<FromWorker>) => {
     if (data.type === "ready") opened?.(data.sampleRate);
-    else if (data.id === undefined) fail(new Error(data.type === "error" ? data.message : "intone: no id"));
+    else if (data.id === undefined)
+      fail(new Error(data.type === "error" ? data.message : "chimera-kit: no id"));
     else listeners.get(data.id)?.(data);
   };
 
@@ -96,7 +97,7 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
   let freed = false;
   /** Throws now, on this thread, what the worker would refuse: a freed voice, a song's timing. */
   const check = (text?: unknown, speak?: WorkerStreamOptions) => {
-    if (freed) throw new Error("intone: this voice has been freed");
+    if (freed) throw new Error("chimera-kit: this voice has been freed");
     if (failure) throw failure;
     if (isSong(text)) refuseTiming("a song", speak);
     if (isScore(text)) refuseTiming("a score", speak);
@@ -112,7 +113,10 @@ export async function createWorkerVoice(options: WorkerVoiceOptions = {}): Promi
         listeners.set(id, (reply) => {
           listeners.delete(id);
           if (reply.type === "rendered") resolve({ audio: reply.audio, sampleRate });
-          else reject(new Error(reply.type === "error" ? reply.message : `intone: unexpected ${reply.type}`));
+          else
+            reject(
+              new Error(reply.type === "error" ? reply.message : `chimera-kit: unexpected ${reply.type}`),
+            );
         });
         send({ type: "render", id, text, options: speak });
       });

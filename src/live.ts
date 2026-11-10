@@ -1,5 +1,5 @@
 /**
- * `intone/live`: a held, playable voice over CHIMERA's physical model, plus the beatbox it
+ * `chimera-kit/live`: a held, playable voice over CHIMERA's physical model, plus the beatbox it
  * already has. `noteOn` opens the breath gate right on the audio thread (`worklet-live.ts`), so a
  * note sounds within a render quantum or two; `vowel`/`shape`/`source`/`bend` move the mouth and
  * the source while it holds, the way a program or a finger would.
@@ -103,10 +103,10 @@ function createNode(
     outputChannelCount: [1],
   };
   try {
-    return new AudioWorkletNode(context, "intone-live", { ...base, processorOptions: { module } });
+    return new AudioWorkletNode(context, "chimera-kit-live", { ...base, processorOptions: { module } });
   } catch (error) {
     if (!(error instanceof DOMException && error.name === "DataCloneError")) throw error;
-    return new AudioWorkletNode(context, "intone-live", { ...base, processorOptions: { bytes } });
+    return new AudioWorkletNode(context, "chimera-kit-live", { ...base, processorOptions: { bytes } });
   }
 }
 
@@ -147,7 +147,7 @@ export async function createInstrument(options: CreateInstrumentOptions = {}): P
       lastTelemetry = data.data;
     } else if (data.type === "error") {
       if (onReadyFail) {
-        onReadyFail(new Error(`intone: ${data.message}`));
+        onReadyFail(new Error(`chimera-kit: ${data.message}`));
         onReady = onReadyFail = undefined;
       } else {
         onError?.(data.message);

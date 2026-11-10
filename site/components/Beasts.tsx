@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Creatures } from "@/lib/intone/creatures.js";
+import type { Creatures } from "@/lib/chimera-kit/creatures.js";
 import { studio } from "@/lib/studio";
 import { Latency } from "./Latency";
 

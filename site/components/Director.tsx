@@ -1,8 +1,8 @@
 "use client";
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import type { Body, Mood, Score } from "@/lib/intone/index.js";
-import { deliver, take } from "@/lib/intone/index.js";
+import type { Body, Mood, Score } from "@/lib/chimera-kit/index.js";
+import { deliver, take } from "@/lib/chimera-kit/index.js";
 import { studio } from "@/lib/studio";
 import { useStudio } from "./useStudio";
 

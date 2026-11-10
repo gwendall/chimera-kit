@@ -7,16 +7,16 @@ import styles from "./page.module.css";
 
 export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
   const inherited = await parent;
-  const title = "Documentation | intone";
+  const title = "Documentation | Chimera Kit";
   const description =
-    "Install intone, speak your first sentence, stream an answer, direct a voice and sing. A JavaScript speech library for the browser.";
+    "Install chimera-kit, speak your first sentence, stream an answer, direct a voice and sing. A JavaScript speech library for the browser.";
   return {
     title,
     description,
     alternates: { canonical: "/docs" },
     openGraph: {
       type: "website",
-      siteName: "intone",
+      siteName: "Chimera Kit",
       title,
       description,
       url: "/docs",
@@ -32,30 +32,30 @@ const sections = [
   ["streaming", "Streaming answers"],
   ["singing", "Singing"],
   ["tools", "Agent tools"],
-  ["backends", "Workers & backends"],
-  ["more", "Live voices & creatures"],
+  ["backends", "Worker playback"],
+  ["instrument", "Instrument & beatbox"],
+  ["creatures", "Creature calls"],
+  ["anatomy", "Anatomy & animation"],
+  ["more", "Voice profiles"],
   ["reference", "API reference"],
   ["troubleshooting", "Troubleshooting"],
 ] as const;
 
 const entrypoints = [
   [
-    "intone",
+    "chimera-kit",
     "createVoice, createWorkerVoice, play, speech, take, deliver, bodyFromSeed",
     "Speech, playback and score direction.",
   ],
-  ["intone/speaker", "createSpeaker", "One asynchronous interface for CHIMERA, Kokoro and Web Speech."],
-  ["intone/singing", "melody, harmony, keyOf, scoop, fall", "Notes, harmonies and singing transforms."],
+  ["chimera-kit/singing", "melody, harmony, keyOf, scoop, fall", "Notes, harmonies and singing transforms."],
   [
-    "intone/tools",
+    "chimera-kit/tools",
     "TOOLS, createToolRunner, forAnthropic, forOpenAI",
     "Validated say, sing and set_voice tool calls.",
   ],
-  ["intone/live", "createInstrument", "A sustained voice and beat sequencer in an AudioWorklet."],
-  ["intone/creatures", "loadCreatures", "A separate engine for birds, seals, alligators and elephants."],
-  ["intone/imitate", "profile", "Coarse voice measurements from a mono recording."],
-  ["intone/web-speech", "createSystemVoice", "The voices available on the device."],
-  ["intone/kokoro", "createKokoroVoice", "Local neural speech with optional model dependencies."],
+  ["chimera-kit/live", "createInstrument", "A sustained voice and beat sequencer in an AudioWorklet."],
+  ["chimera-kit/creatures", "loadCreatures", "Chimera's bird, seal, alligator and elephant models."],
+  ["chimera-kit/imitate", "profile", "Coarse voice measurements from a mono recording."],
 ];
 
 export default function Docs() {
@@ -79,10 +79,11 @@ export default function Docs() {
         <article className={styles.article}>
           <div className={styles.intro}>
             <span className="label">Developer documentation</span>
-            <h1>A voice in your code.</h1>
+            <h1>Build with Chimera.</h1>
             <p className="lead">
-              intone is a JavaScript library for speech in the browser. Speak a sentence, stream an answer, or
-              control the timing and pitch of each word. The default engine runs locally with WebAssembly.
+              The JavaScript toolkit for Chimera's physical voice model. Speak, sing, play a live voice,
+              trigger beatbox patterns and render animal calls. Control scores and articulation directly, with
+              synthesis running locally in the browser.
             </p>
           </div>
 
@@ -107,7 +108,7 @@ export default function Docs() {
             </div>
             <h3>1. Add the package</h3>
             <CodeBlock language={RELEASE.npmVersion ? "Terminal" : "Terminal · after the first npm release"}>
-              {"npm install intone"}
+              {"npm install chimera-kit"}
             </CodeBlock>
             <p>
               Use a browser app with ES modules, such as Vite or Next.js. In Next.js, keep voice creation and
@@ -115,7 +116,7 @@ export default function Docs() {
             </p>
             <h3>2. Speak on a click</h3>
             <CodeBlock language="HTML">{'<button id="speak">Speak</button>'}</CodeBlock>
-            <CodeBlock>{`import { createVoice, play } from "intone";
+            <CodeBlock>{`import { createVoice, play } from "chimera-kit";
 
 const voice = await createVoice({ body: "female" });
 
@@ -143,7 +144,7 @@ document.querySelector("#speak")?.addEventListener("click", () => {
               Start with <code>male</code>, <code>female</code> or <code>child</code>. A body can also be a
               blend with physical and source settings. A seed gives each character the same voice every time.
             </p>
-            <CodeBlock>{`import { bodyFromSeed, createVoice, deliver, play, take } from "intone";
+            <CodeBlock>{`import { bodyFromSeed, createVoice, deliver, play, take } from "chimera-kit";
 
 const voice = await createVoice({
   body: bodyFromSeed("guide"),
@@ -170,7 +171,7 @@ play(voice.stream(reading.score), voice.sampleRate);`}</CodeBlock>
               skips Markdown code blocks and reads links as their text. The following example reuses a loaded{" "}
               <code>voice</code>; <code>tokens</code> is your application's token stream.
             </p>
-            <CodeBlock>{`import { play, speech } from "intone";
+            <CodeBlock>{`import { play, speech } from "chimera-kit";
 
 const playback = play(speech(voice, tokens), voice.sampleRate);
 // When the user interrupts:
@@ -189,8 +190,8 @@ await playback.done;`}</CodeBlock>
               A song pairs one note with each syllable. Hyphens split syllables inside a word. A standalone{" "}
               <code>~</code> or <code>-</code> holds the previous vowel through another note.
             </p>
-            <CodeBlock>{`import { createVoice, play } from "intone";
-import { harmony, melody } from "intone/singing";
+            <CodeBlock>{`import { createVoice, play } from "chimera-kit";
+import { harmony, melody } from "chimera-kit/singing";
 
 const voice = await createVoice();
 const song = {
@@ -217,14 +218,14 @@ const upperPart = harmony(song, "third-above");
               runner validates arguments, speaks concurrent calls in order, and returns readable success or
               error data.
             </p>
-            <CodeBlock>{`import { createSpeaker } from "intone/speaker";
-import { createToolRunner, forAnthropic, forOpenAI } from "intone/tools";
+            <CodeBlock>{`import { createWorkerVoice } from "chimera-kit";
+import { createToolRunner, forAnthropic, forOpenAI } from "chimera-kit/tools";
 
-const speaker = await createSpeaker();
-const runner = createToolRunner(speaker, { body: "female" });
+const voice = await createWorkerVoice();
+const runner = createToolRunner(voice, { body: "female" });
 
 const result = await runner.run("say", { text: "Hello there." });
-// { ok: true, lost: [] }, or { ok: false, error: "..." }
+// { ok: true }, or { ok: false, error: "..." }
 
 const anthropicTools = forAnthropic();
 const chatCompletionsTools = forOpenAI();
@@ -232,21 +233,22 @@ const chatCompletionsTools = forOpenAI();
 // Send each returned tool name and arguments to runner.run().
 
 runner.stop(); // Interrupt audio and discard queued calls.
-speaker.free();`}</CodeBlock>
+voice.free();`}</CodeBlock>
             <p>
               The adapters provide tool definitions, not model API clients. <code>forOpenAI()</code> returns
               the Chat Completions tool format. <code>TOOLS</code> contains provider-neutral JSON Schema
-              definitions. <code>lost</code> lists requested controls the chosen backend could not apply.
+              definitions. Calls run against the Chimera voice and return when playback finishes.
             </p>
           </section>
 
           <section id="backends">
-            <h2>Workers & backends</h2>
+            <h2>Worker playback</h2>
             <p>
-              A worker keeps synthesis off the main thread. Its <code>render</code> and <code>stream</code>{" "}
-              methods are asynchronous; <code>say</code> returns a playback handle immediately.
+              A worker keeps Chimera synthesis off the main thread. Its <code>render</code> and{" "}
+              <code>stream</code> methods are asynchronous; <code>say</code> returns a playback handle
+              immediately.
             </p>
-            <CodeBlock>{`import { createWorkerVoice } from "intone";
+            <CodeBlock>{`import { createWorkerVoice } from "chimera-kit";
 
 const voice = await createWorkerVoice({ body: "female", delivery: "calm" });
 const playback = voice.say("Take a breath.");
@@ -254,81 +256,95 @@ await playback.done;
 voice.free();`}</CodeBlock>
             <p>
               Workers take <code>delivery</code> and <code>intensity</code> as data instead of a{" "}
-              <code>style</code> function. For interchangeable engines, use{" "}
-              <code>createSpeaker(backend, options)</code> from <code>intone/speaker</code>.
-            </p>
-            <div className={styles.table}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Backend</th>
-                    <th>Runs with</th>
-                    <th>Control</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <code>chimera</code> (default)
-                    </td>
-                    <td>Local WebAssembly</td>
-                    <td>Pitch curves, sound timing, body, delivery and singing</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <code>kokoro</code>
-                    </td>
-                    <td>Local neural model, about 88 MB</td>
-                    <td>
-                      Natural speech and rate; unsupported controls appear in <code>lost</code>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <code>web-speech</code>
-                    </td>
-                    <td>Device voices</td>
-                    <td>System-dependent voices, rate, pitch and level</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p>
-              For Kokoro, also install the optional peers <code>kokoro-js</code> and{" "}
-              <code>@huggingface/transformers</code>. Check <code>speaker.supports</code> before showing
-              advanced controls, then inspect each result's <code>lost</code>. Call{" "}
-              <code>speaker.free()</code> when finished.
+              <code>style</code> function. They accept text, songs and edited scores, with samples sent
+              directly to the audio thread. Call <code>playback.stop()</code> to interrupt and{" "}
+              <code>voice.free()</code> on teardown.
             </p>
           </section>
 
+          <section id="instrument">
+            <h2>Live instrument & beatbox</h2>
+            <p>
+              The instrument runs in an AudioWorklet. Load it once, then connect these controls to your app's
+              note, pointer or MIDI events. Trigger audio from a user gesture.
+            </p>
+            <CodeBlock>{`import { createInstrument } from "chimera-kit/live";
+
+const live = await createInstrument({ body: "female" });
+
+live.vowel("a");
+live.noteOn(60); // Your app's note-on event.
+live.shape({ jaw: 0.4, lipAp: 0.2 });
+live.source({ breathiness: 0.3, tension: 0.6 });
+live.bend(62);
+live.noteOff(); // Your app's note-off event.
+
+live.beat.steps("kick . snare .");
+live.beat.start({ bpm: 96 });
+live.beat.hit("kick");
+live.beat.stop();
+live.free(); // Release the worklet when the instrument closes.`}</CodeBlock>
+            <p>
+              Pass <code>onError</code> to receive controls rejected by the engine.{" "}
+              <code>live.telemetry()</code> returns the worklet's most recent snapshot.{" "}
+              <Link href="/#instrument">Play the instrument →</Link>
+            </p>
+          </section>
+          <section id="creatures">
+            <h2>Creature calls</h2>
+            <p>
+              Chimera also models a songbird, seal, alligator and elephant. Creatures load their own small
+              WASM artifact, independently of the human voice.
+            </p>
+            <CodeBlock>{`import { loadCreatures } from "chimera-kit/creatures";
+import { play } from "chimera-kit";
+
+const zoo = await loadCreatures();
+const bird = zoo.create("songbird");
+// Run playback from a click or an already-unlocked audio context.
+await play([bird.call("flute")], zoo.sampleRate).done;
+bird.free();`}</CodeBlock>
+            <p>
+              <code>zoo.list</code> describes the available species and calls. Use <code>call</code> for a
+              complete clip, <code>stream</code> for chunks, or <code>set</code>, <code>gate</code> and{" "}
+              <code>render</code> for live control. <Link href="/#creatures">Hear the creatures →</Link>
+            </p>
+          </section>
+          <section id="anatomy">
+            <h2>Anatomy & animation</h2>
+            <p>
+              The main-thread voice exposes the actual airway while it renders. Read cross-sectional areas,
+              pressures and a versioned suffix containing retained articulation and geometry.
+            </p>
+            <CodeBlock>{`const chunks = voice.stream("Hello there.", {
+  airway(state) {
+    const sections = state.subarray(3, 6).reduce((sum, n) => sum + n, 0);
+    const areas = state.subarray(6, 6 + sections);
+    const pressures = state.subarray(6 + sections, 6 + 2 * sections);
+    console.log({ areas, pressures }); // Feed your own visualizer.
+  },
+});
+play(chunks, voice.sampleRate);`}</CodeBlock>
+            <p>
+              The callback follows generation, which can run ahead of playback. For lip sync, timestamp and
+              buffer frames by sample position, then select them with the audio clock. Keep retention bounded.{" "}
+              <Link href="/#how">Watch the real-time Chimera profile →</Link>
+            </p>
+          </section>
           <section id="more">
-            <h2>Live voices & creatures</h2>
+            <h2>Voice profiles</h2>
             <p>
-              <code>intone/live</code> is an AudioWorklet instrument. Create it with an unlocked audio
-              context, then use <code>vowel("a")</code>, <code>noteOn(60)</code>, <code>bend(62)</code>,{" "}
-              <code>shape({"{ jaw: 0.4 }"})</code> and <code>noteOff()</code>. Its <code>beat</code> sequencer
-              handles kicks, snares and hats. Call <code>free()</code> on teardown.
-            </p>
-            <p>
-              <code>intone/creatures</code> loads a separate engine. Call <code>loadCreatures()</code>, create
-              a creature with <code>zoo.create("songbird")</code>, and play <code>bird.call("flute")</code> at{" "}
-              <code>zoo.sampleRate</code>. Free the creature when finished.
-            </p>
-            <p>
-              <code>intone/imitate</code> measures pitch, rate and a coarse body profile from mono audio:{" "}
+              <code>chimera-kit/imitate</code> measures pitch, rate and a coarse body profile from mono audio:{" "}
               <code>profile(samples, sampleRate, {"{ speakerAgreed: true }"})</code>. It requires the
               speaker's agreement and produces a caricature, with no neural voice cloning.
-            </p>
-            <p>
-              <Link href="/#more">Explore the instrument and creatures demos →</Link>
             </p>
           </section>
 
           <section id="reference">
             <h2>API reference</h2>
             <p>
-              Each entry point ships TypeScript declarations. Import only the part your app needs; Kokoro and
-              creatures are optional.
+              Each entry point ships TypeScript declarations. Import the Chimera features your app needs;
+              creatures load their own small WASM artifact.
             </p>
             <div className={styles.table}>
               <table>
@@ -409,10 +425,10 @@ voice.free();`}</CodeBlock>
             </dl>
             <h3>Bundled resources</h3>
             <p>
-              The package exports <code>intone/worker.js</code>, <code>intone/worklet-live.js</code>,{" "}
-              <code>intone/intone_chimera.wasm</code>, <code>intone/intone_creatures.wasm</code> and{" "}
-              <code>intone/cmudict.txt.gz</code>. They ship with the library; there is no synthesis service or
-              API key.
+              The package exports <code>chimera-kit/worker.js</code>, <code>chimera-kit/worklet-live.js</code>
+              , <code>chimera-kit/chimera.wasm</code>, <code>chimera-kit/creatures.wasm</code> and{" "}
+              <code>chimera-kit/cmudict.txt.gz</code>. They ship with the library; there is no synthesis
+              service or API key.
             </p>
           </section>
 
@@ -433,16 +449,32 @@ voice.free();`}</CodeBlock>
               with reduced pronunciation accuracy. The live instrument additionally accepts a{" "}
               <code>worklet</code> URL.
             </p>
+            <h3>Webpack tries to bundle Node's file loader</h3>
+            <p>
+              The <code>file:</code> resource loader is used only by Node. In a Webpack browser bundle, ignore
+              that exact builtin import. For Next.js, add this to your configuration; server-side loading
+              stays unchanged.
+            </p>
+            <CodeBlock>{`export default {
+  webpack(config, { isServer, webpack }) {
+    if (!isServer) {
+      config.plugins.push(new webpack.IgnorePlugin({
+        resourceRegExp: new RegExp("^node:fs/promises$"),
+      }));
+    }
+    return config;
+  },
+};`}</CodeBlock>
             <h3>Next.js says window or AudioContext is undefined</h3>
             <p>
               Create voices in a client-side effect or event handler. The documentation's module example
               assumes a browser entry point. Release voices in your component's cleanup.
             </p>
-            <h3>A control seems ignored</h3>
+            <h3>A score rejects timing options</h3>
             <p>
-              Check <code>supports</code> and <code>lost</code> on a speaker. System voices and Kokoro cannot
-              follow CHIMERA's sound timing or sing a melody. CHIMERA is controllable but synthetic; English
-              is its current language, and phone latency has not yet been measured.
+              Songs and scores already specify pitch and timing. Use score transforms to edit them instead of
+              passing <code>rate</code>, <code>f0</code> or <code>accent</code>. Chimera currently speaks
+              English, sounds synthetic, and phone latency has not yet been measured.
             </p>
           </section>
         </article>

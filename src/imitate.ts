@@ -1,8 +1,8 @@
 /**
- * `intone/imitate`: a voice profile estimated from a recording, for CHIMERA to caricature (see
+ * `chimera-kit/imitate`: a voice profile estimated from a recording, for CHIMERA to caricature (see
  * docs/design.md's "Imitating a voice"). Pure TypeScript, no dependency, no engine import: this
  * module only measures a `Float32Array`, it never renders one. A separate entry on purpose, so
- * that `intone` itself does not grow for callers who never imitate a voice.
+ * that `chimera-kit` itself does not grow for callers who never imitate a voice.
  *
  * `profile()` is not a clone. It reads caricature parameters off the recording (pitch and its
  * range, speaking rate, pauses, a formant-based body blend, a spectral-tilt brightness and a
@@ -251,22 +251,22 @@ function tiltFit(mix: { female: number; child: number }): { intercept: number; s
 export function profile(samples: Float32Array, sampleRate: number, options: ImitateOptions): Profile {
   if (options.speakerAgreed !== true) {
     throw new RangeError(
-      "intone/imitate: speakerAgreed must be true: the speaker's own agreement to be imitated",
+      "chimera-kit/imitate: speakerAgreed must be true: the speaker's own agreement to be imitated",
     );
   }
   if (!(Number.isFinite(sampleRate) && sampleRate > 0)) {
-    throw new RangeError(`intone/imitate: sampleRate must be positive, got ${sampleRate}`);
+    throw new RangeError(`chimera-kit/imitate: sampleRate must be positive, got ${sampleRate}`);
   }
   const durationSeconds = samples.length / sampleRate;
   if (durationSeconds < MIN_DURATION_SECONDS) {
     throw new RangeError(
-      `intone/imitate: recording is ${durationSeconds.toFixed(2)} s, too short to estimate a voice from (need at least ${MIN_DURATION_SECONDS} s)`,
+      `chimera-kit/imitate: recording is ${durationSeconds.toFixed(2)} s, too short to estimate a voice from (need at least ${MIN_DURATION_SECONDS} s)`,
     );
   }
   const overallRmsDb = rmsDb(samples);
   if (overallRmsDb < MIN_RMS_DB) {
     throw new RangeError(
-      `intone/imitate: recording is too quiet to estimate a voice from (${overallRmsDb.toFixed(1)} dBFS)`,
+      `chimera-kit/imitate: recording is too quiet to estimate a voice from (${overallRmsDb.toFixed(1)} dBFS)`,
     );
   }
 
@@ -285,7 +285,7 @@ export function profile(samples: Float32Array, sampleRate: number, options: Imit
   }
   if (voicedHz.length < MIN_VOICED_FRAMES) {
     throw new RangeError(
-      "intone/imitate: too little voiced speech found to estimate a voice from (too quiet, too short, or not speech)",
+      "chimera-kit/imitate: too little voiced speech found to estimate a voice from (too quiet, too short, or not speech)",
     );
   }
 

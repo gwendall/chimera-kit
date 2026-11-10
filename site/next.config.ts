@@ -6,6 +6,13 @@ const config: NextConfig = {
   images: { unoptimized: true },
   devIndicators: false,
   experimental: { inlineCss: true },
+  webpack(config, { isServer, webpack }) {
+    if (!isServer) {
+      // The file: loader is Node-only. Browsers fetch the WASM and dictionary over HTTP.
+      config.plugins.push(new webpack.IgnorePlugin({ resourceRegExp: /^node:fs\/promises$/ }));
+    }
+    return config;
+  },
 };
 
 export default config;

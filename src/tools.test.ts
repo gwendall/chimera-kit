@@ -67,7 +67,7 @@ describe("the definitions", () => {
 });
 
 /** A voice that records its calls and finishes each one when told to. */
-function fakeVoice(lost?: string[]) {
+function fakeVoice() {
   const calls: { input: string | Song; options?: ToolSayOptions | undefined; stopped: boolean }[] = [];
   const finishers: (() => void)[] = [];
   return {
@@ -80,7 +80,6 @@ function fakeVoice(lost?: string[]) {
       return {
         queued: Promise.resolve(),
         done,
-        lost,
         stop: () => {
           call.stopped = true;
           finishers.shift()?.();
@@ -107,7 +106,7 @@ describe("a tool runner", () => {
     expect(voice.calls[0]?.options).toEqual({ delivery: "calm", intensity: 0.5, rate: 1.2 });
     expect(settled).toBe(false);
     voice.finish();
-    expect(await result).toEqual({ ok: true, lost: [] });
+    expect(await result).toEqual({ ok: true });
   });
 
   test("sings a melody written as text, and passes neither rate nor f0, which a song refuses", async () => {
@@ -234,7 +233,7 @@ describe("a tool runner", () => {
     await tick();
     runner.stop();
     expect(voice.calls[0]?.stopped).toBe(true);
-    expect(await speaking).toEqual({ ok: true, lost: [], interrupted: true });
+    expect(await speaking).toEqual({ ok: true, interrupted: true });
     expect(await waiting).toEqual({ ok: false, error: "stopped before it started" });
     expect(voice.calls.length).toBe(1);
 
@@ -242,21 +241,13 @@ describe("a tool runner", () => {
     await tick();
     expect(voice.calls[1]?.input).toBe("three");
     voice.finish();
-    expect(await again).toEqual({ ok: true, lost: [] });
-  });
-
-  test("reports what the backend could not do", async () => {
-    const voice = fakeVoice(["notes"]);
-    const result = createToolRunner(voice).run("sing", { lyrics: "la", melody: "C4", bpm: 90 });
-    await tick();
-    voice.finish();
-    expect(await result).toEqual({ ok: true, lost: ["notes"] });
+    expect(await again).toEqual({ ok: true });
   });
 
   test("a voice that throws, or fails while playing, becomes a result and the queue goes on", async () => {
     const threw = createToolRunner({
       say() {
-        throw new Error("intone: notes.len() (1) must equal the lyrics' syllable count (2)");
+        throw new Error("chimera-kit: notes.len() (1) must equal the lyrics' syllable count (2)");
       },
     });
     expect(await threw.run("say", { text: "hi" })).toEqual({
@@ -290,7 +281,7 @@ describe("a tool runner", () => {
 });
 
 describe("a tool runner on the real engine", () => {
-  const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
+  const wasm = new URL("../dist/chimera.wasm", import.meta.url);
   const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
 
   /** Renders instead of playing, as Bun has no audio device. */
@@ -314,7 +305,7 @@ describe("a tool runner on the real engine", () => {
       melody: "C4:1 D4:1 | E4:1 G4:1 | A4:1 G4:1 E4:2",
       bpm: 120,
     });
-    expect(result).toEqual({ ok: true, lost: [] });
+    expect(result).toEqual({ ok: true });
     // Eight beats at 120 are four seconds, plus the first consonants and the engine's tail.
     expect(seconds[0]).toBeGreaterThan(3.9);
     expect(seconds[0]).toBeLessThan(5);

@@ -1,25 +1,24 @@
-# intone
+# Chimera Kit
 
 A JavaScript library for speech that runs in the browser, starts in milliseconds and follows your
-code down to the syllable. No model weights, no server for the default engine.
+code down to the syllable. No neural weights or synthesis server.
 
-[Live demos](https://intone-one.vercel.app) · [Get started](https://intone-one.vercel.app/docs#get-started) · [Documentation](https://intone-one.vercel.app/docs)
+[Live demos](https://chimera-kit.vercel.app) · [Get started](https://chimera-kit.vercel.app/docs#get-started) · [Documentation](https://chimera-kit.vercel.app/docs)
 
-intone is how you use [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth), the physical
-voice model by [Jameson Hodge](https://github.com/jamesondh), in a real product: streaming, clause
-cutting for language models, direction, workers, and one interface that also drives other engines
-([`intone/speaker`](#one-interface-three-backends)).
+Chimera Kit is a JavaScript toolkit dedicated to [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth),
+the physical voice model by [Jameson Hodge](https://github.com/jamesondh). Use its speech, singing,
+live instrument, beatbox, creatures and real airway data in your app. The library handles browser
+loading, workers, playback, interruption and streaming answers.
 
-CHIMERA doesn't sound natural, and it isn't trying to. It sounds uncanny, it fits in a few hundred
-kilobytes, and because every sound comes from an articulation, the delivery can be controlled by a
-program. When you want a natural voice instead, change one line and keep the rest of your code.
+Every sound comes from a simulated airway. You can control each word's timing, pitch, breath and
+articulation through plain-data scores. It sounds synthetic, and currently speaks English.
 
 > **Status: private, pre-release.** Not on npm yet, and the API will change.
 
 ## Usage
 
 ```ts
-import { createVoice, play } from "intone";
+import { createVoice, play } from "chimera-kit";
 
 const voice = await createVoice({ body: "female" });
 await play(voice.stream("The birch canoe slid on the smooth planks."), voice.sampleRate).done;
@@ -32,7 +31,7 @@ thread, about a third of one core while it speaks. To leave that thread free, ru
 Worker: the same samples, the same calls, but `render` and `stream` are asynchronous.
 
 ```ts
-import { createWorkerVoice } from "intone";
+import { createWorkerVoice } from "chimera-kit";
 
 const voice = await createWorkerVoice({ body: "female" });
 await voice.say("Hello there.").done;
@@ -43,10 +42,10 @@ speech.stop(); // when the user interrupts
 `say` sends the samples from the worker to the audio thread directly, so a busy page cannot make
 the voice stutter. `stream` and `render` are there too, asynchronous.
 
-The worker script is `intone/worker.js`, found next to the module with
+The worker script is `chimera-kit/worker.js`, found next to the module with
 `new URL("./worker.js", import.meta.url)`; pass `worker` to start it some other way.
 
-The engine (`intone_chimera.wasm`) and the dictionary (`cmudict.txt.gz`) are found next to the
+The engine (`chimera.wasm`) and the dictionary (`cmudict.txt.gz`) are found next to the
 module the same way. Vite and Next.js copy these files into the app's build; `bun build` does
 not, so with it, serve them yourself and pass their URLs as `wasm` and `dictionary`.
 
@@ -55,7 +54,7 @@ as it arrives. `speech` reads it as Markdown (code blocks are skipped, links rea
 and cuts it at punctuation and line ends:
 
 ```ts
-import { play, speech } from "intone";
+import { play, speech } from "chimera-kit";
 
 await play(speech(voice, answer), voice.sampleRate).done;
 ```
@@ -85,7 +84,7 @@ the first sample.
 | `style`  | a score transform for everything planned from text: `deliver("calm")`     |
 
 `createVoice({ dictionary: false })` skips the pronouncing dictionary and uses spelling rules
-alone: 223 KB in all, at a cost in pronunciation.
+alone, saving the 869 KB dictionary at a cost in pronunciation.
 
 ### Any voice
 
@@ -103,7 +102,7 @@ const narrator = await createVoice({
 character gets a voice of its own without anyone choosing a dozen settings.
 
 ```ts
-import { bodyFromSeed } from "intone";
+import { bodyFromSeed } from "chimera-kit";
 
 voice.render(message.text, { body: bodyFromSeed(message.author) });
 ```
@@ -112,7 +111,7 @@ There is nothing to download and the first sound still comes in milliseconds. Se
 speech evaluation found the voices about as intelligible as the presets. Over eleven seeds, the mean word
 error rate came out 4.3 points under the matched presets' with one recognizer and 2.3 under with
 the other. One sentence still trips the second recognizer into a loop on one seed
-([eval/README.md](eval/README.md#drawn-bodies)). A spec written by hand can go further, up to the
+(`eval/README.md`). A spec written by hand can go further, up to the
 limits in `BodySpec`. A live instrument takes a blend only.
 
 A physical model gives a kind of voice (deep, wide, breathy), not a person's: it clones nobody.
@@ -156,7 +155,7 @@ mouth shapes from text nor runs another voice model. Keep only frames needed for
 each word lies. Change it, then render the score itself, timing and pitch kept to the sample:
 
 ```ts
-import { take } from "intone";
+import { take } from "chimera-kit";
 
 const t = take(voice.plan("I never said she stole my money."));
 t.word("never").emphasize();
@@ -171,7 +170,7 @@ The same transforms can shape every reading. A `style` is applied to each score 
 from text, whether it is given to `createVoice` or to one call:
 
 ```ts
-import { deliver, speech } from "intone";
+import { deliver, speech } from "chimera-kit";
 
 const calm = await createVoice({ body: "female", style: deliver("calm") });
 await play(calm.stream("Take a breath."), calm.sampleRate).done;
@@ -182,7 +181,7 @@ Text with a style goes through its score, which sounds like the text read direct
 sample by sample. `plan` includes the voice's style, so a score it returned is not styled twice.
 The pause between clauses follows `rate`, not a style's own pacing.
 
-A function cannot be posted to a worker, so a worker voice and a speaker take a delivery as data
+A function cannot be posted to a worker, so a worker voice takes a delivery as data
 instead: `delivery`, a mood or numbers, and its `intensity`, when the voice is opened or for one
 call. A worker voice speaks it exactly as a voice here speaks `style: deliver(...)`.
 
@@ -210,17 +209,15 @@ const score = voice.plan(song); // the same score, to transform or inspect
 Hyphens split a word's syllables as typed, and a lone `-` or `~` holds the previous vowel through
 one more note. The first beat comes just after the first consonants, or at `t0` seconds to line
 it up with an accompaniment. A song, like a score, refuses `rate`, `f0` and `accent`, and takes
-only the style given with its call (`delivery` on a worker voice or a speaker). A speaker that
-cannot sing (`supports.singing` is false: Kokoro, the device's voices) speaks the lyrics and says
-`notes` in `lost`.
+only the style given with its call (`delivery` on a worker voice).
 
-`intone/singing` has the rest of a singer's kit, all pure functions. `melody` writes notes as text,
+`chimera-kit/singing` has the rest of a singer's kit, all pure functions. `melody` writes notes as text,
 `harmony` makes a second part for another voice, and `scoop` and `fall` slide into a note and off
 the end of a phrase:
 
 ```ts
-import { compose, createVoice, play } from "intone";
-import { fall, harmony, melody, scoop } from "intone/singing";
+import { compose, createVoice, play } from "chimera-kit";
+import { fall, harmony, melody, scoop } from "chimera-kit/singing";
 
 const song = { lyrics: "sun-light on the wa-ter ~", notes: melody("C4 D4 E4 G4 A4 G4 C4:2"), bpm: 120 };
 const style = compose(scoop(1, 0.09), fall(3, 0.25)); // semitones, seconds
@@ -234,75 +231,22 @@ its own voice. Thirds stay in the key, which is worked out from the notes (`keyO
 (`harmony(song, "third-above", { key: "Eb" })`, `"A minor"`). Two keys that cover a melody equally
 are told apart by the note it ends on.
 
-## The device's voices
-
-The same calls can speak through the voices the device already has (Web Speech): nothing to
-download, natural-sounding, but the system decides almost everything. It takes one rate, pitch
-and volume per clause, and `lost` says what of a delivery it could not apply.
-
-```ts
-import { createSystemVoice } from "intone/web-speech";
-
-const voice = await createSystemVoice({ lang: "en" });
-const speech = voice.say(answer, { delivery: "calm" }); // a string, or tokens as they arrive
-speech.lost; // ["pitch range", "breath", "tension", "pause length"]
-await speech.done;
-```
-
 ## Sound on phones
 
 iOS mutes Web Audio with the silent switch and only starts audio from code running inside a tap.
 `play` handles both when it is called from the tap. If your handler awaits something first, call
 `unlockAudio(context)` at the top of it, or give `play` a context you resumed yourself.
 
-## One interface, three backends
-
-`intone/speaker` is one asynchronous interface that CHIMERA, Kokoro (a neural TTS model, run
-locally through `kokoro-js`) and the device's own voices (Web Speech) all speak through, so an
-app can switch backends without changing its call sites. Every call reports what that backend
-could not honor in `lost`.
-
-```ts
-import { createSpeaker } from "intone/speaker";
-
-const speaker = await createSpeaker("kokoro", { body: "female" });
-speaker.id; // "kokoro"
-speaker.supports; // { pitchCurve: false, soundTiming: false, breath: false, phones: true, ... }
-const spoken = speaker.say("Hello there.");
-spoken.lost; // what this call asked for that Kokoro could not do
-await spoken.done; // { underruns: 0 }, or {} from the system voice, which can't tell
-speaker.free();
-```
-
-A `Speaker` describes itself (`accepts` the layer it reads, `supports`, `output`) and every
-`render`/`stream`/`say` call reports `lost`, so a caller never has to know an engine's name to
-degrade gracefully:
-
-|              | accepts  | output   | honors                                  | typical `lost`                                 |
-| ------------ | -------- | -------- | --------------------------------------- | ---------------------------------------------- |
-| `chimera`    | gestures | samples  | everything (f0, accent, body, delivery) | nothing                                        |
-| `kokoro`     | phrasing | samples  | rate, a delivery's rate                 | `f0`, `accent`, `body`, chunk size, the rest   |
-| `web-speech` | intent   | playback | rate, a delivery's rate, pitch, level   | `f0`, `accent`, `body`, range, breath, tension |
-
-A delivery's parts a backend cannot apply are named in `lost` ("pitch range", "breath"...), and
-its rate multiplies the call's `rate`, or else the voice's own.
-
-`createSpeaker("chimera", ...)` is a thin wrapper over `createWorkerVoice` and keeps its
-guarantees (samples straight to the audio thread, `stop()` before anything plays gives silence).
-`createSpeaker("kokoro", ...)` downloads the model on first use (about 88 MB) through `kokoro-js`,
-which is an optional peer dependency: only code that imports `intone/speaker` and asks for
-`"kokoro"` pulls it in.
-
 ## Imitating a voice
 
-`intone/imitate` reads a recording and returns a small, plain-data profile for CHIMERA to speak
+`chimera-kit/imitate` reads a recording and returns a small, plain-data profile for CHIMERA to speak
 with: a caricature (pitch, its range, speaking rate, pauses, a formant-based body blend, the
 voice's brightness and, when it is clearly breathy, its breathiness), not a neural clone of the
 speaker. It is pure TypeScript with no engine import, so it carries nothing of the rest of the
 package (see Cost, below).
 
 ```ts
-import { profile } from "intone/imitate";
+import { profile } from "chimera-kit/imitate";
 
 const p = profile(samples /* Float32Array, mono */, sampleRate, { speakerAgreed: true });
 // p: { body, f0, rate, delivery: { range, breath, pauses }, measured: { ...raw numbers... } }
@@ -327,29 +271,28 @@ The airway's size, fry and tension are not measured. See the round-trip tests in
 
 ## Letting a language model use the voice
 
-`intone/tools` gives a model three tools: `say`, `sing` (lyrics on a melody written as text) and
+`chimera-kit/tools` gives a model three tools: `say`, `sing` (lyrics on a melody written as text) and
 `set_voice`. The definitions are JSON Schema, the same schema checks each call, and a bad call
 comes back as a result the model can read and correct, never as an exception:
 
 ```ts
-import { createSpeaker } from "intone/speaker";
-import { createToolRunner, forAnthropic } from "intone/tools";
+import { createWorkerVoice } from "chimera-kit";
+import { createToolRunner, forAnthropic } from "chimera-kit/tools";
 
-const speaker = await createSpeaker();
-const tools = createToolRunner(speaker, { body: "female" });
+const voice = await createWorkerVoice();
+const tools = createToolRunner(voice, { body: "female" });
 
 const reply = await anthropic.messages.create({ model, messages, max_tokens, tools: forAnthropic() });
 for (const block of reply.content) {
   if (block.type === "tool_use") {
-    const result = await tools.run(block.name, block.input); // { ok: true, lost: [] } when it has finished
+    const result = await tools.run(block.name, block.input); // { ok: true } when it has finished
   }
 }
 tools.stop(); // the user interrupted: silence now, and drop the calls still waiting
 ```
 
 `forOpenAI()` gives the same tools for Chat Completions, and `TOOLS` the neutral definitions. Calls
-made at once speak one after the other. `lost` says what the backend could not do, such as `notes`
-on one that cannot sing. It works on a `createWorkerVoice` too.
+made at once speak one after the other. The worker voice supports speech and singing directly.
 
 A melody is `melody("C4:1 D#4:0.5 Bb3:2")`: pitch and beats, one beat when left out, a MIDI number
 accepted as a pitch, `|` ignored so it can be written in bars. A song has no silent notes, so a rest
@@ -357,18 +300,17 @@ is refused rather than dropped, which would move every later syllable onto the w
 
 ## Cost
 
-|                                                | gzipped |
-| ---------------------------------------------- | ------- |
-| Engine (`intone_chimera.wasm`)                 | 274 KB  |
-| JavaScript: `createVoice` alone                | 2.0 KB  |
-| JavaScript: a chat (`speech`, `play`)          | 5.5 KB  |
-| JavaScript: everything                         | 10.0 KB |
-| JavaScript: a voice in a Worker (both sides)   | 9.5 KB  |
-| JavaScript: the device's voices only           | 2.7 KB  |
-| JavaScript: `profile` (`intone/imitate`) alone | 2.9 KB  |
-| JavaScript: tool calls (`intone/tools`)        | 2.7 KB  |
-| JavaScript: songs (`intone/singing`)           | 2.0 KB  |
-| Pronouncing dictionary (CMUdict, English)      | 869 KB  |
+|                                                     | gzipped |
+| --------------------------------------------------- | ------- |
+| Engine (`chimera.wasm`)                             | 274 KB  |
+| JavaScript: `createVoice` alone                     | 2.1 KB  |
+| JavaScript: a chat (`speech`, `play`)               | 5.5 KB  |
+| JavaScript: everything                              | 10.1 KB |
+| JavaScript: a voice in a Worker (both sides)        | 9.6 KB  |
+| JavaScript: `profile` (`chimera-kit/imitate`) alone | 2.9 KB  |
+| JavaScript: tool calls (`chimera-kit/tools`)        | 2.7 KB  |
+| JavaScript: songs (`chimera-kit/singing`)           | 2.1 KB  |
+| Pronouncing dictionary (CMUdict, English)           | 869 KB  |
 
 On an Apple M2, loading takes about 70 ms once per page, the first audible sample comes about
 10 ms after asking, and one voice takes about a third of one core in real time. Phones have not
@@ -379,11 +321,11 @@ same samples.
 
 CHIMERA also models a few non-human airways: a songbird's two-voice syrinx, a seal's laryngeal
 trill, an alligator's roar and an elephant's infrasonic rumble and trumpet. They render through a
-second, smaller engine, `intone/creatures`, with no dependency on speech.
+second, smaller engine, `chimera-kit/creatures`, with no dependency on speech.
 
 ```ts
-import { loadCreatures } from "intone/creatures";
-import { play } from "intone";
+import { loadCreatures } from "chimera-kit/creatures";
+import { play } from "chimera-kit";
 
 const zoo = await loadCreatures();
 const bird = zoo.create("songbird");
@@ -403,13 +345,13 @@ play([bird.call("flute")], zoo.sampleRate);
 
 ## A played voice
 
-`intone/live` holds a note instead of speaking a sentence: press it on, move the mouth and the
+`chimera-kit/live` holds a note instead of speaking a sentence: press it on, move the mouth and the
 source while it sounds, bend its pitch, release it. It runs inside an AudioWorklet, so a control
 call reaches the audio thread without a hop through the page's own event loop. The beatbox CHIMERA
 already models (kick, snare, hats, clicks, a hummed bass) comes along as `live.beat`.
 
 ```ts
-import { createInstrument } from "intone/live";
+import { createInstrument } from "chimera-kit/live";
 
 const context = new AudioContext();
 const live = await createInstrument({ body: "female", context });
@@ -442,31 +384,31 @@ control is macOS `say`, which shows what a clear voice scores on the same test.
 
 |                                 | Parakeet TDT 0.6b v3 | Whisper large-v3-turbo |
 | ------------------------------- | -------------------- | ---------------------- |
-| intone                          | 42.8 %               | 23.7 %                 |
+| chimera-kit                     | 42.8 %               | 23.7 %                 |
 | Control (macOS `say`, Samantha) | 2.3 %                | 2.6 %                  |
 
 It is still hard to understand, and improving that is the current work. See
-[eval/README.md](eval/README.md) for the method.
+`eval/README.md` for the method.
 
 ## How it stays in step with upstream
 
 The engine is [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth) by Jameson Hodge, a
 physical-modeling vocal synthesizer, kept in `crates/chimera` as a git subtree. The few changes it
 carries here, each measured and meant for upstream, are listed in
-[docs/upstream-patches.md](docs/upstream-patches.md).
+`docs/upstream-patches.md`.
 `bun run sync-upstream` merges new upstream work in. Everything specific to this package lives in
 `crates/intone-chimera` and `src/`.
 
 ## Where it is going
 
-One API for speech, singing and sounds that are not words, over any engine, local first. See
-[docs/design.md](docs/design.md).
+Complete browser access to Chimera: speech, scores, singing, live voices, beatbox and creatures. See
+`docs/design.md`.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). The evaluation harness and its rules are in
-[eval/README.md](eval/README.md).
+See `CONTRIBUTING.md`. The evaluation harness and its rules are in
+`eval/README.md`.
 
 ## License
 
-MIT. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT. See `LICENSE` and `THIRD_PARTY_NOTICES.md`.

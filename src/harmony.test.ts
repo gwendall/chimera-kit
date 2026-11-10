@@ -94,7 +94,7 @@ describe("keyOf", () => {
 
 describe("a harmony on the real engine", () => {
   test("lasts exactly as long as the melody, so that the voices stay together", async () => {
-    const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
+    const wasm = new URL("../dist/chimera.wasm", import.meta.url);
     const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
     const voice = await createVoice({ wasm, dictionary });
     const lead = voice.render(tune);

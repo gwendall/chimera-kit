@@ -1,5 +1,5 @@
 // Activate the npm link after the first successful public release.
-export const RELEASE = { name: "intone", npmVersion: null as string | null };
+export const RELEASE = { name: "chimera-kit", npmVersion: null as string | null };
 export const LINKS = {
   home: "/",
   docs: "/docs",

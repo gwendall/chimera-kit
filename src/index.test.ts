@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { createVoice, deliver, type Note, type Score, type Song, type Voice } from "./index.ts";
 import { valueAt } from "./transforms.ts";
 
-const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
+const wasm = new URL("../dist/chimera.wasm", import.meta.url);
 const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
 const TEXT = "Hello there.";
 
@@ -60,7 +60,7 @@ describe("a voice", () => {
   });
 
   test("reports bad requests with a message and keeps working", () => {
-    expect(() => voice.render("")).toThrow("intone");
+    expect(() => voice.render("")).toThrow("chimera-kit");
     expect(() => voice.render(TEXT, { rate: -1 })).toThrow("rate");
     expect(voice.render(TEXT).audio.length).toBeGreaterThan(0);
   });
@@ -111,7 +111,7 @@ describe("a score", () => {
 
   test("reports a bad score with a readable, prefixed message", () => {
     const score = voice.plan(TEXT);
-    expect(() => voice.render({ ...score, duration: -1 })).toThrow("intone");
+    expect(() => voice.render({ ...score, duration: -1 })).toThrow("chimera-kit");
     expect(() => voice.render({ ...score, duration: -1 })).toThrow("duration");
     expect(() => voice.render({ ...score, sounds: [] })).toThrow("sounds");
   });

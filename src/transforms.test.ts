@@ -87,7 +87,7 @@ describe("stretch", () => {
 
   test("rate is the inverse stretch", () => {
     expect(rate(2)(hello()).duration).toBeCloseTo(0.4, 9);
-    expect(() => rate(0)).toThrow("intone");
+    expect(() => rate(0)).toThrow("chimera-kit");
   });
 });
 
@@ -125,7 +125,7 @@ describe("pitch", () => {
     expect(parseInterval("-2.5st")).toBe(-2.5);
     expect(parseInterval("+50c")).toBe(0.5);
     expect(parseInterval(-1)).toBe(-1);
-    expect(() => parseInterval("3 semitones")).toThrow("intone");
+    expect(() => parseInterval("3 semitones")).toThrow("chimera-kit");
   });
 });
 

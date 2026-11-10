@@ -8,7 +8,7 @@ import { serveDir } from "../lib/serve.ts";
 import type { Measurement, Scenario, ScenarioContext } from "../lib/types.ts";
 import { THRESHOLDS } from "../thresholds.ts";
 
-const ORIGIN = "https://intone.e2e";
+const ORIGIN = "https://chimera-kit.e2e";
 // Measured 2026-11-09 on this machine, no CPU throttle: voice.render("Hello there.") - about 1s
 // of audio - takes ~280-320ms wall (RTF ~0.3, well under polyphony's 1.15 ceiling; this is
 // correct render() cost, not a hang or a leak: confirmed flat across 150 consecutive calls, no

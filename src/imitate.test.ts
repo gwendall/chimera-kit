@@ -3,7 +3,7 @@ import { deliver } from "./delivery.ts";
 import { profile } from "./imitate.ts";
 import { createVoice, type Voice } from "./index.ts";
 
-const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
+const wasm = new URL("../dist/chimera.wasm", import.meta.url);
 const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
 
 // Held out on purpose: none of these sentences were used to fit RATE_FIT, RANGE_FIT,

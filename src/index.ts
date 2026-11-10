@@ -1,7 +1,6 @@
 /**
- * intone: text to speech from a simulated airway, in about a megabyte.
- *
- * The API speaks of voices and utterances. The engine behind it is an implementation detail.
+ * Chimera Kit: Chimera's physical voice model for JavaScript apps.
+ * Voices, editable scores and streaming playback expose the same local synthesis engine.
  */
 import { type ChimeraSources, loadChimera } from "./engines/chimera.js";
 import { type Voice, type VoiceOptions, voiceFrom } from "./voice.js";

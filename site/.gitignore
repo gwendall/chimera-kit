@@ -3,4 +3,4 @@ out
 node_modules
 next-env.d.ts
 tsconfig.tsbuildinfo
-lib/intone
+lib/chimera-kit

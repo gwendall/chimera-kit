@@ -1,7 +1,7 @@
 /**
  * Runs inside an AudioWorkletProcessor: the held, played voice and its beatbox, rendered a
  * render quantum at a time right on the audio thread. Not meant to be imported from the page;
- * `intone/live` (`live.ts`) is the module `context.audioWorklet.addModule` is given, and talks to
+ * `chimera-kit/live` (`live.ts`) is the module `context.audioWorklet.addModule` is given, and talks to
  * this one over its `port`.
  *
  * The AudioWorklet spec always loads this file as an ES module, so it can `import` normally; the
@@ -143,4 +143,4 @@ class LiveProcessor extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor("intone-live", LiveProcessor);
+registerProcessor("chimera-kit-live", LiveProcessor);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createInstrument, type Instrument as Played } from "@/lib/intone/live.js";
+import { createInstrument, type Instrument as Played } from "@/lib/chimera-kit/live.js";
 import { studio } from "@/lib/studio";
 
 /** Two octaves across the pad, from C3. */
@@ -139,7 +139,7 @@ export function Instrument() {
   };
 
   return (
-    <section>
+    <section id="instrument">
       <div className="intro">
         <span className="label">Instrument</span>
         <h2>{"Play the voice live."}</h2>

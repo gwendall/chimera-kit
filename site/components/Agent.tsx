@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createToolRunner, type ToolResult, type ToolTarget } from "@/lib/intone/tools.js";
+import { createToolRunner, type ToolResult, type ToolTarget } from "@/lib/chimera-kit/tools.js";
 import { studio } from "@/lib/studio";
 import styles from "./Agent.module.css";
 import { IllustratedIntro } from "./IllustratedIntro";
@@ -61,7 +61,6 @@ function outcome(result: ToolResult, name: string) {
       : result.error;
   }
   if (result.interrupted) return "Playback stopped before the end.";
-  if (result.lost?.length) return `Finished without support for: ${result.lost.join(", ")}.`;
   if (result.voice) return `Voice changed to ${result.voice.body ?? "the default"}.`;
   return name === "sing" ? "The corrected melody was sung." : "The sentence was spoken.";
 }

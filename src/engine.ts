@@ -1,7 +1,6 @@
 /**
- * What a speech engine must provide. The rest of the package only knows this file, so that the
- * engine can be replaced; `engines/` holds the implementations. Internal until a second engine
- * shows which parts of this are really common.
+ * Internal contract between the Chimera renderer and its TypeScript voice facade. Kept private
+ * so callers use voices and scores while deterministic rendering can be tested in isolation.
  */
 import type { Score, Song } from "./layers.js";
 

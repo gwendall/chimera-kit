@@ -13,7 +13,7 @@
       "!site/.next",
       "!site/out",
       "!site/node_modules",
-      "!site/lib/intone",
+      "!site/lib/chimera-kit",
       "!site/next-env.d.ts",
       "!.claude",
       "!**/*.generated.json"

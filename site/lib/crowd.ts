@@ -1,5 +1,5 @@
 // What a crowd says, as plain timelines: who speaks what, and when. Everything is original text.
-import { type Body, bodyFromSeed, type Mood, type Song } from "./intone/index.js";
+import { type Body, bodyFromSeed, type Mood, type Song } from "./chimera-kit/index.js";
 
 export type Scene = "hubbub" | "choir" | "dialogue";
 

@@ -133,8 +133,8 @@ async function installWith(
           // nearest package.json with a packageManager field and finds that one before it finds
           // this temp project's own (fieldless) one, then refuses: "Unsupported package manager
           // specification (bun@1.3.11)" - bun isn't a corepack-managed manager. A real stranger
-          // installing intone is never nested inside this repo, so this is purely an artifact of
-          // the harness's own scratch directory location, not a real pnpm/intone incompatibility.
+          // installing chimera-kit is never nested inside this repo, so this is purely an artifact of
+          // the harness's own scratch directory location, not a real pnpm/chimera-kit incompatibility.
           // COREPACK_ENABLE_PROJECT_SPEC=0 makes corepack ignore any ancestor packageManager field.
           await run(["pnpm", "add", tarball], {
             cwd: dir,
@@ -157,7 +157,7 @@ async function installWith(
   ]);
   await writeFile(
     join(dir, "check.mjs"),
-    `import { createVoice } from "intone";\nconst voice = await createVoice({ body: "female", dictionary: false });\nconst { audio } = voice.render("Hello there.");\nvoice.free();\nif (!(audio.length > 0)) throw new Error("no audio");\nconsole.log("ok", audio.length);\n`,
+    `import { createVoice } from "chimera-kit";\nconst voice = await createVoice({ body: "female", dictionary: false });\nconst { audio } = voice.render("Hello there.");\nvoice.free();\nif (!(audio.length > 0)) throw new Error("no audio");\nconsole.log("ok", audio.length);\n`,
   );
   // Run with plain node regardless of installer: the point is that node's own resolution finds
   // what npm/pnpm/bun each installed, which is what most consumers (bundlers included) rely on.
@@ -196,7 +196,7 @@ async function buildNextApp(
   // import time (not inside the click handler) would fail the build.
   await writeFile(
     join(dir, "app/page.tsx"),
-    `"use client";\nimport { createVoice } from "intone";\nexport default function Page() {\n  const onClick = async () => {\n    const voice = await createVoice({ body: "female" });\n    await voice.render("The birch canoe slid on the smooth planks.");\n    voice.free();\n  };\n  return <button onClick={onClick}>speak</button>;\n}\n`,
+    `"use client";\nimport { createVoice } from "chimera-kit";\nexport default function Page() {\n  const onClick = async () => {\n    const voice = await createVoice({ body: "female" });\n    await voice.render("The birch canoe slid on the smooth planks.");\n    voice.free();\n  };\n  return <button onClick={onClick}>speak</button>;\n}\n`,
   );
   const install = await run(["bun", "add", tarball, "next@^16", "react@^19", "react-dom@^19"], {
     cwd: dir,
@@ -224,7 +224,7 @@ async function buildViteApp(
   );
   await writeFile(
     join(dir, "src/main.ts"),
-    `import { createVoice } from "intone";\n(async () => {\n  const voice = await createVoice({ body: "female" });\n  (globalThis as unknown as { __v: unknown }).__v = voice;\n})();\n`,
+    `import { createVoice } from "chimera-kit";\n(async () => {\n  const voice = await createVoice({ body: "female" });\n  (globalThis as unknown as { __v: unknown }).__v = voice;\n})();\n`,
   );
   await writeFile(
     join(dir, "package.json"),
@@ -249,7 +249,7 @@ async function buildBunBundle(
   const dir = await mkdtemp(join(ctx.tmp, "bunbundle-"));
   await writeFile(
     join(dir, "entry.ts"),
-    `import { createVoice } from "intone";\n(async () => {\n  const voice = await createVoice({ body: "female" });\n  (globalThis as unknown as { __v: unknown }).__v = voice;\n})();\n`,
+    `import { createVoice } from "chimera-kit";\n(async () => {\n  const voice = await createVoice({ body: "female" });\n  (globalThis as unknown as { __v: unknown }).__v = voice;\n})();\n`,
   );
   await writeFile(
     join(dir, "package.json"),
@@ -282,7 +282,7 @@ async function confirmsInBrowser(
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    const origin = "https://intone.stranger";
+    const origin = "https://chimera-kit.stranger";
     await serveDir(page, origin, outDir, {
       index: `<!doctype html><script type="module" src="/${entryFile}"></script>`,
     });

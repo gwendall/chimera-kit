@@ -1,6 +1,6 @@
 /**
  * CHIMERA's non-human creatures: a songbird, a seal, an alligator, an elephant, each with its own
- * simulated airway and a few recorded calls. A second, smaller engine from `intone/creatures`,
+ * simulated airway and a few recorded calls. A second, smaller engine from `chimera-kit/creatures`,
  * independent of speech.
  */
 
@@ -23,7 +23,7 @@ const CALL_END_SLACK_SECONDS = 0.05;
 export type Source = URL | string | ArrayBuffer | Uint8Array;
 
 export interface CreaturesSources {
-  /** The engine. Defaults to `intone_creatures.wasm` next to this module. */
+  /** The engine. Defaults to `creatures.wasm` next to this module. */
   wasm?: Source;
 }
 
@@ -163,7 +163,7 @@ async function readBytes(source: Source): Promise<Uint8Array> {
     return new Uint8Array(await readFile(url));
   }
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`intone: ${url} answered ${response.status}`);
+  if (!response.ok) throw new Error(`chimera-kit: ${url} answered ${response.status}`);
   return new Uint8Array(await response.arrayBuffer());
 }
 
@@ -185,12 +185,12 @@ function join(chunks: Float32Array[], total: number): Float32Array {
 
 /** A NaN or infinite control would poison the simulation's state for good. */
 function finite(name: string, value: number): void {
-  if (!Number.isFinite(value)) throw new RangeError(`intone: ${name} must be finite, got ${value}`);
+  if (!Number.isFinite(value)) throw new RangeError(`chimera-kit: ${name} must be finite, got ${value}`);
 }
 
 function unknownCallError(info: CreatureInfo, id: string): Error {
   const known = info.calls.map((c) => c.id).join(", ");
-  return new Error(`intone: ${info.id} has no call '${id}'; known calls: ${known}`);
+  return new Error(`chimera-kit: ${info.id} has no call '${id}'; known calls: ${known}`);
 }
 
 class CreatureImpl implements Creature {
@@ -208,7 +208,7 @@ class CreatureImpl implements Creature {
 
   /** A freed handle is dangling memory in the wasm: refuse it here rather than corrupt the heap. */
   private check(): void {
-    if (this.freed) throw new Error("intone: this creature has been freed");
+    if (this.freed) throw new Error("chimera-kit: this creature has been freed");
   }
 
   set(params: Record<string, number>): void {
@@ -218,7 +218,7 @@ class CreatureImpl implements Creature {
       const index = this.paramIndex.get(key);
       if (index === undefined) {
         const known = info.params.map((p) => p.key).join(", ");
-        throw new Error(`intone: ${info.id} has no parameter '${key}'; known parameters: ${known}`);
+        throw new Error(`chimera-kit: ${info.id} has no parameter '${key}'; known parameters: ${known}`);
       }
       finite(key, value);
       x.cc_creature_param(handle, index, value);
@@ -255,7 +255,7 @@ class CreatureImpl implements Creature {
   *stream(id: string, options: StreamOptions = {}): Generator<Float32Array> {
     const chunkSize = options.chunkSize ?? 1024;
     if (!Number.isInteger(chunkSize) || chunkSize < 1) {
-      throw new RangeError(`intone: chunkSize must be a positive integer, got ${chunkSize}`);
+      throw new RangeError(`chimera-kit: chunkSize must be a positive integer, got ${chunkSize}`);
     }
     // Computed step by step, as the caller reads it: the first chunk waits for one chunk's worth of
     // sound, not for the whole call.
@@ -338,12 +338,12 @@ class CreatureImpl implements Creature {
 /** Loads the creatures engine. */
 export async function loadCreatures(sources: CreaturesSources = {}): Promise<Creatures> {
   const { wasm } = sources;
-  const wasmBytes = await readBytes(wasm ?? new URL("./intone_creatures.wasm", import.meta.url));
+  const wasmBytes = await readBytes(wasm ?? new URL("./creatures.wasm", import.meta.url));
   const module = await WebAssembly.compile(wasmBytes as BufferSource);
   const instance = await WebAssembly.instantiate(module, {});
   const x = instance.exports as unknown as Exports;
   if (x.cc_abi_version() !== ABI_VERSION) {
-    throw new Error(`intone: creatures engine ABI ${x.cc_abi_version()}, expected ${ABI_VERSION}`);
+    throw new Error(`chimera-kit: creatures engine ABI ${x.cc_abi_version()}, expected ${ABI_VERSION}`);
   }
 
   // The catalog builds (and may grow memory) on this first call, so fetch it before `.buffer`.
@@ -356,7 +356,7 @@ export async function loadCreatures(sources: CreaturesSources = {}): Promise<Cre
 
   function unknownCreatureError(id: string): Error {
     const known = list.map((c) => c.id).join(", ");
-    return new Error(`intone: no creature '${id}'; known creatures: ${known}`);
+    return new Error(`chimera-kit: no creature '${id}'; known creatures: ${known}`);
   }
 
   return {

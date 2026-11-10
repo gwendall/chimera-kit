@@ -4,7 +4,7 @@ The published package contains compiled code and data from the projects below.
 
 ## CHIMERA
 
-The engine in `intone_chimera.wasm` is compiled from
+The engine in `chimera.wasm` is compiled from
 [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth), MIT licensed. Its copyright notice
 and license are in `LICENSE`.
 

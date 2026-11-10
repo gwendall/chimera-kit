@@ -9,7 +9,7 @@ import { serveDir } from "../lib/serve.ts";
 import type { BrowserName, Measurement, Scenario, ScenarioContext } from "../lib/types.ts";
 import { THRESHOLDS } from "../thresholds.ts";
 
-const ORIGIN = "https://intone.e2e";
+const ORIGIN = "https://chimera-kit.e2e";
 
 export const scenario: Scenario = {
   id: "mobile-profile",

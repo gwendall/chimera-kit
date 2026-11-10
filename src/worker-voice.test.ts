@@ -4,7 +4,7 @@ import { createVoice } from "./index.ts";
 import { shift } from "./transforms.ts";
 import { type AsyncVoice, createWorkerVoice } from "./worker-voice.ts";
 
-const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
+const wasm = new URL("../dist/chimera.wasm", import.meta.url);
 const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
 const TEXT = "The birch canoe slid on the smooth planks.";
 const LONG = Array.from({ length: 6 }, () => "Glue the sheet to the dark blue background.").join(" ");
@@ -134,14 +134,14 @@ describe("a worker voice", () => {
       expect((await moody.render(song, { delivery: "sad" })).audio).toEqual(sad);
       expect(sad).not.toEqual(plain);
       // Refused here, before a round trip, with the page voice's message.
-      expect(() => moody.render(song, { rate: 1.2 })).toThrow("intone: a song ignores rate");
+      expect(() => moody.render(song, { rate: 1.2 })).toThrow("chimera-kit: a song ignores rate");
     } finally {
       moody.free();
     }
   });
 
   test("passes the engine's errors on", async () => {
-    await expect(collect(voice.stream(TEXT, { rate: 100 }))).rejects.toThrow("intone");
+    await expect(collect(voice.stream(TEXT, { rate: 100 }))).rejects.toThrow("chimera-kit");
     expect((await collect(voice.stream(TEXT))).length).toBeGreaterThan(0);
   });
 });

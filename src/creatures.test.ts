@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { type Creatures, loadCreatures } from "./creatures.ts";
 
-const wasm = new URL("../dist/intone_creatures.wasm", import.meta.url);
+const wasm = new URL("../dist/creatures.wasm", import.meta.url);
 
 describe("loadCreatures", () => {
   let zoo: Creatures;
@@ -20,13 +20,13 @@ describe("loadCreatures", () => {
   });
 
   test("unknown creature ids throw, naming the known ones", () => {
-    expect(() => zoo.create("dragon")).toThrow(/intone: no creature 'dragon'.*songbird/s);
+    expect(() => zoo.create("dragon")).toThrow(/chimera-kit: no creature 'dragon'.*songbird/s);
   });
 
   describe("a creature", () => {
     test("unknown call ids throw, naming the known ones", () => {
       const bird = zoo.create("songbird");
-      expect(() => bird.call("roar")).toThrow(/intone: songbird has no call 'roar'.*flute/s);
+      expect(() => bird.call("roar")).toThrow(/chimera-kit: songbird has no call 'roar'.*flute/s);
       bird.free();
     });
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BRAND } from "@/lib/brand";
 import { LINKS, RELEASE } from "@/lib/links";
 import styles from "./SiteChrome.module.css";
 
@@ -11,15 +12,15 @@ export function SiteHeader({ docs = false }: { docs?: boolean }) {
       <header className="top-bar">
         <div className="wrap top">
           <Link className="wordmark" href={LINKS.home}>
-            intone
+            {BRAND.name}
           </Link>
           <span className="badge">{RELEASE.npmVersion ? `v${RELEASE.npmVersion}` : "Private preview"}</span>
           {!docs ? (
             <nav aria-label="Demos">
-              <a href="/#direct">Direct</a>
-              <a href="/#stream">Streaming</a>
-              <a href="/#voices">Voices</a>
+              <a href="/#direct">Speech</a>
               <a href="/#sing">Singing</a>
+              <a href="/#instrument">Instrument</a>
+              <a href="/#creatures">Creatures</a>
               <a href="/#agents">Agents</a>
             </nav>
           ) : null}
@@ -38,7 +39,7 @@ export function SiteFooter() {
       <div className="wrap">
         <div className={styles.footerTop}>
           <Link className="wordmark" href={LINKS.home}>
-            intone
+            {BRAND.name}
           </Link>
           <nav aria-label="Footer">
             <Link href={LINKS.start}>Get started</Link>
@@ -48,7 +49,7 @@ export function SiteFooter() {
           </nav>
         </div>
         <p>
-          A JavaScript library for speech you can direct. The physical voice model is{" "}
+          The JavaScript toolkit for Chimera. Built on the physical voice model{" "}
           <a href={LINKS.engine}>CHIMERA</a> by <a href={LINKS.author}>Jameson Hodge</a>, MIT licensed.
         </p>
       </div>

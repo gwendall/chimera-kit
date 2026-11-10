@@ -64,7 +64,7 @@ export async function writeJson(path: string, report: RunReport): Promise<void> 
 export async function writeMarkdown(path: string, report: RunReport): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   const lines: string[] = [];
-  lines.push("# intone e2e report");
+  lines.push("# chimera-kit e2e report");
   lines.push("");
   lines.push(`Started: ${report.startedAt}`);
   lines.push(

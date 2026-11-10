@@ -161,7 +161,7 @@ function playWith(sampleRate: number, options: PlayOptions, feed: Feed, onStop?:
       // try, `queued` still settles in `finally` and `done` rejects, so neither hangs.
       await addProcessor(context);
       if (context instanceof AudioContext && context.state !== "running") void context.resume();
-      const player = new AudioWorkletNode(context, "intone-player", {
+      const player = new AudioWorkletNode(context, "chimera-kit-player", {
         numberOfInputs: 0,
         outputChannelCount: [1],
         processorOptions: { sourceRate: sampleRate },
@@ -212,7 +212,7 @@ function addProcessor(context: BaseAudioContext): Promise<void> {
  * interpolating linearly when that differs from the source's.
  */
 const PROCESSOR = `
-class IntonePlayer extends AudioWorkletProcessor {
+class ChimeraPlayer extends AudioWorkletProcessor {
   constructor(options) {
     super();
     this.step = options.processorOptions.sourceRate / sampleRate;
@@ -283,5 +283,5 @@ class IntonePlayer extends AudioWorkletProcessor {
     return true;
   }
 }
-registerProcessor("intone-player", IntonePlayer);
+registerProcessor("chimera-kit-player", ChimeraPlayer);
 `;

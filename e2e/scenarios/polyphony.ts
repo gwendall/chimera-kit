@@ -1,6 +1,6 @@
 /**
  * Polyphony to the breaking point. Ramps N concurrent voices through the main thread, the
- * library's worker (`createWorkerVoice`) and `intone/speaker`, on a crowd scenario (original,
+ * library's worker (`createWorkerVoice`) and direct playback, on a crowd scenario (original,
  * non-copyrighted sentences, random bodies and moods), and reports the largest N that holds real
  * time. A fixed, moderate N is also run once for dialogue, choir, creature-zoo and a mixed scene,
  * to confirm those shapes work without ramping each one separately (see the report for why: the
@@ -16,10 +16,10 @@ import { serveDir } from "../lib/serve.ts";
 import type { BrowserName, Measurement, Scenario, ScenarioContext } from "../lib/types.ts";
 import { THRESHOLDS } from "../thresholds.ts";
 
-const ORIGIN = "https://intone.e2e";
+const ORIGIN = "https://chimera-kit.e2e";
 const RAMP_LEVELS = [1, 2, 4, 8, 16, 32, 64, 128];
-type Mode = "main" | "worker" | "speaker";
-const MODES: Mode[] = ["main", "worker", "speaker"];
+type Mode = "main" | "worker";
+const MODES: Mode[] = ["main", "worker"];
 /** Hard ceiling on one mode's ramp, so a measurement bug can't spin forever on a shared machine. */
 const MODE_WALLCLOCK_BUDGET_MS = 90_000;
 
@@ -35,7 +35,7 @@ interface StepResult {
   soloVsCrowdMaxError: number;
 }
 
-/** Runs inside the page. Everything here uses only intone's public API, as a real app would. */
+/** Runs inside the page. Everything here uses only chimera-kit's public API, as a real app would. */
 async function stepInPage({
   origin,
   mode,
@@ -46,7 +46,6 @@ async function stepInPage({
   n: number;
 }): Promise<StepResult> {
   const { createVoice, createWorkerVoice, play } = await import(/* @vite-ignore */ `${origin}/index.js`);
-  const { createSpeaker } = await import(/* @vite-ignore */ `${origin}/speaker.js`);
   // Body only blends female/child (see src/engine.ts); a male percentage or a bare `{ female: 1 }`
   // object is not a valid shape and the engine correctly rejects it (an untagged-enum mismatch) -
   // this array used to carry both and crashed the very first render() call of every mode and N.
@@ -158,16 +157,9 @@ async function stepInPage({
       };
     }
 
-    // worker and speaker modes: say() sends samples straight to the audio thread, and both
-    // report its underruns through `done`.
-    // createWorkerVoice and createSpeaker return compatible but differently-typed `say()` results;
-    // this harness only reads their common shape, so `any` here is deliberate, not a slip.
-    const opened: any[] = await Promise.all(
-      Array.from({ length: n }, (_, i) =>
-        mode === "worker"
-          ? createWorkerVoice({ body: bodies[i % bodies.length] })
-          : createSpeaker("chimera", { body: bodies[i % bodies.length] }),
-      ),
+    // Worker voices send samples straight to the audio thread and report underruns through done.
+    const opened = await Promise.all(
+      Array.from({ length: n }, (_, i) => createWorkerVoice({ body: bodies[i % bodies.length] })),
     );
     const createMs = performance.now() - createStarted;
     const wallStart = performance.now();
@@ -226,7 +218,7 @@ async function stepInPage({
 export const scenario: Scenario = {
   id: "polyphony",
   description:
-    "Ramps N concurrent voices (main thread, worker, speaker) on a crowd scene until it " +
+    "Ramps N concurrent voices (main thread and worker) on a crowd scene until it " +
     "no longer holds real time; checks dialogue, choir, creature zoo and a mixed scene once each.",
   smoke: true,
   async run(ctx: ScenarioContext): Promise<Measurement[]> {
