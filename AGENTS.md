@@ -17,7 +17,8 @@ fine programmatic control of the delivery is what it is for. Natural is not a go
 
 - `crates/chimera/`: the engine, **from upstream**. See below.
 - `crates/intone-chimera/`: our layer over it (`lib.rs`) and the browser's C ABI (`abi.rs`).
-- `src/`: the JavaScript side. `voice.ts` and `engine.ts` know no engine; `engines/chimera.ts` is the adapter.
+- `src/`: the JavaScript side. `voice.ts` controls the Chimera renderer through its private
+  `engine.ts` contract; `engines/chimera.ts` adapts the native ABI.
 - `eval/`: the intelligibility harness and the budgets. `eval/README.md` has its rules.
 - `docs/design.md`: the layers, voices, transforms and engine interface the API grows into.
 - `scripts/sync-upstream.sh`: brings in upstream's engine.
