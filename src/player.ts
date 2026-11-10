@@ -249,7 +249,13 @@ function addProcessor(context: BaseAudioContext): Promise<void> {
   let adding = added.get(context);
   if (!adding) {
     const url = URL.createObjectURL(new Blob([PROCESSOR], { type: "text/javascript" }));
-    adding = context.audioWorklet.addModule(url).finally(() => URL.revokeObjectURL(url));
+    adding = context.audioWorklet
+      .addModule(url)
+      .catch((error: unknown) => {
+        added.delete(context);
+        throw error;
+      })
+      .finally(() => URL.revokeObjectURL(url));
     added.set(context, adding);
   }
   return adding;

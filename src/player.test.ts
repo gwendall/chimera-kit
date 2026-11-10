@@ -100,6 +100,43 @@ describe("unlockAudio", () => {
 });
 
 describe("play", () => {
+  test("a supplied context can retry after its worklet module fails to load", async () => {
+    browser({});
+    class FakeContext {
+      state = "running";
+      currentTime = 0;
+      destination = {};
+      loads = 0;
+      audioWorklet = {
+        addModule: async () => {
+          if (++this.loads === 1) throw new Error("temporary module failure");
+        },
+      };
+      async resume() {}
+    }
+    class FakeNode {
+      port = {
+        onmessage: null as ((event: { data: object }) => void) | null,
+        postMessage: (message: unknown) => {
+          if (message === "end")
+            queueMicrotask(() => this.port.onmessage?.({ data: { queued: 0, done: true, underruns: 0 } }));
+        },
+      };
+      connect() {}
+      disconnect() {}
+    }
+    Object.assign(globalThis, { AudioContext: FakeContext, AudioWorkletNode: FakeNode });
+    const context = new FakeContext();
+    const options = { context: context as unknown as BaseAudioContext };
+    const failed = play([], 48_000, options);
+    await expect(failed.done).rejects.toThrow("temporary module failure");
+    await failed.queued;
+    const retried = play([], 48_000, options);
+    expect(await retried.done).toEqual({ underruns: 0 });
+    await retried.queued;
+    expect(context.loads).toBe(2);
+  });
+
   test("queues normal PCM unchanged and completes after the worklet acknowledges it", async () => {
     browser({});
     class FakeContext {
