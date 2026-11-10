@@ -465,6 +465,11 @@ play(chunks, voice.sampleRate);`}</CodeBlock>
     return config;
   },
 };`}</CodeBlock>
+            <p>
+              This configuration uses Webpack. Start Next.js with <code>next dev --webpack</code> and
+              build for production with <code>next build --webpack</code>. These flags are required when
+              your Next.js version defaults to Turbopack.
+            </p>
             <h3>Next.js says window or AudioContext is undefined</h3>
             <p>
               Create voices in a client-side effect or event handler. The documentation's module example
