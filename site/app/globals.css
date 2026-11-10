@@ -1023,6 +1023,70 @@ svg.pad {
   border-radius: 10px;
 }
 
+.song-note rect {
+  opacity: 0.5;
+}
+
+.song-note[data-played="true"] rect,
+.song-note[data-active="true"] rect {
+  opacity: 1;
+}
+
+.song-note[data-active="true"] rect {
+  fill: var(--accent-ink);
+  stroke: var(--ink);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.song-trail {
+  fill: var(--accent-soft);
+  transform: scaleX(0);
+  pointer-events: none;
+}
+
+.song-head {
+  stroke: var(--accent-ink);
+  fill: var(--accent-ink);
+  pointer-events: none;
+}
+
+.song-head line {
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.roll:not([data-playing="true"]) .song-head,
+.roll:not([data-playing="true"]) .song-trail {
+  visibility: hidden;
+}
+
+.song-lyrics {
+  font-size: var(--fs-md);
+  line-height: 1.8;
+}
+
+.song-lyrics [data-active="true"] {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-radius: 3px;
+}
+
+.sing-transport {
+  min-width: 100px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .song-head,
+  .song-trail {
+    display: none;
+  }
+}
+
 /* Creatures */
 
 .zoo {
