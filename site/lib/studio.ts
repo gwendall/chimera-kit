@@ -168,7 +168,7 @@ class Studio {
       this.voice = voice;
       this.set({ ready: true, engineLoadMs: performance.now() - asked });
       this.countRequests();
-      void this.buildGhost(voice);
+      if (this.ghostWanted) void this.buildGhost(voice);
       return voice;
     });
     return this.loading;
@@ -185,7 +185,19 @@ class Studio {
     }).observe({ type: "resource" });
   }
 
-  /** A real, silent reading, computed in small slices, that keeps the monitor moving before any click. */
+  private ghostWanted = false;
+
+  /**
+   * The throat drawing asks for the silent reading when it first shows. Computing it at load cost
+   * a phone seconds of main thread for a drawing most visitors never scroll to.
+   */
+  wantGhost() {
+    if (this.ghostWanted) return;
+    this.ghostWanted = true;
+    if (this.voice) void this.buildGhost(this.voice);
+  }
+
+  /** A real, silent reading, computed in small slices, that keeps the throat moving before any click. */
   private async buildGhost(voice: Voice) {
     const score = voice.plan(GHOST_LINE);
     const frames: Float32Array[] = [];

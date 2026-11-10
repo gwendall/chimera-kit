@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { Score } from "@/lib/intone/index.js";
 import { studio } from "@/lib/studio";
 import { Latency } from "./Latency";
-import { Throat } from "./Throat";
 import { useStudio } from "./useStudio";
 
 const LINE = "Hello there.";
+
+// The drawing and its silent reading load only once the section is on screen.
+const Throat = lazy(() => import("./Throat").then((m) => ({ default: m.Throat })));
 
 export function Layers() {
   const { ready } = useStudio();
@@ -54,7 +56,13 @@ export function Layers() {
           }
         </p>
       </div>
-      <div className="throat-screen">{visible ? <Throat /> : null}</div>
+      <div className="throat-screen">
+        {visible ? (
+          <Suspense fallback={null}>
+            <Throat />
+          </Suspense>
+        ) : null}
+      </div>
       <div className="row">
         <button type="button" className="go" disabled={!ready} onClick={() => void studio.speak(LINE)}>
           Say it and watch the tract
