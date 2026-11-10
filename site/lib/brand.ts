@@ -7,7 +7,7 @@ export const BRAND = {
   origin: production ? `https://${production}` : "http://localhost:3000",
   title: "intone: text to speech you can direct, word by word",
   description:
-    "A JavaScript text to speech library that runs in the browser. Choose the stressed words, move the pitch, set the mood and the voice. First sound in about 10 ms, 273 KB, no server.",
+    "A JavaScript text to speech library that runs in the browser. Choose the stressed words, move the pitch, set the mood and the voice. First sound in about 10 ms, 274 KB, no server.",
   keywords: [
     "text to speech",
     "speech synthesis",

@@ -9,7 +9,7 @@ const LINE = "The same call, a different voice.";
 const ASK = { f0: 190, delivery: "excited" } as const;
 
 const ENGINES: { id: EngineName; name: string; weight: string; action: string }[] = [
-  { id: "chimera", name: "CHIMERA", weight: "273 KB, already here", action: "Play" },
+  { id: "chimera", name: "CHIMERA", weight: "274 KB, already here", action: "Play" },
   { id: "web-speech", name: "Your device's voice", weight: "Nothing to download", action: "Play" },
   {
     id: "kokoro",

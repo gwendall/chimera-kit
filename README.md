@@ -357,7 +357,7 @@ is refused rather than dropped, which would move every later syllable onto the w
 
 |                                                | gzipped |
 | ---------------------------------------------- | ------- |
-| Engine (`intone_chimera.wasm`)                 | 273 KB  |
+| Engine (`intone_chimera.wasm`)                 | 274 KB  |
 | JavaScript: `createVoice` alone                | 2.0 KB  |
 | JavaScript: a chat (`speech`, `play`)          | 5.5 KB  |
 | JavaScript: everything                         | 10.0 KB |

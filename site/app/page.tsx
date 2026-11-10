@@ -34,7 +34,7 @@ function Facts() {
         <dd>{firstSampleMs === null ? "to the first sound" : "to the first sound, measured just now"}</dd>
       </div>
       <div>
-        <dt>273 KB</dt>
+        <dt>274 KB</dt>
         <dd>the whole engine, gzipped</dd>
       </div>
       <div>
@@ -89,7 +89,7 @@ function Numbers() {
           <tbody>
             <tr>
               <th>Engine</th>
-              <td>273 KB gzipped, WebAssembly</td>
+              <td>274 KB gzipped, WebAssembly</td>
             </tr>
             <tr>
               <th>JavaScript to speak</th>
