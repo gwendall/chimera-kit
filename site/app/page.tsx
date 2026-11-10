@@ -1,20 +1,134 @@
 "use client";
 
-import { useEffect } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Agent } from "@/components/Agent";
 import { Anyone } from "@/components/Anyone";
 import { Beasts } from "@/components/Beasts";
 import { Consonants } from "@/components/Consonants";
 import { Crowd } from "@/components/Crowd";
-import { Direct } from "@/components/Direct";
+import { Director } from "@/components/Director";
 import { Engines } from "@/components/Engines";
 import { Instrument } from "@/components/Instrument";
 import { Layers } from "@/components/Layers";
 import { Live } from "@/components/Live";
-import { Monitor } from "@/components/Monitor";
 import { Sing } from "@/components/Sing";
 import { Speed } from "@/components/Speed";
+import { useStudio } from "@/components/useStudio";
 import { studio } from "@/lib/studio";
+
+const MORE: { name: string; render: () => ReactNode }[] = [
+  { name: "Latency", render: () => <Speed /> },
+  { name: "Crowds", render: () => <Crowd /> },
+  { name: "Instrument", render: () => <Instrument /> },
+  { name: "Consonants", render: () => <Consonants /> },
+  { name: "Creatures", render: () => <Beasts /> },
+];
+
+function Facts() {
+  const { firstSampleMs } = useStudio();
+  return (
+    <dl className="facts">
+      <div>
+        <dt>{firstSampleMs === null ? "~10 ms" : `${firstSampleMs.toFixed(1)} ms`}</dt>
+        <dd>{firstSampleMs === null ? "to the first sound" : "to the first sound, measured just now"}</dd>
+      </div>
+      <div>
+        <dt>273 KB</dt>
+        <dd>the whole engine, gzipped</dd>
+      </div>
+      <div>
+        <dt>0</dt>
+        <dd>servers, accounts or models to download</dd>
+      </div>
+      <div>
+        <dt>1 line</dt>
+        <dd>to switch to a natural-sounding engine</dd>
+      </div>
+    </dl>
+  );
+}
+
+function More() {
+  const [open, setOpen] = useState(0);
+  const shown = MORE[open] ?? MORE[0];
+  return (
+    <section id="more">
+      <div className="intro">
+        <span className="label">More from the same engine</span>
+        <h2>{"Latency, crowds, an instrument, and animals."}</h2>
+      </div>
+      <div className="tabs" role="tablist">
+        {MORE.map((item, i) => (
+          <button
+            key={item.name}
+            type="button"
+            role="tab"
+            className="chip"
+            aria-selected={open === i}
+            onClick={() => setOpen(i)}
+          >
+            {item.name}
+          </button>
+        ))}
+      </div>
+      <div className="more">{shown?.render()}</div>
+    </section>
+  );
+}
+
+function Numbers() {
+  return (
+    <section id="numbers">
+      <div className="intro">
+        <span className="label">Numbers and limits</span>
+        <h2>{"What it costs, and what it does not do."}</h2>
+      </div>
+      <div className="two">
+        <table className="facts-table">
+          <tbody>
+            <tr>
+              <th>Engine</th>
+              <td>273 KB gzipped, WebAssembly</td>
+            </tr>
+            <tr>
+              <th>JavaScript to speak</th>
+              <td>2.0 KB gzipped</td>
+            </tr>
+            <tr>
+              <th>Pronouncing dictionary</th>
+              <td>869 KB, optional</td>
+            </tr>
+            <tr>
+              <th>First sound</th>
+              <td>about 10 ms after the call, on an Apple M2</td>
+            </tr>
+            <tr>
+              <th>Processor</th>
+              <td>about a third of one core per voice speaking</td>
+            </tr>
+            <tr>
+              <th>Network</th>
+              <td>none after the engine loads</td>
+            </tr>
+            <tr>
+              <th>Output</th>
+              <td>the same text and options always give the same samples</td>
+            </tr>
+          </tbody>
+        </table>
+        <ul className="plain-list">
+          <li>
+            It sounds synthetic. Every sound is computed from a simulated throat, not copied from a recording.
+          </li>
+          <li>It speaks English only, for now.</li>
+          <li>It does not clone a person's voice. A body describes a kind of voice.</li>
+          <li>Timings on phones have not been measured yet.</li>
+          <li>It is a private preview: not on npm yet, and the API will change.</li>
+        </ul>
+      </div>
+    </section>
+  );
+}
 
 export default function Page() {
   useEffect(() => {
@@ -32,30 +146,48 @@ export default function Page() {
   }, []);
 
   return (
-    <main className="page">
-      <aside className="pane">
-        <Monitor />
-      </aside>
-      <div className="story">
-        <Direct />
-        <Speed />
+    <>
+      <header className="wrap top">
+        <a className="wordmark" href="#direct">
+          intone
+        </a>
+        <span className="badge">Private preview</span>
+        <nav aria-label="Sections">
+          <a href="#direct">Direct</a>
+          <a href="#stream">Streaming</a>
+          <a href="#voices">Voices</a>
+          <a href="#sing">Singing</a>
+          <a href="#agents">Agents</a>
+          <a href="#how">How it works</a>
+        </nav>
+      </header>
+      <main className="wrap">
+        <div className="hero" id="direct">
+          <h1>Text to speech you can direct, word by word.</h1>
+          <p className="lead">
+            intone is a JavaScript library that reads text aloud, inside the browser. You choose the words
+            that carry the stress, move the pitch, and set the mood and the voice. It starts talking a few
+            milliseconds after you ask, with no server and no AI model to download.
+          </p>
+          <Facts />
+        </div>
+        <Director />
+        <Live />
         <Anyone />
         <Sing />
-        <Instrument />
-        <Consonants />
-        <Crowd />
-        <Beasts />
-        <Live />
         <Agent />
         <Engines />
         <Layers />
-        <footer>
+        <More />
+        <Numbers />
+      </main>
+      <footer className="wrap">
+        <p>
           The voice is <a href="https://github.com/jamesondh/chimera-vocal-synth">CHIMERA</a> by{" "}
-          <a href="https://github.com/jamesondh">Jameson Hodge</a>, MIT licensed. intone is the layer that
-          puts it in products. It does not sound natural and it is not trying to. Nothing you type leaves this
-          page.
-        </footer>
-      </div>
-    </main>
+          <a href="https://github.com/jamesondh">Jameson Hodge</a>, MIT licensed. intone is the library that
+          puts it in products. Nothing you type on this page leaves it.
+        </p>
+      </footer>
+    </>
   );
 }

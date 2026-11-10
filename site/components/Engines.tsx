@@ -9,7 +9,7 @@ const LINE = "The same call, a different voice.";
 const ASK = { f0: 190, delivery: "excited" } as const;
 
 const ENGINES: { id: EngineName; name: string; weight: string; action: string }[] = [
-  { id: "chimera", name: "CHIMERA", weight: "221 KB, already here", action: "Play" },
+  { id: "chimera", name: "CHIMERA", weight: "273 KB, already here", action: "Play" },
   { id: "web-speech", name: "Your device's voice", weight: "Nothing to download", action: "Play" },
   {
     id: "kokoro",
@@ -98,17 +98,16 @@ export function Engines() {
   };
 
   return (
-    <section>
-      <span className="kicker">Engines</span>
-      <h2>
-        Same call.
-        <br />
-        <em>Any</em> engine.
-      </h2>
-      <p>
-        CHIMERA is the default, not a requirement. One interface drives all three below, and each engine says
-        plainly what it could not do. Swap one line when you want a natural voice.
-      </p>
+    <section id="engines">
+      <div className="intro">
+        <span className="label">Engines</span>
+        <h2>{"Need a natural voice? Change one line."}</h2>
+        <p>
+          {
+            "The same calls also drive the browser's built-in voices and Kokoro, a neural model that runs on your device. Each engine says plainly what it cannot do, such as singing."
+          }
+        </p>
+      </div>
       <div className="code">
         <span className="hot">{`const speaker = await createSpeaker("${last}");`}</span>
         {`\nconst { lost } = speaker.say("${LINE}", {\n  f0: ${ASK.f0}, delivery: "${ASK.delivery}",\n});`}

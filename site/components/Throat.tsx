@@ -90,7 +90,7 @@ function along(s: number, pharynx: number, _mouth: number): { wall: Pt; normal: 
 }
 
 /** Canvas can't read CSS variables, so the page's font families are looked up once. */
-const fonts = { mono: "monospace", serif: "serif" };
+const fonts = { mono: "monospace", sans: "sans-serif" };
 
 /** How much the air in a section is moving, from cold flesh to white heat. */
 function colorFor(level: number): string {
@@ -184,7 +184,7 @@ function drawScore(
     ctx.fillText(sound.sound, at((sound.t0 + sound.t1) / 2), y + height - 6);
   }
 
-  ctx.font = `italic ${width < 480 ? 17 : 22}px ${fonts.serif}`;
+  ctx.font = `500 ${width < 480 ? 15 : 18}px ${fonts.sans}`;
   ctx.textAlign = "left";
   for (const word of score.words ?? []) {
     if (word.t1 < left || word.t0 > right) continue;
@@ -496,7 +496,7 @@ class Scope {
   paint(ctx: CanvasRenderingContext2D, width: number, height: number, title: string) {
     ctx.drawImage(this.canvas, 0, 0, width, height);
     if (!title) return;
-    ctx.font = `italic ${width < 480 ? 22 : 34}px ${fonts.serif}`;
+    ctx.font = `600 ${width < 480 ? 18 : 24}px ${fonts.sans}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = "rgb(244,239,232)";
@@ -515,7 +515,7 @@ export function Throat() {
     const heat: Heat = { levels: new Float32Array(0), peak: 1e-3, loudest: 0 };
     const style = getComputedStyle(document.documentElement);
     fonts.mono = style.getPropertyValue("--font-mono").trim() || "monospace";
-    fonts.serif = style.getPropertyValue("--font-serif").trim() || "serif";
+    fonts.sans = style.getPropertyValue("--font-sans").trim() || "sans-serif";
     const scope = new Scope();
 
     const draw = () => {
@@ -573,7 +573,7 @@ export function Throat() {
       ref={canvasRef}
       className="throat-canvas"
       role="img"
-      aria-label="A live spectrogram of the voice, and of the vocal tract while How it works is on screen"
+      aria-label="The simulated vocal tract while the voice speaks, with the sounds it is making"
     />
   );
 }

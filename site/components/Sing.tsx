@@ -59,102 +59,104 @@ export function Sing() {
 
   let beat = 0;
   return (
-    <section>
-      <span className="kicker">Singing</span>
-      <h2>
-        It can carry
-        <br />a <em>tune.</em>
-      </h2>
-      <p>
-        The same engine, on notes. Drag any note up or down and it sings the new melody straight away. Add a
-        part and another simulated throat joins in, on harmony worked out from your notes.
-      </p>
-      <svg
-        className="roll"
-        viewBox="0 0 1000 250"
-        preserveAspectRatio="none"
-        role="img"
-        aria-label="Melody editor"
-      >
-        {BEATS.map((length, i) => {
-          const note = midi[i] ?? 60;
-          const x = (beat / total) * 1000;
-          const width = (length / total) * 1000 - 4;
-          beat += length;
-          const y = ((TOP - note) / ROWS) * 250;
-          return (
-            <g
-              // biome-ignore lint/suspicious/noArrayIndexKey: notes never reorder, dragging only changes their pitch
-              key={`${i}-${length}`}
-              style={{ cursor: "ns-resize", touchAction: "none" }}
-              onPointerDown={(event) => {
-                event.currentTarget.setPointerCapture(event.pointerId);
-                drag.current = { index: i, startY: event.clientY, startMidi: note };
-              }}
-              onPointerMove={(event) => {
-                const from = drag.current;
-                if (!from || from.index !== i) return;
-                const box = event.currentTarget.ownerSVGElement?.getBoundingClientRect();
-                if (!box) return;
-                const step = box.height / ROWS;
-                const next = Math.max(
-                  TOP - ROWS + 1,
-                  Math.min(TOP, from.startMidi + Math.round((from.startY - event.clientY) / step)),
-                );
-                setMidi((old) => old.map((n, at) => (at === i ? next : n)));
-              }}
-              onPointerUp={() => {
-                drag.current = null;
-                void sing();
-              }}
-            >
-              <rect x={x} y={y} width={width} height={250 / ROWS - 2} fill="#ff5c36" rx="2" />
-              <text x={x + 4} y={y - 4} fontSize="12" fill="#c9c1b5" fontFamily="var(--font-mono)">
-                {(SYLLABLES[i] ?? "").replace(/[-,.]/g, "")}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-      <div className="row">
-        <button type="button" className="go" onClick={() => void sing()}>
-          Sing it
-        </button>
-        <button type="button" className="ghost-button" onClick={() => setMidi(START)}>
-          Reset
-        </button>
-        <label className="slider">
-          vibrato
-          <input
-            type="range"
-            min="0"
-            max="80"
-            value={vibrato}
-            onChange={(event) => setVibrato(Number(event.target.value))}
-          />
-        </label>
-        <Latency />
+    <section id="sing">
+      <div className="intro">
+        <span className="label">Singing</span>
+        <h2>{"It sings, in harmony."}</h2>
+        <p>
+          {
+            "Give it lyrics and notes and the same engine sings them. Drag a note to change the melody. Add a part and a second simulated singer joins in, on a harmony worked out from your notes."
+          }
+        </p>
       </div>
-      <div className="row">
-        {PARTS.map(({ part, label }) => (
+      <div className="panel">
+        <svg
+          className="roll"
+          viewBox="0 0 1000 250"
+          preserveAspectRatio="none"
+          role="img"
+          aria-label="Melody editor"
+        >
+          {BEATS.map((length, i) => {
+            const note = midi[i] ?? 60;
+            const x = (beat / total) * 1000;
+            const width = (length / total) * 1000 - 4;
+            beat += length;
+            const y = ((TOP - note) / ROWS) * 250;
+            return (
+              <g
+                // biome-ignore lint/suspicious/noArrayIndexKey: notes never reorder, dragging only changes their pitch
+                key={`${i}-${length}`}
+                style={{ cursor: "ns-resize", touchAction: "none" }}
+                onPointerDown={(event) => {
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  drag.current = { index: i, startY: event.clientY, startMidi: note };
+                }}
+                onPointerMove={(event) => {
+                  const from = drag.current;
+                  if (!from || from.index !== i) return;
+                  const box = event.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                  if (!box) return;
+                  const step = box.height / ROWS;
+                  const next = Math.max(
+                    TOP - ROWS + 1,
+                    Math.min(TOP, from.startMidi + Math.round((from.startY - event.clientY) / step)),
+                  );
+                  setMidi((old) => old.map((n, at) => (at === i ? next : n)));
+                }}
+                onPointerUp={() => {
+                  drag.current = null;
+                  void sing();
+                }}
+              >
+                <rect x={x} y={y} width={width} height={250 / ROWS - 2} fill="var(--accent)" rx="2" />
+                <text x={x + 4} y={y - 4} fontSize="12" fill="var(--muted)" fontFamily="var(--font-mono)">
+                  {(SYLLABLES[i] ?? "").replace(/[-,.]/g, "")}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+        <div className="row">
+          <button type="button" className="go" onClick={() => void sing()}>
+            Sing it
+          </button>
+          <button type="button" className="ghost-button" onClick={() => setMidi(START)}>
+            Reset
+          </button>
+          <label className="slider">
+            vibrato
+            <input
+              type="range"
+              min="0"
+              max="80"
+              value={vibrato}
+              onChange={(event) => setVibrato(Number(event.target.value))}
+            />
+          </label>
+          <Latency />
+        </div>
+        <div className="row">
+          {PARTS.map(({ part, label }) => (
+            <button
+              key={part}
+              type="button"
+              className="ghost-button"
+              aria-pressed={chosen.includes(part)}
+              onClick={() => toggle(part)}
+            >
+              {label}
+            </button>
+          ))}
           <button
-            key={part}
             type="button"
             className="ghost-button"
-            aria-pressed={chosen.includes(part)}
-            onClick={() => toggle(part)}
+            aria-pressed={ornate}
+            onClick={() => setOrnate((old) => !old)}
           >
-            {label}
+            Scoops and falls
           </button>
-        ))}
-        <button
-          type="button"
-          className="ghost-button"
-          aria-pressed={ornate}
-          onClick={() => setOrnate((old) => !old)}
-        >
-          Scoops and falls
-        </button>
+        </div>
       </div>
     </section>
   );

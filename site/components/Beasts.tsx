@@ -22,37 +22,38 @@ export function Beasts() {
 
   return (
     <section id="creatures">
-      <span className="kicker">Not only people, straight from CHIMERA</span>
-      <h2>
-        Same physics.
-        <br />
-        <em>Other</em> animals.
-      </h2>
-      <p>
-        CHIMERA simulates anatomy, so changing the anatomy gives you a bird, a seal, an alligator or an
-        elephant. None of these are samples. Each call is computed when you press it.
-      </p>
-      <div className="row">
-        <Latency label="last call, first sample" />
+      <div className="intro">
+        <span className="label">Creatures</span>
+        <h2>{"Animals, from the same physics."}</h2>
+        <p>
+          {
+            "Change the anatomy and CHIMERA gives a songbird, a seal, an alligator or an elephant. No samples: each call is computed when you press it."
+          }
+        </p>
       </div>
-      <div className="zoo">
-        {(zoo?.list ?? []).map((creature) => (
-          <div className="beast" key={creature.id}>
-            <h3>{creature.id}</h3>
-            <div className="row">
-              {creature.calls.map((call) => (
-                <button
-                  key={call.id}
-                  type="button"
-                  className="chip"
-                  onClick={() => void studio.call(creature.id, call.id)}
-                >
-                  {call.id}
-                </button>
-              ))}
+      <div className="panel">
+        <div className="row">
+          <Latency label="last call, first sample" />
+        </div>
+        <div className="zoo">
+          {(zoo?.list ?? []).map((creature) => (
+            <div className="beast" key={creature.id}>
+              <h3>{creature.id}</h3>
+              <div className="row">
+                {creature.calls.map((call) => (
+                  <button
+                    key={call.id}
+                    type="button"
+                    className="chip"
+                    onClick={() => void studio.call(creature.id, call.id)}
+                  >
+                    {call.id}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );

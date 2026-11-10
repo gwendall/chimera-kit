@@ -51,54 +51,56 @@ export function Crowd() {
 
   return (
     <section ref={section}>
-      <span className="kicker">Crowds</span>
-      <h2>
-        Now make it
-        <br />a <em>crowd.</em>
-      </h2>
-      <p>
-        Every voice below is its own simulation in its own worker, each with a body of its own, mixed live.
-        Push the slider until your device gives up: the numbers will say when it does.
-      </p>
-      <label className="slider wide">
-        {voices} {voices === 1 ? "voice" : "voices"}
-        <input
-          type="range"
-          min="1"
-          max="24"
-          value={voices}
-          disabled={running}
-          aria-label="Number of voices"
-          onChange={(event) => setVoices(Number(event.target.value))}
-          onPointerUp={() => studio.warmCrowd(voices)}
-        />
-      </label>
-      <div className="row">
-        {SCENES.map(({ id, name }) => (
-          <button
-            key={id}
-            type="button"
-            className="chip"
-            aria-pressed={running && scene === id}
-            disabled={running}
-            onClick={() => start(id)}
-          >
-            {name}
-          </button>
-        ))}
-        {running ? (
-          <button type="button" className="ghost-button" onClick={() => studio.stop()}>
-            Stop
-          </button>
-        ) : null}
+      <div className="intro">
+        <span className="label">Crowds</span>
+        <h2>{"Dozens of voices at once."}</h2>
+        <p>
+          {
+            "Each voice runs in its own worker with its own body, mixed live. Raise the count until your device cannot keep up: the numbers show when."
+          }
+        </p>
       </div>
-      <div className="stats">
-        {cells.map(([value, label]) => (
-          <div className="stat" key={label}>
-            <b>{value}</b>
-            <span>{label}</span>
-          </div>
-        ))}
+      <div className="panel">
+        <label className="slider wide">
+          {voices} {voices === 1 ? "voice" : "voices"}
+          <input
+            type="range"
+            min="1"
+            max="24"
+            value={voices}
+            disabled={running}
+            aria-label="Number of voices"
+            onChange={(event) => setVoices(Number(event.target.value))}
+            onPointerUp={() => studio.warmCrowd(voices)}
+          />
+        </label>
+        <div className="row">
+          {SCENES.map(({ id, name }) => (
+            <button
+              key={id}
+              type="button"
+              className="chip"
+              aria-pressed={running && scene === id}
+              disabled={running}
+              onClick={() => start(id)}
+            >
+              {name}
+            </button>
+          ))}
+          {running ? (
+            <button type="button" className="ghost-button" onClick={() => studio.stop()}>
+              Stop
+            </button>
+          ) : null}
+        </div>
+        <div className="stats">
+          {cells.map(([value, label]) => (
+            <div className="stat" key={label}>
+              <b>{value}</b>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

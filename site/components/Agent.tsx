@@ -59,38 +59,38 @@ export function Agent() {
   const shown = CALLS.slice(0, Math.min(CALLS.length, results.length + (running ? 1 : 0)));
 
   return (
-    <section>
-      <span className="kicker">For agents</span>
-      <h2>
-        A model can
-        <br />
-        <em>use it</em> by itself.
-      </h2>
-      <p>
-        One import gives a language model three tools: say, sing and set the voice. A bad call comes back as a
-        sentence the model can read and correct, never as a crash. These calls are scripted so that the page
-        needs no account, but they go through the same code a model would reach.
-      </p>
-      <div className="row">
-        <button type="button" className="go" onClick={running ? stop : () => void run()}>
-          {running ? "Interrupt" : "Run the tool calls"}
-        </button>
+    <section id="agents">
+      <div className="intro">
+        <span className="label">For AI agents</span>
+        <h2>{"A language model can use it as a tool."}</h2>
+        <p>
+          {
+            "One import gives a model three tools, in the formats the Anthropic and OpenAI APIs expect: say, sing and set the voice. A bad call comes back as a message the model can read and fix, never as a crash. The calls below are scripted so this page needs no account, but they run through the same code."
+          }
+        </p>
       </div>
-      <div className="code wrapped" aria-live="polite">
-        {shown.length === 0 ? "// the calls appear here as they run\n" : null}
-        {shown.map(({ name, input }, index) => {
-          const result = results[index];
-          return (
-            <span key={`${name}-${JSON.stringify(input)}`}>
-              {`${pretty(name, input)}\n`}
-              {result === undefined ? null : result.ok ? (
-                `  ${JSON.stringify(result)}\n`
-              ) : (
-                <span className="hot">{`  ${JSON.stringify(result)}\n`}</span>
-              )}
-            </span>
-          );
-        })}
+      <div className="panel">
+        <div className="row">
+          <button type="button" className="go" onClick={running ? stop : () => void run()}>
+            {running ? "Interrupt" : "Run the tool calls"}
+          </button>
+        </div>
+        <div className="code wrapped" aria-live="polite">
+          {shown.length === 0 ? "// the calls appear here as they run\n" : null}
+          {shown.map(({ name, input }, index) => {
+            const result = results[index];
+            return (
+              <span key={`${name}-${JSON.stringify(input)}`}>
+                {`${pretty(name, input)}\n`}
+                {result === undefined ? null : result.ok ? (
+                  `  ${JSON.stringify(result)}\n`
+                ) : (
+                  <span className="hot">{`  ${JSON.stringify(result)}\n`}</span>
+                )}
+              </span>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
