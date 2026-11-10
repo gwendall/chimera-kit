@@ -309,9 +309,9 @@ is refused rather than dropped, which would move every later syllable onto the w
 | --------------------------------------------------- | ------- |
 | Engine (`chimera.wasm`)                             | 274 KB  |
 | JavaScript: `createVoice` alone                     | 2.1 KB  |
-| JavaScript: a chat (`speech`, `play`)               | 5.5 KB  |
-| JavaScript: everything                              | 10.1 KB |
-| JavaScript: a voice in a Worker (both sides)        | 9.6 KB  |
+| JavaScript: a chat (`speech`, `play`)               | 5.8 KB  |
+| JavaScript: everything                              | 10.4 KB |
+| JavaScript: a voice in a Worker (both sides)        | 9.9 KB  |
 | JavaScript: `profile` (`chimera-kit/imitate`) alone | 2.9 KB  |
 | JavaScript: tool calls (`chimera-kit/tools`)        | 2.7 KB  |
 | JavaScript: songs (`chimera-kit/singing`)           | 2.1 KB  |
