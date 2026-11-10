@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { createToolRunner, type ToolResult, type ToolTarget } from "@/lib/intone/tools.js";
 import { studio } from "@/lib/studio";
 import styles from "./Agent.module.css";
+import { IllustratedIntro } from "./IllustratedIntro";
 
 /** Plays through the page's own studio, so the monitor shows these calls like any other speech. */
 const target: ToolTarget = {
@@ -97,7 +98,7 @@ export function Agent() {
 
   return (
     <section id="agents">
-      <div className="intro">
+      <IllustratedIntro scene="tools">
         <span className="label">For AI agents</span>
         <h2>{"A language model can use it as a tool."}</h2>
         <p>
@@ -105,7 +106,7 @@ export function Agent() {
             "One import gives a model three tools, in the formats the Anthropic and OpenAI APIs expect: say, sing and set the voice. A bad call comes back as a message the model can read and fix, never as a crash. The calls below are scripted so this page needs no account, but they run through the same code."
           }
         </p>
-      </div>
+      </IllustratedIntro>
       <div className="panel">
         <div className="row">
           <button type="button" className="go" onClick={running ? stop : () => void run()}>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { compose, type Song } from "@/lib/intone/index.js";
 import { fall, harmony, type Part, scoop } from "@/lib/intone/singing.js";
 import { studio } from "@/lib/studio";
+import { IllustratedIntro } from "./IllustratedIntro";
 import { Latency } from "./Latency";
 
 // An original tune and words, written for this page.
@@ -137,7 +138,7 @@ export function Sing() {
   let beat = 0;
   return (
     <section id="sing">
-      <div className="intro">
+      <IllustratedIntro scene="sing">
         <span className="label">Singing</span>
         <h2>{"It sings, in harmony."}</h2>
         <p>
@@ -145,7 +146,7 @@ export function Sing() {
             "Give it lyrics and notes and the same engine sings them. Drag a note to change the melody. Add a part and a second simulated singer joins in, on a harmony worked out from your notes."
           }
         </p>
-      </div>
+      </IllustratedIntro>
       <div className="panel">
         <svg
           className="roll"
