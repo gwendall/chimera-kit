@@ -34,6 +34,7 @@ export async function createVoice(options: CreateVoiceOptions = {}): Promise<Voi
   return voiceFrom(await loadChimera(sources), defaults);
 }
 
+export { bodyFromSeed } from "./bodies.js";
 export { ClauseCutter, type ClauseOptions, clauses, speakable } from "./clauses.js";
 export { blend, type Delivery, deliver, MOODS, type Mood } from "./delivery.js";
 export { pauseAfter, type SpeechOptions, speech, withPause } from "./pace.js";

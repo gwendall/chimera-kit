@@ -36,7 +36,9 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
   // 9,549 to 9,623.
   "a chat (createVoice, speech, play)": { imports: ["createVoice", "speech", "play"], limit: 5_600 },
   // The `airway` stream option, which reads the simulated tube, took everything from 9,178 to 9,237.
-  "everything (index.js)": { imports: [], limit: 9_700 },
+  // `bodyFromSeed` (a voice of its own per seed: a small RNG, a string hash, twelve draws) took
+  // everything from 9,623 to 10,021; an app that doesn't import it ships none of it.
+  "everything (index.js)": { imports: [], limit: 10_100 },
   // `say` is a method, so its clause cutter stays in: this is a chat's page side.
   "a voice in a Worker, page side (createWorkerVoice, play)": {
     imports: ["createWorkerVoice", "play"],

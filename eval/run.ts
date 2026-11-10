@@ -6,13 +6,14 @@
  *   bun eval/run.ts --name <run> [--splits dev,held] [--backends parakeet,whisper]
  *                   [--bodies male,female] [--against eval/baselines/x.json] [--control Samantha]
  *
+ * A body is a name, or `seed-<n>` for `bodyFromSeed(n)`.
  * --control renders with macOS `say` instead: a known-good voice that shows the harness's floor.
  */
 import { createHash } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import type { Body } from "../dist/index.js";
+import { type Body, bodyFromSeed } from "../dist/index.js";
 import {
   type Comparison,
   compare,
@@ -170,8 +171,12 @@ const selected = corpus.filter((sentence) => splits.includes(sentence.split));
 const keyOf = (sentence: Sentence, body: string) => `${sentence.id}/${body}`;
 const pathOf = (sentence: Sentence, body: string) => join(out, "audio", `${sentence.id}-${body}.wav`);
 
+const bodyOf = (label: string): Body => {
+  const seed = /^seed-(\d+)$/.exec(label)?.[1];
+  return seed === undefined ? (label as Body) : bodyFromSeed(Number(seed));
+};
 const jobs: RenderJob[] = selected.flatMap((sentence) =>
-  bodies.map((body) => ({ text: sentence.text, body: body as Body, path: pathOf(sentence, body) })),
+  bodies.map((body) => ({ text: sentence.text, body: bodyOf(body), path: pathOf(sentence, body) })),
 );
 const started = performance.now();
 if (values.control) controlRender(values.control, jobs);

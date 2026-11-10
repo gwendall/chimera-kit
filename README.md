@@ -97,8 +97,21 @@ const narrator = await createVoice({
 });
 ```
 
-There is nothing to download and the first sound still comes in milliseconds. Each field goes as
-far as the limits in `BodySpec`. A live instrument takes a blend only.
+`bodyFromSeed` draws one from a number or a string, the same body every time: each user, agent or
+character gets a voice of its own without anyone choosing a dozen settings.
+
+```ts
+import { bodyFromSeed } from "intone";
+
+voice.render(message.text, { body: bodyFromSeed(message.author) });
+```
+
+There is nothing to download and the first sound still comes in milliseconds. Seeds draw where the
+speech evaluation found the voices about as intelligible as the presets. Over eleven seeds, the mean word
+error rate came out 4.3 points under the matched presets' with one recognizer and 2.3 under with
+the other. One sentence still trips the second recognizer into a loop on one seed
+([eval/README.md](eval/README.md#drawn-bodies)). A spec written by hand can go further, up to the
+limits in `BodySpec`. A live instrument takes a blend only.
 
 A physical model gives a kind of voice (deep, wide, breathy), not a person's: it clones nobody.
 

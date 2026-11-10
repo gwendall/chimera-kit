@@ -5,7 +5,7 @@
  */
 import type { Score, Song } from "./layers.js";
 
-/** Who speaks: a named body, or a body anywhere in the voice space. */
+/** Who speaks: a named body, or a body anywhere in the voice space (`bodyFromSeed` draws one). */
 export type Body = "male" | "female" | "child" | BodySpec;
 
 /**
