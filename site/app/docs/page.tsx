@@ -466,9 +466,9 @@ play(chunks, voice.sampleRate);`}</CodeBlock>
   },
 };`}</CodeBlock>
             <p>
-              This configuration uses Webpack. Start Next.js with <code>next dev --webpack</code> and
-              build for production with <code>next build --webpack</code>. These flags are required when
-              your Next.js version defaults to Turbopack.
+              This configuration uses Webpack. Start Next.js with <code>next dev --webpack</code> and build
+              for production with <code>next build --webpack</code>. These flags are required when your
+              Next.js version defaults to Turbopack.
             </p>
             <h3>Next.js says window or AudioContext is undefined</h3>
             <p>

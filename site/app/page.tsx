@@ -16,7 +16,7 @@ import { Sing } from "@/components/Sing";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { Speed } from "@/components/Speed";
 import { useStudio } from "@/components/useStudio";
-import { LINKS } from "@/lib/links";
+import { LINKS, RELEASE } from "@/lib/links";
 import { studio } from "@/lib/studio";
 
 const MORE: { name: string; render: () => ReactNode }[] = [
@@ -139,7 +139,11 @@ function Numbers() {
           <li>It speaks English only, for now.</li>
           <li>It does not clone a person's voice. A body describes a kind of voice.</li>
           <li>Timings on phones have not been measured yet.</li>
-          <li>It is a private preview: not on npm yet, and the API will change.</li>
+          <li>
+            {RELEASE.npmVersion
+              ? "The 0.x API may change before 1.0."
+              : "It is a private preview: not on npm yet, and the API will change."}
+          </li>
         </ul>
       </div>
     </section>
