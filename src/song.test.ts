@@ -13,7 +13,7 @@ describe("song input and timing", () => {
 
   test("refuses the timing its notes already set", () => {
     expect(() => refuseTiming("a song", { rate: 1.2, accent: 0.5 })).toThrow(
-      "intone: a song ignores rate, accent; transform it instead",
+      "chimera-kit: a song ignores rate, accent; transform it instead",
     );
     expect(() => refuseTiming("a song", { body: "male" } as never)).not.toThrow();
     expect(() => refuseTiming("a song")).not.toThrow();

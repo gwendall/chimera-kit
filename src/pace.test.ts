@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { createVoice, type Voice } from "./index.ts";
 import { pauseAfter, speech, withPause } from "./pace.ts";
 
-const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
+const wasm = new URL("../dist/chimera.wasm", import.meta.url);
 const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
 
 const loud = (n: number) => new Float32Array(n).fill(0.5);

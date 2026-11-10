@@ -20,7 +20,7 @@ const DIST = join(import.meta.dir, "../dist");
 // https, not http: `BaseAudioContext.audioWorklet` only exists in a secure context, and a plain
 // http origin isn't one (confirmed: `OfflineAudioContext.audioWorklet` is undefined there, with
 // the rest of the suite's checks unaffected since they use no worklet).
-const ORIGIN = "https://intone.test";
+const ORIGIN = "https://chimera-kit.test";
 /** A browser installed on the system ("chrome" on CI runners) instead of Playwright's own. */
 const CHANNEL = process.env.BROWSER_CHANNEL;
 const TYPES: Record<string, string> = {
@@ -46,7 +46,7 @@ interface Result {
   creature: { kinds: number; samples: number; peak: number };
   /** A song through the worker to the audio thread: the samples of its render, nothing lost. */
   song: { sayError: number };
-  /** `intone/live`: a held voice through the real `AudioWorkletNode` + `addModule` pipeline (not
+  /** `chimera-kit/live`: a held voice through the real `AudioWorkletNode` + `addModule` pipeline (not
    * just the bare engine the bun tests exercise), and its beatbox. */
   live: {
     /** Offline, so sample-accurate: first audible sample after `noteOn`, and whether the beatbox
@@ -55,7 +55,7 @@ interface Result {
   };
 }
 
-// intone/live's check runs on its own page, navigated here directly, rather than inside the main
+// chimera-kit/live's check runs on its own page, navigated here directly, rather than inside the main
 // page.route-faked ORIGIN above. Two reasons, both found by hand: (1) `audioWorklet.addModule` on
 // Chromium fetches its target through a loader page.route cannot intercept (a plain
 // `${ORIGIN}/worklet-live.js` 404s there, chromium only); (2) even once the worklet file comes
@@ -262,7 +262,7 @@ try {
         { origin: ORIGIN },
       );
 
-      // intone/live, on its own page navigated straight to the real loopback server (see the
+      // chimera-kit/live, on its own page navigated straight to the real loopback server (see the
       // comment on `liveServer` above for why it can't share ORIGIN's page): through the real
       // AudioWorkletNode + addModule pipeline, not just the bare engine the bun tests exercise.
       // Offline, so it's sample-accurate and needs no audio device (a real, non-offline
@@ -344,11 +344,11 @@ try {
         !(result.creature.kinds > 0 && result.creature.samples > 0 && result.creature.peak > 0.001) &&
           `a creature was not heard: ${JSON.stringify(result.creature)}`,
         result.song.sayError > 0 && `a sung say differs from its render by ${result.song.sayError}`,
-        !result.live.offline.finite && "intone/live produced a non-finite sample",
-        result.live.offline.peak <= 1e-3 && "intone/live's held note was not heard",
+        !result.live.offline.finite && "chimera-kit/live produced a non-finite sample",
+        result.live.offline.peak <= 1e-3 && "chimera-kit/live's held note was not heard",
         (result.live.offline.firstSampleMs < 0 || result.live.offline.firstSampleMs > 50) &&
-          `intone/live's first sample took ${result.live.offline.firstSampleMs} ms`,
-        result.live.offline.beatPeak <= 1e-3 && "intone/live's beatbox was not heard",
+          `chimera-kit/live's first sample took ${result.live.offline.firstSampleMs} ms`,
+        result.live.offline.beatPeak <= 1e-3 && "chimera-kit/live's beatbox was not heard",
       ].filter(Boolean);
       console.log(
         `${problems.length === 0 ? "ok  " : "FAIL"} ${name} ${await browser.version()} ${JSON.stringify(result)}`,

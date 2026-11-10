@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef } from "react";
-import type { Score } from "@/lib/intone/index.js";
+import type { Score } from "@/lib/chimera-kit/index.js";
 import { studio } from "@/lib/studio";
 import { Latency } from "./Latency";
 import { useStudio } from "./useStudio";

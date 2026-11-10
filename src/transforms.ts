@@ -73,7 +73,7 @@ export function valueAt(curve: Curve, t: number): number | undefined {
 /** Lengthens a span by `factor` (2 is twice as long); what follows moves later. */
 export function stretch(factor: number): ScoreTransform {
   if (!(Number.isFinite(factor) && factor > 0)) {
-    throw new RangeError(`intone: stretch factor must be positive, got ${factor}`);
+    throw new RangeError(`chimera-kit: stretch factor must be positive, got ${factor}`);
   }
   const warp = (t: number, score: Score, scope?: Span) => {
     const { t0, t1 } = scope ?? whole(score);
@@ -95,7 +95,7 @@ export function stretch(factor: number): ScoreTransform {
  */
 export function pauses(factor: number): ScoreTransform {
   if (!(Number.isFinite(factor) && factor > 0)) {
-    throw new RangeError(`intone: a pause factor must be positive, got ${factor}`);
+    throw new RangeError(`chimera-kit: a pause factor must be positive, got ${factor}`);
   }
   const inner = (score: Score, scope?: Span) => {
     const { t0, t1 } = scope ?? whole(score);
@@ -146,7 +146,7 @@ function retime(score: Score, w: (t: number) => number, kinks: number[]): Score 
 
 /** Speaks a span `r` times as fast (0.5 is half speed). */
 export function rate(r: number): ScoreTransform {
-  if (!(Number.isFinite(r) && r > 0)) throw new RangeError(`intone: rate must be positive, got ${r}`);
+  if (!(Number.isFinite(r) && r > 0)) throw new RangeError(`chimera-kit: rate must be positive, got ${r}`);
   return stretch(1 / r);
 }
 
@@ -157,7 +157,7 @@ export function rate(r: number): ScoreTransform {
  */
 export function pauseAt(requested: number, seconds: number): ScoreTransform {
   if (!(Number.isFinite(seconds) && seconds >= 0)) {
-    throw new RangeError(`intone: a pause must last zero seconds or more, got ${seconds}`);
+    throw new RangeError(`chimera-kit: a pause must last zero seconds or more, got ${seconds}`);
   }
   const warp = (t: number, score: Score) => (t > boundary(score, requested) ? t + seconds : t);
   const transform: ScoreTransform = (score) => {
@@ -219,7 +219,7 @@ export function shift(amount: number | string): ScoreTransform {
  */
 export function range(factor: number): ScoreTransform {
   if (!(Number.isFinite(factor) && factor >= 0)) {
-    throw new RangeError(`intone: a pitch range factor must be zero or more, got ${factor}`);
+    throw new RangeError(`chimera-kit: a pitch range factor must be zero or more, got ${factor}`);
   }
   return (score, scope) => {
     const reference = meanPitch(score, scope ?? whole(score));
@@ -273,7 +273,7 @@ export function parseInterval(amount: number | string): number {
     if (match) return Number(match[1]) / (match[2] === "c" ? 100 : 1);
   }
   throw new RangeError(
-    `intone: expected semitones like "+3st", cents like "-50c" or a number, got ${amount}`,
+    `chimera-kit: expected semitones like "+3st", cents like "-50c" or a number, got ${amount}`,
   );
 }
 

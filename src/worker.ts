@@ -110,7 +110,7 @@ async function serve(request: ToWorker): Promise<void> {
       const state = pending.get(id) as Pending;
       const port = request.type === "say" ? request.port : undefined;
       try {
-        if (!voice) throw new Error("intone: the worker has no voice");
+        if (!voice) throw new Error("chimera-kit: the worker has no voice");
         if (request.type === "render") {
           if (state.cancelled) return;
           const { text, options } = request;

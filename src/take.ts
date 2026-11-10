@@ -39,7 +39,9 @@ export class Take {
   /** A span of time, in seconds. */
   span(t0: number, t1: number): Selection {
     if (!(t0 >= 0 && t1 > t0 && t1 <= this.score.duration)) {
-      throw new RangeError(`intone: a span must lie inside 0..${this.score.duration} s, got ${t0}..${t1}`);
+      throw new RangeError(
+        `chimera-kit: a span must lie inside 0..${this.score.duration} s, got ${t0}..${t1}`,
+      );
     }
     return new Selection(this, { t0, t1 });
   }
@@ -51,7 +53,9 @@ export class Take {
     const found = words.filter((w) => normalize(w.text) === wanted)[nth];
     if (!found) {
       const known = words.map((w) => w.text).join(", ") || "none: this score has no word spans";
-      throw new RangeError(`intone: no word "${text}" (occurrence ${nth}) in this take. Words: ${known}`);
+      throw new RangeError(
+        `chimera-kit: no word "${text}" (occurrence ${nth}) in this take. Words: ${known}`,
+      );
     }
     return new Selection(this, { t0: found.t0, t1: found.t1 });
   }

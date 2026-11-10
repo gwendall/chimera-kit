@@ -133,7 +133,7 @@ describe("the singing entry", () => {
   });
 
   test("the real engine sings a styled song, for the same length and with a different sound", async () => {
-    const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
+    const wasm = new URL("../dist/chimera.wasm", import.meta.url);
     const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
     const voice = await createVoice({ wasm, dictionary });
     const song: Song = {

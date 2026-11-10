@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { type ChimeraLiveEngine, loadLiveEngine } from "./chimera-live.ts";
 
-const wasm = new URL("../../dist/intone_chimera.wasm", import.meta.url);
+const wasm = new URL("../../dist/chimera.wasm", import.meta.url);
 const SAMPLE_RATE = 48_000;
 
 let engine: ChimeraLiveEngine | undefined;

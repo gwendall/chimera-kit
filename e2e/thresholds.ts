@@ -22,7 +22,7 @@ export const THRESHOLDS = {
     // index.js + the engine + the dictionary, uncompressed over the route-intercepted "network":
     // README's own gzipped figures sum to about 1.1 MB; local files aren't gzip-encoded in transit
     // here (only cmudict.txt.gz is gzip as a file), so this is intentionally looser than the README
-    // table, which is post-gzip. Measured 2026-11-09: intone_chimera.wasm (556,042 B) +
+    // table, which is post-gzip. Measured 2026-11-09: chimera.wasm (556,042 B) +
     // cmudict.txt.gz (868,793 B) alone already sum to 1,424,835 B, before a single byte of JS; the
     // full cold load measured 1,450,672 B, stable across three separate runs. The previous
     // 1,400,000 B threshold was below that unavoidable wasm+dictionary floor and could never pass
@@ -48,11 +48,11 @@ export const THRESHOLDS = {
     // Measured: npm pack produced a 1.24 MB tarball (49 files) on 2026-11-09.
     tarballBytes: 2_000_000,
     // npm/pnpm/bun installing a single tarball with zero runtime dependencies, on this machine's
-    // network. Generous because registry latency, not intone's size, dominates this number.
+    // network. Generous because registry latency, not chimera-kit's size, dominates this number.
     installMs: 60_000,
     installedBytes: 5_000_000,
-    // intone declares zero regular dependencies (two optional peers); a clean install of the
-    // tarball alone should add intone itself and nothing else.
+    // chimera-kit declares zero regular dependencies (two optional peers); a clean install of the
+    // tarball alone should add chimera-kit itself and nothing else.
     depCount: 3,
     // Next.js/Vite install + build in a from-scratch temp project: registry fetches dominate.
     frameworkBuildMs: 120_000,

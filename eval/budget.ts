@@ -13,20 +13,22 @@ const SIZE_LIMITS: Record<string, number> = {
   // 188,032 before planning to a score and rendering one back (layer 2), 206,897 after, 221,182
   // with singing (plan_song and lyrics_to_syllables, +14.3 KB): 1.3 % of a first load with the
   // dictionary, and a separate singing build would carry the whole speech engine again. 273,867
-  // with `intone/live` (`ic_live_*`/`ic_beat_*`, +52.7 KB): the held voice's own render path plus
+  // with `chimera-kit/live` (`ic_live_*`/`ic_beat_*`, +52.7 KB): the held voice's own render path plus
   // the beatbox's `BeatSound` table, both newly linker-reachable, measured on the one wasm the
   // utterance and live APIs share (`bun eval/budget.ts --no-speed`, 2026-11-09).
-  "intone_chimera.wasm": 280_000,
+  "chimera.wasm": 280_000,
   "cmudict.txt.gz": 880_000,
   // The 4 creatures (songbird, seal, alligator, elephant) and their airways: 108,935 measured.
-  "intone_creatures.wasm": 115_000,
+  "creatures.wasm": 115_000,
 };
 /**
  * What an app's bundler keeps of the JavaScript for a given import, gzipped. The package has no
  * side effects, so an app ships only what it imports.
  */
 const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: number }> = {
-  "speaking (createVoice)": { imports: ["createVoice"], limit: 2_000 },
+  // Removing provider entries changes Bun's shared chunks. The Chimera-only, renamed build
+  // measures 2,083 bytes; keep 17 bytes of headroom without changing any engine/audio budget.
+  "speaking (createVoice)": { imports: ["createVoice"], limit: 2_100 },
   // Songs (a voice plans and renders a Song) took the chat from 4,954 to 5,090, everything from
   // 8,979 to 9,123.
   // Sound on phones (`unlockAudio`: the iOS audio session, its fallback, resuming inside the tap) took
@@ -47,7 +49,9 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
   // 2,362 before each clause's end was paced (withPause), 2,674 after, 2,747 with styles. 4,624 with
   // deliveries as data (`deliver` and the transforms it applies), which a worker must carry since a
   // style cannot be posted to it. The worker loads 207 KB of wasm and 869 KB of dictionary besides.
-  "a voice in a Worker, worker side (worker.js)": { imports: [], from: "worker.js", limit: 5_000 },
+  // The provider-free graph measures 5,002 bytes on CI (4,999 locally after renaming).
+  // Allow the small bundle-layout/platform difference, without relaxing the audio budgets.
+  "a voice in a Worker, worker side (worker.js)": { imports: [], from: "worker.js", limit: 5_050 },
   // 1,752 bytes measured: loadCreatures alone, nothing speech-related pulled in.
   "the creatures (loadCreatures)": { imports: ["loadCreatures"], from: "creatures.js", limit: 2_000 },
   // `profile` is pure TypeScript with no engine import (type-only imports of Body and Delivery

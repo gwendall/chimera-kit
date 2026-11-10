@@ -9,7 +9,7 @@ import { serveDir } from "../lib/serve.ts";
 import type { BrowserName, Measurement, Scenario, ScenarioContext } from "../lib/types.ts";
 import { THRESHOLDS } from "../thresholds.ts";
 
-const ORIGIN = "https://intone.e2e";
+const ORIGIN = "https://chimera-kit.e2e";
 
 interface Net {
   label: string;
@@ -86,8 +86,8 @@ async function measureOnce(
         createVoiceMs,
         firstSampleMs,
         firstAudibleMs,
-        wasmMark: of("intone:wasm"),
-        dictMark: of("intone:dict"),
+        wasmMark: of("chimera-kit:wasm"),
+        dictMark: of("chimera-kit:dict"),
       };
     }, ORIGIN);
     await context.close();

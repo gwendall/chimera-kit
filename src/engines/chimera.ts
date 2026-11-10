@@ -11,7 +11,7 @@ const MAX_CHUNK = 4096;
 export type Source = URL | string | ArrayBuffer | Uint8Array;
 
 export interface ChimeraSources {
-  /** The engine. Defaults to `intone_chimera.wasm` next to this module. */
+  /** The engine. Defaults to `chimera.wasm` next to this module. */
   wasm?: Source;
   /**
    * The pronouncing dictionary (CMUdict, gzipped or plain). Defaults to `cmudict.txt.gz` next to
@@ -57,7 +57,7 @@ async function readBytes(source: Source): Promise<Uint8Array> {
     return new Uint8Array(await readFile(url));
   }
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`intone: ${url} answered ${response.status}`);
+  if (!response.ok) throw new Error(`chimera-kit: ${url} answered ${response.status}`);
   return new Uint8Array(await response.arrayBuffer());
 }
 
@@ -172,7 +172,7 @@ class ChimeraEngine implements Engine {
     const { x } = this;
     const pointer = x.ic_speaker_error_ptr(this.speaker);
     const bytes = new Uint8Array(x.memory.buffer, pointer, x.ic_speaker_error_len(this.speaker));
-    return `intone: ${new TextDecoder().decode(bytes)}`;
+    return `chimera-kit: ${new TextDecoder().decode(bytes)}`;
   }
 }
 
@@ -180,14 +180,14 @@ class ChimeraEngine implements Engine {
 export async function loadChimera(sources: ChimeraSources = {}): Promise<Engine> {
   const { wasm, dictionary } = sources;
   const [wasmBytes, dictionaryBytes] = await Promise.all([
-    readBytes(wasm ?? new URL("./intone_chimera.wasm", import.meta.url)),
+    readBytes(wasm ?? new URL("./chimera.wasm", import.meta.url)),
     dictionary === false ? null : readBytes(dictionary ?? new URL("./cmudict.txt.gz", import.meta.url)),
   ]);
   const module = await WebAssembly.compile(wasmBytes as BufferSource);
   const instance = await WebAssembly.instantiate(module, {});
   const x = instance.exports as unknown as Exports;
   if (x.ic_abi_version() !== ABI_VERSION) {
-    throw new Error(`intone: engine ABI ${x.ic_abi_version()}, expected ${ABI_VERSION}`);
+    throw new Error(`chimera-kit: engine ABI ${x.ic_abi_version()}, expected ${ABI_VERSION}`);
   }
   const engine = new ChimeraEngine(x);
   if (dictionaryBytes) engine.loadDictionary(await decodeText(dictionaryBytes));

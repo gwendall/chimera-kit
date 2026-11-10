@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { type BodySpec, bodyFromSeed, MOODS, type Mood } from "@/lib/intone/index.js";
+import { type BodySpec, bodyFromSeed, MOODS, type Mood } from "@/lib/chimera-kit/index.js";
 import { studio } from "@/lib/studio";
 import { Latency } from "./Latency";
 

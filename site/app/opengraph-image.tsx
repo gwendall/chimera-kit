@@ -5,11 +5,9 @@ import curve from "@/assets/og-curve.generated.json";
 import { BRAND } from "@/lib/brand";
 
 export const alt =
-  'Text to speech you can direct. The pitch of "I never said she stole my money." rises on "stole", the word the reader chose to stress.';
+  'Chimera Kit. The pitch of "I never said she stole my money." rises on "stole", the word the reader chose to stress.';
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-
-const font = (name: string) => readFile(join(process.cwd(), "assets/fonts", name));
 
 // Each word's chip is as wide as the word lasts, so the curve above it lines up with the word.
 const PX_PER_SECOND = 520;
@@ -83,7 +81,10 @@ function Line({ text }: { text: string }) {
 }
 
 export default async function Image() {
-  const [medium, semibold] = await Promise.all([font("Geist-Medium.ttf"), font("Geist-SemiBold.ttf")]);
+  const [medium, semibold] = await Promise.all([
+    readFile(join(process.cwd(), "assets/fonts/Geist-Medium.ttf")),
+    readFile(join(process.cwd(), "assets/fonts/Geist-SemiBold.ttf")),
+  ]);
   const { words, width, plain, stressed } = layout();
   return new ImageResponse(
     <div
@@ -110,7 +111,7 @@ export default async function Image() {
           letterSpacing: "-0.02em",
         }}
       >
-        intone
+        {BRAND.name}
       </div>
       <div
         style={{
@@ -124,8 +125,8 @@ export default async function Image() {
           letterSpacing: "-0.035em",
         }}
       >
-        <Line text="Text to speech" />
-        <Line text="you can direct." />
+        <Line text="Chimera." />
+        <Line text="In your app." />
       </div>
       {/* No <title>: Satori draws it as text. The image's alt describes the curve. */}
       <svg

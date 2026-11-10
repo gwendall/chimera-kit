@@ -1,5 +1,5 @@
 /**
- * `intone/tools`: lets a language model drive a voice through tool calls. The definitions are
+ * `chimera-kit/tools`: lets a language model drive a voice through tool calls. The definitions are
  * plain JSON Schema, the same schema validates each call, and a bad call comes back as a result
  * the model can read and correct instead of an exception, as a model repairs its own arguments
  * when told what was wrong with them.
@@ -215,7 +215,7 @@ export interface ToolRunner {
 }
 
 function reason(error: unknown): string {
-  return (error instanceof Error ? error.message : String(error)).replace(/^intone: /, "");
+  return (error instanceof Error ? error.message : String(error)).replace(/^chimera-kit: /, "");
 }
 
 /** Refuses anything its schema doesn't allow, and returns the arguments without nulls. */

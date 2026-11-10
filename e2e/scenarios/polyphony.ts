@@ -16,7 +16,7 @@ import { serveDir } from "../lib/serve.ts";
 import type { BrowserName, Measurement, Scenario, ScenarioContext } from "../lib/types.ts";
 import { THRESHOLDS } from "../thresholds.ts";
 
-const ORIGIN = "https://intone.e2e";
+const ORIGIN = "https://chimera-kit.e2e";
 const RAMP_LEVELS = [1, 2, 4, 8, 16, 32, 64, 128];
 type Mode = "main" | "worker";
 const MODES: Mode[] = ["main", "worker"];
@@ -35,7 +35,7 @@ interface StepResult {
   soloVsCrowdMaxError: number;
 }
 
-/** Runs inside the page. Everything here uses only intone's public API, as a real app would. */
+/** Runs inside the page. Everything here uses only chimera-kit's public API, as a real app would. */
 async function stepInPage({
   origin,
   mode,

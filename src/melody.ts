@@ -32,20 +32,22 @@ export function melody(text: string): Note[] {
     if (token === "" || token === "|") continue;
     const [written = "", beats, extra] = token.split(":");
     if (REST.test(written)) {
-      throw new RangeError(`intone: "${token}" is a rest, and a song has none: lengthen the note before it`);
+      throw new RangeError(
+        `chimera-kit: "${token}" is a rest, and a song has none: lengthen the note before it`,
+      );
     }
     const midi = pitchOf(written);
     if (midi === undefined || extra !== undefined) {
-      throw new RangeError(`intone: "${token}" is not a note: write it like C4:1, Bb3:0.5 or 60:2`);
+      throw new RangeError(`chimera-kit: "${token}" is not a note: write it like C4:1, Bb3:0.5 or 60:2`);
     }
     if (midi < 0 || midi > 127) {
-      throw new RangeError(`intone: "${token}" is outside the MIDI range, C-1 to G9`);
+      throw new RangeError(`chimera-kit: "${token}" is outside the MIDI range, C-1 to G9`);
     }
     if (beats !== undefined && (!BEATS.test(beats) || Number(beats) <= 0)) {
-      throw new RangeError(`intone: "${token}" needs a length above 0, in beats, like C4:0.5`);
+      throw new RangeError(`chimera-kit: "${token}" needs a length above 0, in beats, like C4:0.5`);
     }
     notes.push({ midi, beats: beats === undefined ? 1 : Number(beats) });
   }
-  if (notes.length === 0) throw new RangeError("intone: a melody needs at least one note");
+  if (notes.length === 0) throw new RangeError("chimera-kit: a melody needs at least one note");
   return notes;
 }

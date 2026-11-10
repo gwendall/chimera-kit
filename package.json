@@ -1,24 +1,25 @@
 {
-  "name": "intone",
+  "name": "chimera-kit",
   "version": "0.0.0",
   "private": true,
   "packageManager": "bun@1.3.11",
-  "description": "A JavaScript library for browser speech, streaming answers and singing, with control down to the syllable. Powered by CHIMERA.",
-  "homepage": "https://intone-one.vercel.app/docs",
+  "description": "The JavaScript toolkit for Chimera: physical voice synthesis, singing, live articulation, beatbox and creatures in the browser.",
+  "homepage": "https://chimera-kit.vercel.app/docs",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gwendall/intone.git"
+    "url": "git+https://github.com/gwendall/chimera-kit.git"
   },
   "bugs": {
-    "url": "https://intone-one.vercel.app/docs#troubleshooting"
+    "url": "https://chimera-kit.vercel.app/docs#troubleshooting"
   },
   "keywords": [
-    "text-to-speech",
+    "chimera",
+    "physical-modeling",
     "speech-synthesis",
     "singing",
+    "beatbox",
     "webassembly",
-    "chimera",
-    "browser"
+    "audioworklet"
   ],
   "publishConfig": {
     "access": "public"
@@ -39,13 +40,13 @@
       "import": "./dist/live.js"
     },
     "./worklet-live.js": "./dist/worklet-live.js",
-    "./intone_chimera.wasm": "./dist/intone_chimera.wasm",
+    "./chimera.wasm": "./dist/chimera.wasm",
     "./cmudict.txt.gz": "./dist/cmudict.txt.gz",
     "./creatures": {
       "types": "./dist/creatures.d.ts",
       "import": "./dist/creatures.js"
     },
-    "./intone_creatures.wasm": "./dist/intone_creatures.wasm",
+    "./creatures.wasm": "./dist/creatures.wasm",
     "./imitate": {
       "types": "./dist/imitate.d.ts",
       "import": "./dist/imitate.js"
@@ -67,7 +68,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "build:wasm": "cargo build -p intone-chimera -p intone-creatures --release --target wasm32-unknown-unknown && mkdir -p dist && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_chimera.wasm -o dist/intone_chimera.wasm && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_creatures.wasm -o dist/intone_creatures.wasm",
+    "build:wasm": "cargo build -p intone-chimera -p intone-creatures --release --target wasm32-unknown-unknown && mkdir -p dist && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_chimera.wasm -o dist/chimera.wasm && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_creatures.wasm -o dist/creatures.wasm",
     "build:js": "bun scripts/clean-dist.ts && bun build src/index.ts src/worker.ts src/live.ts src/creatures.ts src/imitate.ts src/tools.ts src/singing.ts --root src --outdir dist --format esm --target browser --minify --splitting && bun build src/worklet-live.ts --root src --outdir dist --format esm --target browser --minify && tsc -p tsconfig.build.json",
     "build": "bun run build:wasm && bun run build:js && cp public/data/cmudict.txt.gz dist/",
     "test": "bun run build && cargo test --workspace && bun test --timeout 30000 src eval",

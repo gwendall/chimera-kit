@@ -56,7 +56,7 @@ export const scenario: Scenario = {
       page.on("console", (m) => {
         if (m.type() === "error") consoleErrors.push(m.text());
       });
-      const origin = "https://intone.site";
+      const origin = "https://chimera-kit.site";
       // serveDir's "/" default is a blank placeholder page (see its doc comment) - a visitor of
       // the real production site gets the real exported index.html, so this scenario must hand
       // that in explicitly. Without it, `.go` never exists, the readiness wait always times out,

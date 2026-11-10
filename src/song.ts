@@ -21,7 +21,7 @@ export function refuseTiming(
   const refused = (["rate", "f0", "accent"] as const).filter((key) => options?.[key] !== undefined);
   if (refused.length > 0) {
     throw new RangeError(
-      `intone: ${what} ignores ${refused.join(", ")}; transform it instead (stretch, shift, deliver)`,
+      `chimera-kit: ${what} ignores ${refused.join(", ")}; transform it instead (stretch, shift, deliver)`,
     );
   }
 }

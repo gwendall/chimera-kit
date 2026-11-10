@@ -1,7 +1,7 @@
 // One voice, one audio graph and one clock for the whole page: every demo speaks through here, and
 // the monitor on the right measures and draws whatever is sounding now.
-import { type Scene, scene as sceneTurns, type Turn } from "./crowd";
-import { type Creatures, loadCreatures } from "./intone/creatures.js";
+
+import { type Creatures, loadCreatures } from "./chimera-kit/creatures.js";
 import {
   type AsyncVoice,
   type Body,
@@ -16,7 +16,8 @@ import {
   speech,
   unlockAudio,
   type Voice,
-} from "./intone/index.js";
+} from "./chimera-kit/index.js";
+import { type Scene, scene as sceneTurns, type Turn } from "./crowd";
 import { SPECTRUM_SIZE, spectrumColumn } from "./spectrum";
 
 export interface Snapshot {

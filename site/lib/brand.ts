@@ -1,13 +1,10 @@
-// Vercel sets this at build time to the project's production domain, so the canonical origin
-// follows the domain when the name changes. VERCEL_URL would point crawlers at a preview.
-const production = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-
+// Canonical public origin. Keep package metadata and README links in sync when it changes.
 export const BRAND = {
-  name: "intone",
-  origin: production ? `https://${production}` : "http://localhost:3000",
-  title: "intone: text to speech you can direct, word by word",
+  name: "Chimera Kit",
+  origin: "https://chimera-kit.vercel.app",
+  title: "Chimera Kit: the JavaScript toolkit for Chimera",
   description:
-    "A JavaScript text to speech library that runs in the browser. Choose the stressed words, move the pitch, set the mood and the voice. First sound in about 10 ms, 274 KB, no server.",
+    "Put Chimera in your app. Physical voice synthesis, singing, a live instrument, beatbox and creatures, with a small JavaScript API. Runs in the browser.",
   keywords: [
     "text to speech",
     "speech synthesis",

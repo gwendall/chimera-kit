@@ -1,4 +1,4 @@
-# intone
+# chimera-kit
 
 Text to speech in the browser, from a physical model of the human airway: a small Rust/wasm engine
 under a small TypeScript API. Small and cheap to run are the point. Intelligible comes next, and

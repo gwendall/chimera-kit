@@ -18,7 +18,7 @@ try {
   const ids = new Map<string, string[]>();
   const links: { path: string; href: string }[] = [];
   for (const path of ["/", "/docs"]) {
-    for (const width of [390, 1440]) {
+    for (const width of [320, 390, 1440]) {
       for (const colorScheme of ["light", "dark"] as const) {
         await page.setViewportSize({ width, height: 900 });
         await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
@@ -65,11 +65,11 @@ try {
       assert.ok(ids.get(target.pathname)?.includes(target.hash.slice(1)), `Missing anchor: ${href}`);
   }
   await page.getByRole("button", { name: "Copy code", exact: true }).first().click();
-  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "npm install intone");
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "npm install chimera-kit");
   await page.getByRole("button", { name: "Copied", exact: true }).waitFor();
   assert.equal((await page.locator('a[href*="npmjs.com"]').count()) > 0, RELEASE.npmVersion !== null);
   assert.deepEqual(errors, []);
-  console.log(`PASS: 8 layouts, ${links.length} links, clipboard and browser errors`);
+  console.log(`PASS: 12 layouts, ${links.length} links, clipboard and browser errors`);
 } finally {
   await browser.close();
 }

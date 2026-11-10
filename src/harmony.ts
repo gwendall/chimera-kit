@@ -46,14 +46,14 @@ function tonicOf(notes: readonly Note[]): number {
 
 /** The major key a melody is most likely in, by name: `"G"`, `"Eb"`. A minor key gives its relative. */
 export function keyOf(notes: readonly Note[]): string {
-  if (notes.length === 0) throw new RangeError("intone: a melody needs at least one note");
+  if (notes.length === 0) throw new RangeError("chimera-kit: a melody needs at least one note");
   return NAMES[tonicOf(notes)] as string;
 }
 
 /** A key's tonic as a pitch class: "G", "Eb", "F#", or a minor key, "A minor" or "C#m". */
 function parseKey(key: string): number {
   const match = /^\s*([A-Ga-g])([#b]?)\s*(m|min|minor|maj|major)?\s*$/.exec(key);
-  if (!match) throw new RangeError(`intone: "${key}" is not a key: write it like G, Eb or A minor`);
+  if (!match) throw new RangeError(`chimera-kit: "${key}" is not a key: write it like G, Eb or A minor`);
   const [, letter, accidental, quality] = match as unknown as [string, string, string, string?];
   const shift = accidental === "#" ? 1 : accidental === "b" ? -1 : 0;
   const tonic = (LETTERS[letter.toLowerCase()] as number) + shift;
@@ -89,17 +89,17 @@ const PARALLEL: Partial<Record<Part, number>> = {
  * fifth move in strict parallel. The key is worked out from the melody unless given.
  */
 export function harmony(song: Song, part: Part, options: { key?: string } = {}): Song {
-  if (song.notes.length === 0) throw new RangeError("intone: a melody needs at least one note");
+  if (song.notes.length === 0) throw new RangeError("chimera-kit: a melody needs at least one note");
   const parallel = PARALLEL[part];
   if (parallel === undefined && part !== "third-above" && part !== "third-below") {
-    throw new RangeError(`intone: no part named "${part}"`);
+    throw new RangeError(`chimera-kit: no part named "${part}"`);
   }
   const tonic = options.key === undefined ? tonicOf(song.notes) : parseKey(options.key);
   const notes = song.notes.map(({ midi, beats }, index) => {
     const moved =
       parallel !== undefined ? midi + parallel : third(midi, tonic, part === "third-above" ? 1 : -1);
     if (moved < 0 || moved > 127) {
-      throw new RangeError(`intone: ${part} of note ${index} (MIDI ${midi}) falls outside MIDI's range`);
+      throw new RangeError(`chimera-kit: ${part} of note ${index} (MIDI ${midi}) falls outside MIDI's range`);
     }
     return { midi: moved, beats };
   });

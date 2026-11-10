@@ -80,15 +80,15 @@ class EngineVoice implements Voice {
   }
 
   plan(input: string | Song, options?: VoiceOptions): Score {
-    if (this.freed) throw new Error("intone: this voice has been freed");
+    if (this.freed) throw new Error("chimera-kit: this voice has been freed");
     if (typeof input !== "string") {
-      if (!this.engine.planSong) throw new Error("intone: this engine cannot sing");
+      if (!this.engine.planSong) throw new Error("chimera-kit: this engine cannot sing");
       refuseTiming("a song", options);
       const body = options?.body ?? this.defaults.body;
       const score = this.engine.planSong(body === undefined ? input : { ...input, body });
       return options?.style ? options.style(score) : score;
     }
-    if (!this.engine.plan) throw new Error("intone: this engine cannot plan a score");
+    if (!this.engine.plan) throw new Error("chimera-kit: this engine cannot plan a score");
     const { style, ...speak } = { ...this.defaults, ...options };
     const score = this.engine.plan({ ...speak, text: input });
     return style ? style(score) : score;
@@ -114,7 +114,7 @@ class EngineVoice implements Voice {
     const { maxChunk } = this.engine;
     const { chunkSize = DEFAULT_CHUNK, airway, ...speak } = options;
     if (!Number.isInteger(chunkSize) || chunkSize < 1 || chunkSize > maxChunk) {
-      throw new RangeError(`intone: chunkSize must be from 1 to ${maxChunk}, got ${chunkSize}`);
+      throw new RangeError(`chimera-kit: chunkSize must be from 1 to ${maxChunk}, got ${chunkSize}`);
     }
     const utterance = this.begin(input, speak);
     try {
@@ -134,16 +134,16 @@ class EngineVoice implements Voice {
   }
 
   private begin(input: Speakable, options?: VoiceOptions): EngineUtterance {
-    if (this.freed) throw new Error("intone: this voice has been freed");
+    if (this.freed) throw new Error("chimera-kit: this voice has been freed");
     if (typeof input === "string") {
       const { style, ...speak } = { ...this.defaults, ...options };
       // Without a style, text goes straight to the engine, sample for sample as before.
       if (!style) return this.engine.begin({ ...speak, text: input });
-      if (!this.engine.beginScore) throw new Error("intone: this engine cannot render a score");
+      if (!this.engine.beginScore) throw new Error("chimera-kit: this engine cannot render a score");
       const score = this.plan(input, options);
       return this.engine.beginScore(speak.body === undefined ? { score } : { score, body: speak.body });
     }
-    if (!this.engine.beginScore) throw new Error("intone: this engine cannot render a score");
+    if (!this.engine.beginScore) throw new Error("chimera-kit: this engine cannot render a score");
     let score: Score;
     if (isSong(input)) score = this.plan(input, options);
     else {

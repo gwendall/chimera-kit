@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "intone-site",
+      "name": "chimera-kit-site",
       "dependencies": {
         "next": "16.4.5",
         "react": "19.3.1",

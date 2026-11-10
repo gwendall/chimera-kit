@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * The intone e2e harness: installs and integration, load, reliability, hostile inputs and
+ * The chimera-kit e2e harness: installs and integration, load, reliability, hostile inputs and
  * environments, polyphony to the breaking point, and the browser matrix, for the Next.js site in
  * `site/` and the library behind it.
  *
@@ -155,7 +155,7 @@ async function main() {
   const chosen = all.filter((s) => matches(s.id, scenarioGlob) && (!smoke || s.smoke));
 
   console.log(
-    `intone e2e: ${chosen.length} scenario(s)${smoke ? " (smoke)" : ""}: ${chosen.map((s) => s.id).join(", ")}`,
+    `chimera-kit e2e: ${chosen.length} scenario(s)${smoke ? " (smoke)" : ""}: ${chosen.map((s) => s.id).join(", ")}`,
   );
   const calibration = await calibrate();
   console.log(calibration.uptimeLine);

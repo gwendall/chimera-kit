@@ -77,7 +77,7 @@ export function deliver(delivery: Delivery | Mood, intensity = 1): ScoreTransfor
 /** A delivery's numbers at an intensity: multipliers raised to its power, the rest scaled by it. */
 export function atIntensity(delivery: Delivery | Mood, intensity = 1): Delivery {
   if (!(Number.isFinite(intensity) && intensity >= 0)) {
-    throw new RangeError(`intone: intensity must be zero or more, got ${intensity}`);
+    throw new RangeError(`chimera-kit: intensity must be zero or more, got ${intensity}`);
   }
   const d: Delivery = typeof delivery === "string" ? lookup(delivery) : delivery;
   const k = intensity;
@@ -111,6 +111,6 @@ export function blend(a: Delivery | Mood, b: Delivery | Mood, t: number): Delive
 
 function lookup(mood: string): Delivery {
   const found = (MOODS as Record<string, Delivery>)[mood];
-  if (!found) throw new RangeError(`intone: no mood "${mood}". Moods: ${Object.keys(MOODS).join(", ")}`);
+  if (!found) throw new RangeError(`chimera-kit: no mood "${mood}". Moods: ${Object.keys(MOODS).join(", ")}`);
   return found;
 }

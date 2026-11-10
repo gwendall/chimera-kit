@@ -1,12 +1,12 @@
 {
-  "name": "intone-site",
+  "name": "chimera-kit-site",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "sync": "bun scripts/sync-lib.ts",
-    "dev": "bun run sync && next dev",
-    "build": "bun run sync && next build",
+    "dev": "bun run sync && next dev --webpack",
+    "build": "bun run sync && next build --webpack",
     "typecheck": "bun run sync && next typegen && tsc --noEmit"
   },
   "dependencies": {

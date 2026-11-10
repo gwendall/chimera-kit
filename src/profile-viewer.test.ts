@@ -4,7 +4,7 @@ import { AnatomyRenderer } from "../site/lib/chimera-visual/vendor/anatomy";
 import { buildProfile } from "../site/lib/chimera-visual/vendor/profile";
 import { createVoice } from "./index.ts";
 
-const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
+const wasm = new URL("../dist/chimera.wasm", import.meta.url);
 const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
 
 describe("the canonical Chimera profile", () => {

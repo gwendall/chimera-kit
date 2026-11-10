@@ -247,7 +247,7 @@ describe("a tool runner", () => {
   test("a voice that throws, or fails while playing, becomes a result and the queue goes on", async () => {
     const threw = createToolRunner({
       say() {
-        throw new Error("intone: notes.len() (1) must equal the lyrics' syllable count (2)");
+        throw new Error("chimera-kit: notes.len() (1) must equal the lyrics' syllable count (2)");
       },
     });
     expect(await threw.run("say", { text: "hi" })).toEqual({
@@ -281,7 +281,7 @@ describe("a tool runner", () => {
 });
 
 describe("a tool runner on the real engine", () => {
-  const wasm = new URL("../dist/intone_chimera.wasm", import.meta.url);
+  const wasm = new URL("../dist/chimera.wasm", import.meta.url);
   const dictionary = new URL("../dist/cmudict.txt.gz", import.meta.url);
 
   /** Renders instead of playing, as Bun has no audio device. */

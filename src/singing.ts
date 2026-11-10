@@ -1,5 +1,5 @@
 /**
- * `intone/singing`: pure helpers for songs. A melody written as text, a harmony line for a second
+ * `chimera-kit/singing`: pure helpers for songs. A melody written as text, a harmony line for a second
  * voice, and the pitch ornaments of a sung line, as score transforms. A separate entry so that an
  * app that only speaks ships none of it.
  */
@@ -18,10 +18,10 @@ const isVowel = (sound: Sound | undefined) => sound !== undefined && VOWEL.test(
 
 function refuse(name: string, semitones: number, seconds: number): void {
   if (!(Number.isFinite(semitones) && semitones > 0)) {
-    throw new RangeError(`intone: ${name} needs a depth above 0 semitones, got ${semitones}`);
+    throw new RangeError(`chimera-kit: ${name} needs a depth above 0 semitones, got ${semitones}`);
   }
   if (!(Number.isFinite(seconds) && seconds > 0)) {
-    throw new RangeError(`intone: ${name} needs a length above 0 seconds, got ${seconds}`);
+    throw new RangeError(`chimera-kit: ${name} needs a length above 0 seconds, got ${seconds}`);
   }
 }
 

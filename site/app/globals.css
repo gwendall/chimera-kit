@@ -1117,49 +1117,6 @@ svg.pad {
   }
 }
 
-/* Engines */
-
-.engines {
-  display: grid;
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.engine {
-  background: var(--raised);
-  padding: 16px 18px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px 16px;
-  align-items: center;
-}
-
-.engine dl {
-  grid-column: 1 / -1;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(3, auto);
-  grid-auto-flow: column;
-  grid-template-rows: auto auto;
-  justify-content: start;
-  gap: 0 32px;
-  font-family: var(--font-mono), monospace;
-  font-size: var(--fs-sm);
-}
-
-.engine dt {
-  color: var(--muted);
-  font-size: var(--fs-xs);
-}
-
-.engine dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
 /* Streaming */
 
 .tokens {

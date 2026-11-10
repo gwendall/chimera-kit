@@ -46,7 +46,7 @@ export function Live() {
         <h2>{"It starts talking before the text is finished."}</h2>
         <p>
           {
-            "Plug it into a chatbot: intone cuts the answer at each comma and full stop while it is still being written, and speaks each piece as soon as it is complete. Below, words arrive at a language model's pace, 40 tokens a second. Interrupt stops the sound at once: nothing is queued on a server."
+            "Plug it into a chatbot: Chimera Kit cuts the answer at each comma and full stop while it is still being written, and speaks each piece as soon as it is complete. Below, words arrive at a language model's pace, 40 tokens a second. Interrupt stops the sound at once: nothing is queued on a server."
           }
         </p>
       </IllustratedIntro>

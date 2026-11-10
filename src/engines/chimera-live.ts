@@ -3,7 +3,7 @@
  *
  * This file only loads the engine and moves bytes; it runs equally on the main thread (for tests,
  * or a caller with no AudioWorklet) and inside the worklet (`../worklet-live.ts`), which is where
- * `intone/live` actually renders.
+ * `chimera-kit/live` actually renders.
  */
 
 /** Must match `ABI_VERSION` in `abi.rs`. */
@@ -15,7 +15,7 @@ const MAX_CHUNK = 4096;
 export type Source = URL | string | ArrayBuffer | Uint8Array;
 
 export interface ChimeraLiveSources {
-  /** The engine. Defaults to `intone_chimera.wasm` next to this module (the same file the
+  /** The engine. Defaults to `chimera.wasm` next to this module (the same file the
    * utterance API uses: `ic_live_*` lives in the same wasm as `ic_utterance_*`). */
   wasm?: Source;
 }
@@ -166,7 +166,7 @@ async function readBytes(source: Source): Promise<Uint8Array> {
     return new Uint8Array(await readFile(url));
   }
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`intone: ${url} answered ${response.status}`);
+  if (!response.ok) throw new Error(`chimera-kit: ${url} answered ${response.status}`);
   return new Uint8Array(await response.arrayBuffer());
 }
 
@@ -242,20 +242,20 @@ function utf8Decode(bytes: Uint8Array): string {
 function assertFinite(label: string, values: object): void {
   for (const [key, value] of Object.entries(values)) {
     if (typeof value === "number" && !Number.isFinite(value)) {
-      throw new Error(`intone: ${label}.${key} must be finite, got ${value}`);
+      throw new Error(`chimera-kit: ${label}.${key} must be finite, got ${value}`);
     }
   }
 }
 
 /**
- * Compiles the engine's wasm once. Shared by `loadLiveEngine` and `intone/live`'s main-thread
+ * Compiles the engine's wasm once. Shared by `loadLiveEngine` and `chimera-kit/live`'s main-thread
  * side, which passes the compiled module (or, failing that, the raw bytes) to the worklet through
  * `AudioWorkletNode`'s `processorOptions`.
  */
 export async function compileLiveWasm(
   source?: Source,
 ): Promise<{ module: WebAssembly.Module; bytes: Uint8Array }> {
-  const bytes = await readBytes(source ?? new URL("./intone_chimera.wasm", import.meta.url));
+  const bytes = await readBytes(source ?? new URL("./chimera.wasm", import.meta.url));
   const module = await WebAssembly.compile(bytes as BufferSource);
   return { module, bytes };
 }
@@ -299,8 +299,8 @@ export class ChimeraLiveEngine {
 
   /** Starts a note: `velocity` is the breath gate (0..1.5; 1, the default, is a plain note). */
   noteOn(midi: number, velocity = 1): void {
-    if (!Number.isFinite(midi)) throw new Error(`intone: note must be finite, got ${midi}`);
-    if (!Number.isFinite(velocity)) throw new Error(`intone: velocity must be finite, got ${velocity}`);
+    if (!Number.isFinite(midi)) throw new Error(`chimera-kit: note must be finite, got ${midi}`);
+    if (!Number.isFinite(velocity)) throw new Error(`chimera-kit: velocity must be finite, got ${velocity}`);
     if (!this.x.ic_live_note_on(this.handle, midi, velocity)) throw new Error(this.lastError());
   }
 
@@ -310,7 +310,7 @@ export class ChimeraLiveEngine {
 
   /** Glides to a new pitch while a note is held, without retriggering the gate. */
   bend(midi: number): void {
-    if (!Number.isFinite(midi)) throw new Error(`intone: note must be finite, got ${midi}`);
+    if (!Number.isFinite(midi)) throw new Error(`chimera-kit: note must be finite, got ${midi}`);
     if (!this.x.ic_live_bend(this.handle, midi)) throw new Error(this.lastError());
   }
 
@@ -372,7 +372,7 @@ export class ChimeraLiveEngine {
     const { x, handle } = this;
     const pointer = x.ic_live_error_ptr(handle);
     const bytes = new Uint8Array(x.memory.buffer, pointer, x.ic_live_error_len(handle));
-    return `intone: ${utf8Decode(bytes)}`;
+    return `chimera-kit: ${utf8Decode(bytes)}`;
   }
 }
 
@@ -419,13 +419,13 @@ export async function instantiateLive(
   const instance = await WebAssembly.instantiate(module, {});
   const x = instance.exports as unknown as Exports;
   if (x.ic_abi_version() !== ABI_VERSION) {
-    throw new Error(`intone: engine ABI ${x.ic_abi_version()}, expected ${ABI_VERSION}`);
+    throw new Error(`chimera-kit: engine ABI ${x.ic_abi_version()}, expected ${ABI_VERSION}`);
   }
   return new ChimeraLiveEngine(x, sampleRate);
 }
 
 /** Loads the engine directly, for calling from any thread with no AudioWorklet (tests, Node/Bun,
- * or a caller that renders itself). `intone/live` runs this same class inside an
+ * or a caller that renders itself). `chimera-kit/live` runs this same class inside an
  * AudioWorkletProcessor instead; see `worklet-live.ts`. */
 export async function loadLiveEngine(
   sources: ChimeraLiveSources = {},

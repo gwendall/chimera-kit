@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createToolRunner, type ToolResult, type ToolTarget } from "@/lib/intone/tools.js";
+import { createToolRunner, type ToolResult, type ToolTarget } from "@/lib/chimera-kit/tools.js";
 import { studio } from "@/lib/studio";
 import styles from "./Agent.module.css";
 import { IllustratedIntro } from "./IllustratedIntro";

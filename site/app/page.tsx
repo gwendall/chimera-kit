@@ -22,9 +22,7 @@ import { studio } from "@/lib/studio";
 const MORE: { name: string; render: () => ReactNode }[] = [
   { name: "Latency", render: () => <Speed /> },
   { name: "Crowds", render: () => <Crowd /> },
-  { name: "Instrument", render: () => <Instrument /> },
   { name: "Consonants", render: () => <Consonants /> },
-  { name: "Creatures", render: () => <Beasts /> },
 ];
 
 function Facts() {
@@ -58,7 +56,7 @@ function More() {
     <section id="more">
       <div className="intro">
         <span className="label">More from the same engine</span>
-        <h2>{"Latency, crowds, an instrument, and animals."}</h2>
+        <h2>{"Latency, crowds, and consonants."}</h2>
       </div>
       <fieldset className="tabs">
         <legend className="sr-only">Demo to show</legend>
@@ -95,7 +93,7 @@ function Numbers() {
             </tr>
             <tr>
               <th>JavaScript to speak</th>
-              <td>2.0 KB gzipped</td>
+              <td>2.1 KB gzipped</td>
             </tr>
             <tr>
               <th>Pronouncing dictionary</th>
@@ -160,11 +158,11 @@ export default function Page() {
       <main className="wrap" id="main">
         <div className="hero" id="direct">
           <IllustratedIntro scene="direct">
-            <span className="label">A JavaScript library for controllable speech</span>
-            <h1>Text to speech you can direct, word by word.</h1>
+            <span className="label">The JavaScript toolkit for Chimera</span>
+            <h1>Chimera, ready for your app.</h1>
             <p className="lead">
-              Add speech to your app with a few lines of JavaScript. Choose the voice, shape each word, or
-              speak a language model's answer as it arrives. Everything runs in the browser.
+              Speech, singing, a live instrument and animal voices from a simulated airway. Bring Chimera's
+              physical voice model into your app, with streaming, precise control and immediate interruption.
             </p>
             <div className="row">
               <Link href={LINKS.start} className="go" style={{ textDecoration: "none" }}>
@@ -179,6 +177,8 @@ export default function Page() {
         <Live />
         <Anyone />
         <Sing />
+        <Instrument />
+        <Beasts />
         <Agent />
         <Layers />
         <More />
