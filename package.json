@@ -3,7 +3,26 @@
   "version": "0.0.0",
   "private": true,
   "packageManager": "bun@1.3.11",
-  "description": "Speech in the page that starts in milliseconds and follows your code, down to the syllable. Powered by CHIMERA.",
+  "description": "A JavaScript library for browser speech, streaming answers and singing, with control down to the syllable. Powered by CHIMERA.",
+  "homepage": "https://intone-one.vercel.app/docs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gwendall/intone.git"
+  },
+  "bugs": {
+    "url": "https://intone-one.vercel.app/docs#troubleshooting"
+  },
+  "keywords": [
+    "text-to-speech",
+    "speech-synthesis",
+    "singing",
+    "webassembly",
+    "chimera",
+    "browser"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT",
   "type": "module",
   "sideEffects": false,

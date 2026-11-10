@@ -1,7 +1,9 @@
 # intone
 
-Speech that runs in the page, starts in milliseconds and does what your code says, down to the
-syllable. No model weights, no server.
+A JavaScript library for speech that runs in the browser, starts in milliseconds and follows your
+code down to the syllable. No model weights, no server for the default engine.
+
+[Live demos](https://intone-one.vercel.app) · [Get started](https://intone-one.vercel.app/docs#get-started) · [Documentation](https://intone-one.vercel.app/docs)
 
 intone is how you use [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth), the physical
 voice model by [Jameson Hodge](https://github.com/jamesondh), in a real product: streaming, clause
