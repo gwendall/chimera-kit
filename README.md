@@ -3,7 +3,7 @@
 A JavaScript library for speech that runs in the browser, starts in milliseconds and follows your
 code down to the syllable. No neural weights or synthesis server.
 
-[Live demos](https://chimerakit.dev) · [Get started](https://chimerakit.dev/docs#get-started) · [Documentation](https://chimerakit.dev/docs)
+[Live demos](https://chimerakit.dev) · [Get started](https://chimerakit.dev/docs#get-started) · [Documentation](https://chimerakit.dev/docs) · [npm](https://www.npmjs.com/package/chimera-kit) · [Source](https://github.com/gwendall/chimera-kit) · [Report an issue](https://github.com/gwendall/chimera-kit/issues)
 
 Chimera Kit is a JavaScript toolkit dedicated to [CHIMERA](https://github.com/jamesondh/chimera-vocal-synth),
 the physical voice model by [Jameson Hodge](https://github.com/jamesondh). Use its speech, singing,

@@ -1,12 +1,15 @@
 # npm releases
 
-The package is prepared as `chimera-kit@0.1.0`. Publication is a separate authenticated action.
-The website uses `site/lib/links.ts` as its release switch: no active npm link appears until
-`RELEASE.npmVersion` has a verified published version. Public links use `https://chimerakit.dev`.
+The source is public at `https://github.com/gwendall/chimera-kit`. The package is prepared as
+`chimera-kit@0.1.0`. Publication is a separate authenticated action. Public links use
+`https://chimerakit.dev`. The release branch prepares `RELEASE.npmVersion` in `site/lib/links.ts`;
+do not merge or deploy that branch until the registry version and integrity are verified.
 
 For each authorized release:
 
-1. Set the version in `package.json`. Keep the documentation website's own package private.
+1. Set the version in `package.json` and `RELEASE.npmVersion` on a release branch. Keep the
+   documentation website's own package private. The production site keeps its previous release
+   until publication succeeds.
 2. Qualify that exact source through CI. The pipeline builds in a clean checkout, runs the existing
    checks, then uploads `npm-package-<commit>` with the tarball and its `npm-pack.json` manifest.
    Download the artifact from the successful run for the release commit.
@@ -19,10 +22,10 @@ For each authorized release:
    authentication outside the repository. Never paste credentials into source or logs. Do not
    rebuild between inspection and publication.
 6. Verify the registry version and integrity against the manifest, then install that registry
-   version in a clean consumer and repeat the smoke check. Set `RELEASE.npmVersion`, update the
-   preview status on the homepage, and deploy. The header and footer will then expose npm.
+   version in a clean consumer and repeat the smoke check. Merge the qualified release branch
+   and deploy. The header, footer and documentation then expose the verified npm version.
+7. Tag the release source and publish GitHub release notes linking npm, the site and documentation.
 
-The source repository stays private until separately authorized. The optional npm `repository`
-field is omitted to avoid an inaccessible public link. Homepage and help links point to the public
-documentation. Do not add a public source CTA while the repo is private. Keep canonical origin,
-package URLs and README links in sync.
+The npm `repository` field points to the public GitHub repository, `homepage` to the site, and
+`bugs` to GitHub Issues. The README links all three services and the documentation; the site's
+footer and documentation link back to the source. Keep these links and canonical origin in sync.
