@@ -1,5 +1,5 @@
 // What a crowd says, as plain timelines: who speaks what, and when. Everything is original text.
-import type { Body, Mood, Song } from "./intone/index.js";
+import { type Body, bodyFromSeed, type Mood, type Song } from "./intone/index.js";
 
 export type Scene = "hubbub" | "choir" | "dialogue";
 
@@ -48,20 +48,18 @@ const MOODS: Mood[] = ["neutral", "calm", "excited", "sad", "angry", "whisper"];
 
 const words = (line: string) => line.split(" ").length;
 
-/** A body of its own for every voice: the same index always gives the same person. */
-function person(i: number): Pick<Turn, "body" | "f0" | "rate"> {
-  const r = (seed: number) => {
-    const x = Math.sin((i + 1) * seed) * 43758.5453;
-    return x - Math.floor(x);
-  };
-  const kind = r(12.9898);
-  const female = kind < 0.42 ? r(4.1) * 0.25 : kind < 0.86 ? 0.75 + r(4.1) * 0.25 : 0.5;
-  const child = kind >= 0.86 ? 0.55 + r(7.3) * 0.45 : 0;
-  const base = child ? 250 : female > 0.5 ? 190 : 112;
+/**
+ * A body of its own for every voice, drawn from its index: the same index always gives the same
+ * person, over the whole voice space (not just the female/child blend), because `bodyFromSeed`
+ * now draws the anatomy and the voice source too. Only the speaking rate is still rolled here,
+ * since `BodySpec` has nothing for pace.
+ */
+function person(i: number): Pick<Turn, "body" | "rate"> {
+  const x = Math.sin((i + 1) * 9.2) * 43758.5453;
+  const r = x - Math.floor(x);
   return {
-    body: { female, child },
-    f0: Math.round(base * (0.85 + r(2.7) * 0.32)),
-    rate: Number((0.9 + r(9.2) * 0.3).toFixed(2)),
+    body: bodyFromSeed(i),
+    rate: Number((0.9 + r * 0.3).toFixed(2)),
   };
 }
 
@@ -74,6 +72,8 @@ const PARTS = [
   [54, 57, 57, 62, 59, 57, 57, 54, 57, 59, 62, 66, 64, 62, 59, 62],
   [50, 45, 50, 54, 55, 50, 45, 50, 50, 55, 54, 50, 45, 50, 55, 50],
 ];
+// Left as four fixed bodies, not a seed per voice: a soprano, an alto, a tenor and a bass is the
+// arrangement, and every singer in a part sings the same line in the same range on purpose.
 const PART_BODY: Body[] = [
   { female: 1, child: 0 },
   { female: 0.85, child: 0.15 },

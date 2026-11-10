@@ -1,13 +1,53 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { MOODS, type Mood } from "@/lib/intone/index.js";
+import { type BodySpec, bodyFromSeed, MOODS, type Mood } from "@/lib/intone/index.js";
 import { studio } from "@/lib/studio";
 import { Latency } from "./Latency";
 
 const LINE = "You can be anyone you like, and it only takes a few numbers.";
 const CORNERS = { male: [50, 12], female: [8, 92], child: [92, 92] } as const;
 const MOOD_NAMES = Object.keys(MOODS) as Mood[];
+
+/** Dials on `BodySpec`, past the female/child blend the triangle already sets. */
+interface DialSpec {
+  key: keyof BodySpec;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+}
+
+const MAIN_DIALS: DialSpec[] = [
+  { key: "size", label: "size", min: 0.7, max: 1.3, step: 0.01 },
+  { key: "pitch", label: "pitch", min: -24, max: 24, step: 0.5 },
+  { key: "breathiness", label: "breathiness", min: 0, max: 1, step: 0.01 },
+  { key: "tension", label: "tension", min: 0, max: 1, step: 0.01 },
+];
+
+const MORE_DIALS: DialSpec[] = [
+  { key: "throat", label: "throat", min: 0.7, max: 1.3, step: 0.01 },
+  { key: "tongue", label: "tongue", min: 0.7, max: 1.3, step: 0.01 },
+  { key: "lips", label: "lips", min: 0.7, max: 1.3, step: 0.01 },
+  { key: "brightness", label: "brightness", min: 0, max: 1, step: 0.01 },
+  { key: "fry", label: "fry", min: 0, max: 1, step: 0.01 },
+  { key: "roughness", label: "roughness", min: 0, max: 1, step: 0.01 },
+];
+
+// A neutral starting point for the dials, before anyone has drawn a body. Not a claim about what
+// an unset field defaults to inside the engine, just a reasonable place for the sliders to sit.
+const DEFAULT_DIALS: BodySpec = {
+  size: 1,
+  throat: 1,
+  tongue: 1,
+  lips: 1,
+  pitch: 0,
+  breathiness: 0.15,
+  tension: 0.5,
+  brightness: 0.3,
+  fry: 0,
+  roughness: 0.1,
+};
 
 function share(x: number, y: number) {
   const [ax, ay] = CORNERS.male;
@@ -22,59 +62,95 @@ function share(x: number, y: number) {
   return { male: clamp(male) / total, female: clamp(female) / total, child: clamp(child) / total };
 }
 
-interface Traits {
-  f0?: number;
-  rate?: number;
-  accent?: number;
+/** The triangle point a drawn body sits closest to, so the dot follows `bodyFromSeed`'s draw. */
+function pointFromBody(body: BodySpec): [number, number] {
+  const female = Math.max(0, Math.min(1, body.female ?? 0));
+  const child = Math.max(0, Math.min(1, body.child ?? 0));
+  const male = Math.max(0, 1 - female - child);
+  const total = male + female + child || 1;
+  const [ax, ay] = CORNERS.male;
+  const [bx, by] = CORNERS.female;
+  const [cx, cy] = CORNERS.child;
+  return [(male * ax + female * bx + child * cx) / total, (male * ay + female * by + child * cy) / total];
 }
 
 const round = (value: number) => Number(value.toFixed(2));
 
+function roundBody(body: BodySpec): BodySpec {
+  const out: Record<string, number> = {};
+  for (const [key, value] of Object.entries(body)) if (typeof value === "number") out[key] = round(value);
+  return out as BodySpec;
+}
+
+function Dial({
+  dial,
+  value,
+  onChange,
+  onCommit,
+}: {
+  dial: DialSpec;
+  value: number;
+  onChange: (value: number) => void;
+  onCommit: () => void;
+}) {
+  return (
+    <label className="dial">
+      {dial.label}
+      <input
+        type="range"
+        min={dial.min}
+        max={dial.max}
+        step={dial.step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        onPointerUp={onCommit}
+        onKeyUp={onCommit}
+      />
+    </label>
+  );
+}
+
 export function Anyone() {
   const [point, setPoint] = useState<[number, number]>([50, 66]);
+  const [body, setBody] = useState<BodySpec>(DEFAULT_DIALS);
   const [mood, setMood] = useState<Mood>("neutral");
   const [strength, setStrength] = useState(0.8);
-  const [traits, setTraits] = useState<Traits>({});
+  const [name, setName] = useState("");
   const dragging = useRef(false);
   const { male, female, child } = share(point[0], point[1]);
 
-  const say = (at = point, withMood = mood, withTraits = traits, intensity = strength) => {
+  const say = (
+    at: [number, number] = point,
+    withBody: BodySpec = body,
+    withMood: Mood = mood,
+    intensity = strength,
+  ) => {
     const shares = share(at[0], at[1]);
     void studio.speak(LINE, {
-      body: { female: shares.female, child: shares.child },
+      body: { ...withBody, female: shares.female, child: shares.child },
       style: withMood,
       intensity,
       label: "this voice",
-      ...withTraits,
     });
   };
 
-  const surprise = () => {
-    const a = Math.random();
-    const b = Math.random() * (1 - a);
-    const c = 1 - a - b;
-    const at: [number, number] = [
-      a * CORNERS.male[0] + b * CORNERS.female[0] + c * CORNERS.child[0],
-      a * CORNERS.male[1] + b * CORNERS.female[1] + c * CORNERS.child[1],
-    ];
-    const pitchTop = 120 + (b + c) * 150;
-    const next: Traits = {
-      f0: Math.round(pitchTop * (0.8 + Math.random() * 0.4)),
-      rate: round(0.85 + Math.random() * 0.5),
-      accent: round(0.1 + Math.random() * 0.8),
-    };
-    const nextMood = MOOD_NAMES[Math.floor(Math.random() * MOOD_NAMES.length)] ?? "neutral";
-    const nextStrength = round(0.4 + Math.random() * 0.6);
+  /** Draws a body from a seed, moves the triangle to match it, and speaks it. */
+  const draw = (seed: number | string) => {
+    const next = bodyFromSeed(seed);
+    const at = pointFromBody(next);
+    setBody(next);
     setPoint(at);
-    setMood(nextMood);
-    setStrength(nextStrength);
-    setTraits(next);
-    say(at, nextMood, next, nextStrength);
+    say(at, next);
+  };
+
+  const askName = (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmed = name.trim();
+    if (trimmed) draw(trimmed);
   };
 
   const json = JSON.stringify({
-    body: { female: round(female), child: round(child) },
-    ...traits,
+    body: { ...roundBody(body), female: round(female), child: round(child) },
     delivery: mood,
     intensity: strength,
   });
@@ -99,7 +175,8 @@ export function Anyone() {
       </h2>
       <p>
         Not a model and not a recording, so a thousand characters can each have their own. Drag between the
-        bodies, pick a mood, or roll a new voice: the line below is all of it.
+        bodies, draw a new one, or type a name: it is a kind of voice, not a person's, and the line below is
+        all of it.
       </p>
       <svg
         className="pad"
@@ -132,18 +209,38 @@ export function Anyone() {
         <circle cx={point[0]} cy={point[1]} r="3" fill="#ff5c36" />
       </svg>
       <div className="row">
-        {MOOD_NAMES.map((name) => (
+        <button type="button" className="go" onClick={() => draw(Math.floor(Math.random() * 1e9))}>
+          New voice
+        </button>
+        <form className="row" onSubmit={askName}>
+          <input
+            type="text"
+            className="name-field"
+            placeholder="a name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            maxLength={40}
+            aria-label="A name to hear as a voice"
+          />
+          <button type="submit" className="chip">
+            that voice
+          </button>
+        </form>
+        <Latency />
+      </div>
+      <div className="row">
+        {MOOD_NAMES.map((moodName) => (
           <button
-            key={name}
+            key={moodName}
             type="button"
             className="chip"
-            aria-pressed={mood === name}
+            aria-pressed={mood === moodName}
             onClick={() => {
-              setMood(name);
-              say(point, name);
+              setMood(moodName);
+              say(point, body, moodName);
             }}
           >
-            {name}
+            {moodName}
           </button>
         ))}
       </div>
@@ -158,12 +255,31 @@ export function Anyone() {
           onChange={(event) => setStrength(Number(event.target.value))}
         />
       </label>
-      <div className="row">
-        <button type="button" className="go" onClick={surprise}>
-          Surprise me
-        </button>
-        <Latency />
+      <div className="dials">
+        {MAIN_DIALS.map((dial) => (
+          <Dial
+            key={dial.key}
+            dial={dial}
+            value={body[dial.key] ?? 0}
+            onChange={(value) => setBody((current) => ({ ...current, [dial.key]: value }))}
+            onCommit={() => say()}
+          />
+        ))}
       </div>
+      <details className="dials-more">
+        <summary>More of the body</summary>
+        <div className="dials">
+          {MORE_DIALS.map((dial) => (
+            <Dial
+              key={dial.key}
+              dial={dial}
+              value={body[dial.key] ?? 0}
+              onChange={(value) => setBody((current) => ({ ...current, [dial.key]: value }))}
+              onCommit={() => say()}
+            />
+          ))}
+        </div>
+      </details>
       <div className="code">
         {json}
         <span className="hot">{`\n${bytes} bytes. That is the whole voice.`}</span>
