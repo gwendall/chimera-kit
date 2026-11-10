@@ -1317,9 +1317,9 @@ svg.pad {
   gap: 6px;
 }
 
-footer {
+footer.wrap {
   border-top: 1px solid var(--line);
-  padding: 32px 0 56px;
+  padding: 32px var(--gutter) 56px;
   color: var(--muted);
   font-size: var(--fs-ui);
 }
