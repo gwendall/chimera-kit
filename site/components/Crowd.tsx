@@ -37,7 +37,10 @@ export function Crowd() {
   const running = report?.running ?? false;
   const start = (name: Scene) => {
     setScene(name);
-    void studio.crowd(name, voices, setReport);
+    void studio.crowd(name, voices, setReport).catch((cause: unknown) => {
+      setReport((old) => (old ? { ...old, running: false } : null));
+      studio.reportError(cause);
+    });
   };
 
   const first = report?.firstMs ?? [];

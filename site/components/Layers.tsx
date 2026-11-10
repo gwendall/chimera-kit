@@ -36,7 +36,7 @@ export function Layers() {
   }, []);
 
   useEffect(() => {
-    if (ready) void studio.plan(LINE).then(setScore);
+    if (ready) void studio.plan(LINE).then(setScore).catch(studio.reportError);
   }, [ready]);
 
   const sounds = score?.sounds
@@ -64,7 +64,12 @@ export function Layers() {
         ) : null}
       </div>
       <div className="row">
-        <button type="button" className="go" disabled={!ready} onClick={() => void studio.speak(LINE)}>
+        <button
+          type="button"
+          className="go"
+          disabled={!ready}
+          onClick={() => void studio.speak(LINE).catch(studio.reportError)}
+        >
           Say it and watch the tract
         </button>
         <Latency />

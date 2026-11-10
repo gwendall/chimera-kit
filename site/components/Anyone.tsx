@@ -126,12 +126,14 @@ export function Anyone() {
     intensity = strength,
   ) => {
     const shares = share(at[0], at[1]);
-    void studio.speak(LINE, {
-      body: { ...withBody, female: shares.female, child: shares.child },
-      style: withMood,
-      intensity,
-      label: "this voice",
-    });
+    void studio
+      .speak(LINE, {
+        body: { ...withBody, female: shares.female, child: shares.child },
+        style: withMood,
+        intensity,
+        label: "this voice",
+      })
+      .catch(studio.reportError);
   };
 
   /** Draws a body from a seed, moves the triangle to match it, and speaks it. */
@@ -178,41 +180,66 @@ export function Anyone() {
         </p>
       </div>
       <div className="panel">
-        <svg
-          className="pad"
-          viewBox="0 0 100 100"
-          role="img"
+        <button
+          type="button"
+          style={{ display: "block", width: "min(100%, 300px)" }}
+          onClick={(event) => {
+            if (event.detail === 0) say();
+          }}
+          aria-describedby="blend-keys"
           aria-label={`Body blend: ${Math.round(male * 100)} percent man, ${Math.round(female * 100)} percent woman, ${Math.round(child * 100)} percent child`}
-          onPointerDown={(event) => {
-            event.currentTarget.setPointerCapture(event.pointerId);
-            dragging.current = true;
-            move(event);
+          onKeyDown={(event) => {
+            const dx = event.key === "ArrowRight" ? 2 : event.key === "ArrowLeft" ? -2 : 0;
+            const dy = event.key === "ArrowDown" ? 2 : event.key === "ArrowUp" ? -2 : 0;
+            if (!dx && !dy) return;
+            event.preventDefault();
+            setPoint(([x, y]) => [Math.max(0, Math.min(100, x + dx)), Math.max(0, Math.min(100, y + dy))]);
           }}
-          onPointerMove={(event) => {
-            if (dragging.current) move(event);
-          }}
-          onPointerUp={(event) => {
-            dragging.current = false;
-            say(move(event));
+          onKeyUp={(event) => {
+            if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(event.key)) say();
           }}
         >
-          <polygon
-            points="50,12 8,92 92,92"
-            fill="var(--surface)"
-            stroke="var(--line-strong)"
-            strokeWidth="0.4"
-          />
-          <text x="50" y="7" textAnchor="middle" fontSize="4" fill="var(--muted)">
-            man
-          </text>
-          <text x="4" y="98" fontSize="4" fill="var(--muted)">
-            woman
-          </text>
-          <text x="96" y="98" textAnchor="end" fontSize="4" fill="var(--muted)">
-            child
-          </text>
-          <circle cx={point[0]} cy={point[1]} r="3" fill="var(--accent)" />
-        </svg>
+          <svg
+            className="pad"
+            viewBox="0 0 100 100"
+            aria-hidden="true"
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId);
+              dragging.current = true;
+              move(event);
+            }}
+            onPointerMove={(event) => {
+              if (dragging.current) move(event);
+            }}
+            onPointerUp={(event) => {
+              dragging.current = false;
+              say(move(event));
+            }}
+            onPointerCancel={() => {
+              dragging.current = false;
+            }}
+          >
+            <polygon
+              points="50,12 8,92 92,92"
+              fill="var(--surface)"
+              stroke="var(--line-strong)"
+              strokeWidth="0.4"
+            />
+            <text x="50" y="7" textAnchor="middle" fontSize="4" fill="var(--muted)">
+              man
+            </text>
+            <text x="4" y="98" fontSize="4" fill="var(--muted)">
+              woman
+            </text>
+            <text x="96" y="98" textAnchor="end" fontSize="4" fill="var(--muted)">
+              child
+            </text>
+            <circle cx={point[0]} cy={point[1]} r="3" fill="var(--accent)" />
+          </svg>
+        </button>
+        <p id="blend-keys" className="kicker">
+          Keyboard: focus the triangle and use the arrow keys to blend the body.
+        </p>
         <div className="row">
           <button type="button" className="go" onClick={() => draw(Math.floor(Math.random() * 1e9))}>
             New voice

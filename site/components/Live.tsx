@@ -30,6 +30,7 @@ export function Live() {
     }
     void studio
       .speakTokens(tokens(), { onFirstSample: () => setFirstMs(performance.now() - startedAt) })
+      .catch(studio.reportError)
       .finally(() => setRunning(false));
   };
 

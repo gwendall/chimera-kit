@@ -49,6 +49,21 @@ function Facts() {
   );
 }
 
+function LoadingStatus() {
+  const { ready, loading, error } = useStudio();
+  if (error) {
+    return (
+      <div className="panel" role="alert">
+        <p>Audio could not start. Check your connection and retry. {error}</p>
+        <button type="button" className="chip" onClick={() => void studio.load().catch(studio.reportError)}>
+          Retry loading Chimera
+        </button>
+      </div>
+    );
+  }
+  return !ready && loading ? <p role="status">Loading Chimera...</p> : null;
+}
+
 function More() {
   const [open, setOpen] = useState(0);
   const shown = MORE[open] ?? MORE[0];
@@ -138,11 +153,11 @@ export default function Page() {
     const idle =
       window.requestIdleCallback ??
       ((run: () => void, _options?: IdleRequestOptions) => window.setTimeout(run, 200));
-    idle(() => void studio.load(), { timeout: 1500 });
+    idle(() => void studio.load().catch(studio.reportError), { timeout: 1500 });
     // pointerdown doesn't count as a gesture on iOS: these do. A scroll's touchend is refused, so keep trying.
     const events = ["pointerup", "touchend", "click", "keydown"];
     const wake = () => {
-      void studio.load();
+      if (!studio.getSnapshot().error) void studio.load().catch(studio.reportError);
       if (!studio.unlock()) return;
       for (const name of events) document.removeEventListener(name, wake, true);
     };
@@ -173,6 +188,7 @@ export default function Page() {
           </IllustratedIntro>
           <Facts />
         </div>
+        <LoadingStatus />
         <Director />
         <Live />
         <Anyone />

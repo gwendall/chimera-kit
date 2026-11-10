@@ -152,11 +152,14 @@ export function Director() {
   useEffect(() => {
     if (!ready) return;
     let live = true;
-    void studio.plan(text, body as Body).then((score) => {
-      if (!live) return;
-      setPlain(score);
-      setEdits((old) => (old.length === (score.words?.length ?? 0) ? old : []));
-    });
+    void studio
+      .plan(text, body as Body)
+      .then((score) => {
+        if (!live) return;
+        setPlain(score);
+        setEdits((old) => (old.length === (score.words?.length ?? 0) ? old : []));
+      })
+      .catch(studio.reportError);
     return () => {
       live = false;
     };
@@ -172,7 +175,7 @@ export function Director() {
   const speak = (next: Score | null = score) => {
     if (!next) return;
     spoken.current = next;
-    void studio.speak(next, { body: body as Body, label: "director" });
+    void studio.speak(next, { body: body as Body, label: "director" }).catch(studio.reportError);
   };
 
   // A change made by a tap plays once the new score exists.

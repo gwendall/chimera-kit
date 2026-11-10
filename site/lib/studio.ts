@@ -22,6 +22,8 @@ import { SPECTRUM_SIZE, spectrumColumn } from "./spectrum";
 
 export interface Snapshot {
   ready: boolean;
+  loading: boolean;
+  error: string | null;
   speaking: boolean;
   /** Milliseconds from the call to the first sample computed, for the last thing spoken. */
   firstSampleMs: number | null;
@@ -104,6 +106,8 @@ class Studio {
   private listeners = new Set<() => void>();
   private snapshot: Snapshot = {
     ready: false,
+    loading: false,
+    error: null,
     speaking: false,
     firstSampleMs: null,
     label: "",
@@ -159,7 +163,7 @@ class Studio {
       } else {
         this.spokeUntil = performance.now();
         if (this.warmLater) {
-          this.spawn(this.warmLater);
+          void this.spawn(this.warmLater).catch(this.reportError);
           this.warmLater = 0;
         }
       }
@@ -169,17 +173,31 @@ class Studio {
 
   /** Starts loading the engine; safe to call any number of times. */
   load(): Promise<Voice> {
+    this.set({ error: null });
     if (this.loading) return this.loading;
     const asked = performance.now();
-    this.loading = createVoice({ body: "female" }).then((voice) => {
-      this.voice = voice;
-      this.set({ ready: true, engineLoadMs: performance.now() - asked });
-      this.countRequests();
-      if (this.ghostWanted) void this.buildGhost(voice);
-      return voice;
-    });
+    this.set({ loading: true });
+    this.loading = createVoice({ body: "female" })
+      .then((voice) => {
+        this.voice = voice;
+        this.set({ ready: true, loading: false, engineLoadMs: performance.now() - asked });
+        this.countRequests();
+        if (this.ghostWanted) void this.buildGhost(voice).catch(this.reportError);
+        return voice;
+      })
+      .catch((cause: unknown) => {
+        this.loading = null;
+        this.set({ loading: false });
+        this.reportError(cause);
+        throw cause;
+      });
     return this.loading;
   }
+
+  /** UI event handlers route asynchronous failures to the shared, retryable notice. */
+  reportError = (cause: unknown) => {
+    this.set({ error: cause instanceof Error ? cause.message : "Could not start audio." });
+  };
 
   /** From here on, anything fetched while a voice is sounding is counted, and shown. */
   private countRequests() {
@@ -201,7 +219,7 @@ class Studio {
   wantGhost() {
     if (this.ghostWanted) return;
     this.ghostWanted = true;
-    if (this.voice) void this.buildGhost(this.voice);
+    if (this.voice) void this.buildGhost(this.voice).catch(this.reportError);
   }
 
   /** A real, silent reading, computed in small slices, that keeps the throat moving before any click. */
@@ -317,7 +335,7 @@ class Studio {
 
   private watch(sounding: Sounding, playback: Playback) {
     this.playback = playback;
-    void playback.done.then(() => {
+    void playback.done.catch(this.reportError).finally(() => {
       if (this.sounding?.id !== sounding.id) return;
       if (sounding.kind === "creature") this.scopeUntil = performance.now() + 1600;
       this.sounding = null;
@@ -452,7 +470,10 @@ class Studio {
   }
 
   async creatures(): Promise<Creatures> {
-    this.zoo ??= loadCreatures();
+    this.zoo ??= loadCreatures().catch((cause: unknown) => {
+      this.zoo = null;
+      throw cause;
+    });
     return this.zoo;
   }
 
@@ -472,17 +493,23 @@ class Studio {
     );
     const playback = play(chunks, zoo.sampleRate, { context, destination: output });
     this.watch(sounding, playback);
-    void playback.done.finally(() => creature.free());
+    void playback.done.finally(() => creature.free()).catch(this.reportError);
   }
 
   /** Starts the workers a crowd of this size needs, one per voice: a worker speaks one thing at a time. */
   warmCrowd(voices: number): void {
     if (this.snapshot.speaking) this.warmLater = Math.max(this.warmLater, voices);
-    else this.spawn(voices);
+    else void this.spawn(voices).catch(this.reportError);
   }
 
   private spawn(voices: number): Promise<AsyncVoice[]> {
-    while (this.pool.length < voices) this.pool.push(createWorkerVoice({ body: "female" }));
+    while (this.pool.length < voices) {
+      const pending = createWorkerVoice({ body: "female" }).catch((cause: unknown) => {
+        this.pool = this.pool.filter((voice) => voice !== pending);
+        throw cause;
+      });
+      this.pool.push(pending);
+    }
     return Promise.all(this.pool.slice(0, voices));
   }
 
