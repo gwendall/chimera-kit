@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { studio } from "@/lib/studio";
+import { IllustratedIntro } from "./IllustratedIntro";
 
 const ANSWER =
   "You asked how fast this can start. Faster than you can tell. The first clause leaves at its first comma, while the model is still writing the rest of the sentence, and each clause is computed while the one before it plays. If you interrupt me, I stop at once.";
@@ -40,7 +41,7 @@ export function Live() {
 
   return (
     <section id="stream">
-      <div className="intro">
+      <IllustratedIntro scene="stream">
         <span className="label">Streaming</span>
         <h2>{"It starts talking before the text is finished."}</h2>
         <p>
@@ -48,7 +49,7 @@ export function Live() {
             "Plug it into a chatbot: intone cuts the answer at each comma and full stop while it is still being written, and speaks each piece as soon as it is complete. Below, words arrive at a language model's pace, 40 tokens a second. Interrupt stops the sound at once: nothing is queued on a server."
           }
         </p>
-      </div>
+      </IllustratedIntro>
       <div className="panel">
         <div className="tokens">
           {shown || running ? (

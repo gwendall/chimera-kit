@@ -8,6 +8,7 @@ import { Consonants } from "@/components/Consonants";
 import { Crowd } from "@/components/Crowd";
 import { Director } from "@/components/Director";
 import { Engines } from "@/components/Engines";
+import { IllustratedIntro } from "@/components/IllustratedIntro";
 import { Instrument } from "@/components/Instrument";
 import { Layers } from "@/components/Layers";
 import { Live } from "@/components/Live";
@@ -174,12 +175,14 @@ export default function Page() {
       </header>
       <main className="wrap" id="main">
         <div className="hero" id="direct">
-          <h1>Text to speech you can direct, word by word.</h1>
-          <p className="lead">
-            intone is a JavaScript library that reads text aloud, inside the browser. You choose the words
-            that carry the stress, move the pitch, and set the mood and the voice. It starts talking a few
-            milliseconds after you ask, with no server and no AI model to download.
-          </p>
+          <IllustratedIntro scene="direct">
+            <h1>Text to speech you can direct, word by word.</h1>
+            <p className="lead">
+              intone is a JavaScript library that reads text aloud, inside the browser. You choose the words
+              that carry the stress, move the pitch, and set the mood and the voice. It starts talking a few
+              milliseconds after you ask, with no server and no AI model to download.
+            </p>
+          </IllustratedIntro>
           <Facts />
         </div>
         <Director />
