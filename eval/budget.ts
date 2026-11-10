@@ -57,8 +57,12 @@ const BUNDLE_LIMITS: Record<string, { imports: string[]; from?: string; limit: n
   "the creatures (loadCreatures)": { imports: ["loadCreatures"], from: "creatures.js", limit: 2_000 },
   // `profile` is pure TypeScript with no engine import (type-only imports of Body and Delivery
   // are erased), so it carries nothing of the rest of the package: measured 2,587 bytes gzipped
-  // (`bun eval/budget.ts --no-speed`, 2026-11-09).
-  "imitating a voice (imitate.js)": { imports: ["profile"], from: "imitate.js", limit: 2_800 },
+  // (`bun eval/budget.ts --no-speed`, 2026-11-09). `body.brightness` and `body.breathiness` (a
+  // blend-interpolated tilt fit - one intercept and slope per male/female/child anchor, instead
+  // of a male-only fit that read a female voice's brightness back wrong by up to 0.4 - plus a
+  // reliability gate that leaves breathiness `undefined` instead of misreading a clean voice as
+  // somewhat breathy) took it to 2,889 (`--no-speed`, 2026-11-10).
+  "imitating a voice (imitate.js)": { imports: ["profile"], from: "imitate.js", limit: 2_950 },
   // A new entry, so it costs nothing to an app that doesn't import it: measured 2,730 bytes gzipped
   // (`bun eval/budget.ts --no-speed`, 2026-11-09). The moods come with it, for the schema's list.
   "tool calls from a language model (tools.js)": {

@@ -4,12 +4,17 @@
  * module only measures a `Float32Array`, it never renders one. A separate entry on purpose, so
  * that `intone` itself does not grow for callers who never imitate a voice.
  *
- * `profile()` is not a clone. It reads five caricature parameters off the recording (pitch and
- * its range, speaking rate, pauses, a formant-based body size, and a periodicity-based
- * breathiness) and returns them as the small, plain-data shape CHIMERA already takes
- * (`{ body, f0, rate, delivery }`). The mappings from raw measurements to CHIMERA's own dials are
- * fit against CHIMERA's own renders (see the constants below, each with how it was measured);
- * nothing here was guessed from audio theory alone.
+ * `profile()` is not a clone. It reads caricature parameters off the recording (pitch and its
+ * range, speaking rate, pauses, a formant-based body blend, a spectral-tilt brightness and a
+ * periodicity-based breathiness, the last placed on both the delivery and the body) and returns
+ * them as the small, plain-data shape CHIMERA already takes (`{ body, f0, rate, delivery }`). The
+ * mappings from raw measurements to CHIMERA's own dials are fit against CHIMERA's own renders
+ * (see the constants below, each with how it was measured); nothing here was guessed from audio
+ * theory alone. `size`, `throat`, `tongue`, `lips`, `tension`, `fry` and `roughness` are left out:
+ * see the imitate.ts commit for the round trips that ruled each one out. `body.brightness` and
+ * `body.breathiness` are each left `undefined` (not written at all, so CHIMERA keeps its own
+ * default) when the measurement behind them is not reliable at that reading; see `TILT_ANCHORS`
+ * and `BODY_BREATHINESS_RELIABLE_BELOW` for exactly where that line is and why.
  *
  * Consent: `speakerAgreed` must be the literal `true`, checked again at runtime (a boolean
  * variable that happens to be `true` still satisfies the type, so the runtime check is not
@@ -45,6 +50,9 @@ export interface Measured {
   f3Hz: number;
   /** Median periodicity (YIN) confidence over voiced frames, 0 to 1: lower is noisier/breathier. */
   breathConfidence: number;
+  /** Median spectral tilt over the same confident voiced frames as `f3Hz` (LPC envelope at 3500
+   * Hz over 600 Hz, dB): positive is brighter. 0 when too few frames carried a usable estimate. */
+  tiltDb: number;
 }
 
 export interface Profile {
@@ -147,6 +155,95 @@ const BREATH_TABLE: readonly [confidence: number, breath: number][] = [
 const F3_ANCHORS = { male: 2535, female: 2760, child: 3060 };
 
 /**
+ * Body breathiness: the same `measured.breathConfidence` as `BREATH_TABLE`, now also read onto
+ * `body.breathiness` (0 to 1), measured at `body: { breathiness: k }`, k from 0 to 1 (male body,
+ * no style). Pairs are (confidence, breathiness), confidence ascending; measured on Harvard list 1
+ * (the fit set): 0.877@1, 0.907@0.9, 0.924@0.8, 0.938@0.7, 0.944@0.6, 0.949@0.5, 0.953@0 (the last
+ * is the top of a flat band: confidence stays 0.944 to 0.953 across breathiness 0 to 0.6, not
+ * monotonic in that band on either the fit or held-out sentences). On held-out Harvard list 2
+ * (pooled, male), a plain default-breathiness render (no override) measured confidence 0.9517,
+ * which sits inside that same flat band and would read back as breathiness 0.16 if trusted - and
+ * true 0.5 measured confidence 0.9484, only 0.003 away: the two are not reliably told apart here.
+ * Below `BODY_BREATHINESS_RELIABLE_BELOW` that reading is not returned at all. Above it, recovered
+ * breathiness was within 0.02 absolute at true 0.8 and 1 (0.805, 1.000; true 0.5 sits right at the
+ * cutoff and is not claimed accurate, see below). `roughness` also lowers this confidence
+ * (measured breathConfidence 0.953 to 0.851 across roughness 0 to 1, male, breathiness at its
+ * default) by about as much as high breathiness does: a rough-but-clean voice reads back as
+ * breathiness 1 at roughness 1 (confidence 0.851), and already breathiness 0.83 at roughness 0.6
+ * (confidence 0.917) - inside the "reliable" zone below. Raising the cutoff would not fix this
+ * (roughness and breathiness move the same measurement in the same direction by similar amounts),
+ * so it is left as a known, documented confound rather than papered over: a speaker whose voice is
+ * rough but not breathy will read back with some breathiness here. `tension` moves this confidence
+ * less (0.958 to 0.893 across tension 0 to 1) but moves `tiltDb` a lot (see `TILT_ANCHORS`); this
+ * file's measurements don't pull either apart from breathiness or brightness, so `tension` and
+ * `roughness` are not returned as their own dials.
+ */
+const BODY_BREATHINESS_TABLE: readonly [confidence: number, breathiness: number][] = [
+  [0.877, 1],
+  [0.907, 0.9],
+  [0.924, 0.8],
+  [0.938, 0.7],
+  [0.944, 0.6],
+  [0.949, 0.5],
+  [0.953, 0],
+];
+
+/**
+ * Below this `breathConfidence`, body breathiness is reliable enough to return (see the table's
+ * comment above); at or above it, `body.breathiness` is left `undefined` so CHIMERA keeps its own
+ * default (0.15) rather than reporting a clean voice as somewhat breathy. Set at the table's own
+ * flat-band boundary (0.944, the confidence at breathiness 0.6): a plain default-breathiness
+ * render measured 0.9517 (above the cutoff, correctly excluded) and true breathiness 0.8 measured
+ * 0.9232 (below it, correctly included).
+ */
+const BODY_BREATHINESS_RELIABLE_BELOW = 0.944;
+
+/**
+ * Brightness fit: tiltDb = INTERCEPT + SLOPE * brightness, where `tiltDb` is `measureSpectrum`'s
+ * LPC-envelope tilt (3500 Hz over 600 Hz, dB), and INTERCEPT/SLOPE are themselves interpolated by
+ * the already-recovered body blend (see `bodyFromF3`), the same male-to-female-to-child path
+ * `F3_ANCHORS` walks. Measured by rendering Harvard list 1 (10 sentences) at
+ * `body: { ...base, brightness: k }`, k 0, 0.25, 0.5, 0.75 and 1, least squares per base:
+ *   male (`{}`):                     -25.02, -23.06, -19.75, -17.34, -14.89 dB
+ *   female (`{ female: 1 }`):        -31.95, -28.09, -23.13, -19.63, -15.64 dB
+ *   child (`{ female: 1, child: 1 }`): -23.78, -19.18, -14.22, -9.92,  -5.87 dB
+ * A single male-only fit read a female recording's brightness back wrong by up to 0.4 (see the
+ * imitate.ts commit that first added this dial); the slope moves almost as much as the intercept
+ * across bases (10.39 male, 16.43 female, 18.03 child - not "one slope within the noise"), so both
+ * are interpolated, not just the intercept. On held-out Harvard list 2 (pooled), recovered
+ * brightness against this blend-interpolated fit was within 0.13 absolute at every true value
+ * tested: male 0.2/0.5/0.8 -> errors -0.10/-0.04/-0.06 (unchanged from the male-only fit, since a
+ * male blend interpolates to the male anchor exactly); female 0.2/0.5/0.8 -> errors
+ * -0.12/-0.02/-0.05; child 0.2/0.5/0.8 -> errors -0.13/-0.08/-0.12 (the child anchor itself rests
+ * on a less reliable F3 reading, see `F3_ANCHORS`'s comment, so child brightness carries that same
+ * caveat). `fry` and `tension` also move this tilt (tension 0 vs 0.5 moved it about 6 dB in
+ * testing, non-monotonically with `tension`), so a speaker who presses or relaxes their voice away
+ * from this engine's default reads back with a biased brightness regardless of blend.
+ */
+const TILT_ANCHORS = {
+  male: { intercept: -25.208, slope: 10.394 },
+  female: { intercept: -31.905, slope: 16.434 },
+  child: { intercept: -23.607, slope: 18.028 },
+};
+
+/** Interpolates `TILT_ANCHORS` by the already-recovered body blend, along the same
+ * male-to-female-to-child path `bodyFromF3` produces it on. */
+function tiltFit(mix: { female: number; child: number }): { intercept: number; slope: number } {
+  const { male, female, child } = TILT_ANCHORS;
+  if (mix.female <= 0) return male;
+  if (mix.female < 1) {
+    return {
+      intercept: male.intercept + (female.intercept - male.intercept) * mix.female,
+      slope: male.slope + (female.slope - male.slope) * mix.female,
+    };
+  }
+  return {
+    intercept: female.intercept + (child.intercept - female.intercept) * mix.child,
+    slope: female.slope + (child.slope - female.slope) * mix.child,
+  };
+}
+
+/**
  * Estimates a voice profile from a recording. `samples` is mono audio, nominally within -1 to 1;
  * `sampleRate` is its rate in Hz. Throws a `RangeError` when `speakerAgreed` is not exactly
  * `true`, or when the recording is too short or too quiet to estimate a voice from.
@@ -209,7 +306,7 @@ export function profile(samples: Float32Array, sampleRate: number, options: Imit
 
   const { pauseShare, meanPauseSeconds } = pauseStats(active, HOP_MS / 1000);
 
-  const f3Hz = medianF3(samples, sampleRate, active, track);
+  const { f3Hz, tiltDb } = measureSpectrum(samples, sampleRate, active, track);
 
   const measured: Measured = {
     durationSeconds,
@@ -221,6 +318,7 @@ export function profile(samples: Float32Array, sampleRate: number, options: Imit
     meanPauseSeconds,
     f3Hz,
     breathConfidence,
+    tiltDb,
   };
 
   const rate = clamp((nucleiPerSecond - RATE_FIT.intercept) / RATE_FIT.slope, RATE_MIN, RATE_MAX);
@@ -230,8 +328,19 @@ export function profile(samples: Float32Array, sampleRate: number, options: Imit
     PAUSES_MIN,
     PAUSES_MAX,
   );
-  const breath = interpolateBreath(breathConfidence);
-  const body = f3Hz > 0 ? bodyFromF3(f3Hz) : "male";
+  const breath = interpolateBreath(breathConfidence, BREATH_TABLE);
+  const breathiness =
+    breathConfidence < BODY_BREATHINESS_RELIABLE_BELOW
+      ? clamp(interpolateBreath(breathConfidence, BODY_BREATHINESS_TABLE), 0, 1)
+      : undefined;
+  const blend = f3Hz > 0 ? bodyFromF3(f3Hz) : { female: 0, child: 0 };
+  const fit = tiltFit(blend);
+  const brightness = tiltDb !== 0 ? clamp((tiltDb - fit.intercept) / fit.slope, 0, 1) : undefined;
+  const body: Body = {
+    ...blend,
+    ...(breathiness === undefined ? {} : { breathiness }),
+    ...(brightness === undefined ? {} : { brightness }),
+  };
 
   return { body, f0: f0Hz, rate, delivery: { range, breath, pauses }, measured };
 }
@@ -413,8 +522,10 @@ function pauseStats(active: boolean[], hopSeconds: number): { pauseShare: number
 
 // --- breath: table lookup ------------------------------------------------------------------------
 
-function interpolateBreath(confidence: number): number {
-  const table = BREATH_TABLE;
+/** Linear interpolation through a (confidence, dial) table, confidence ascending; clamped to the
+ * table's own ends. Shared by `BREATH_TABLE` (delivery's `breath`) and `BODY_BREATHINESS_TABLE`
+ * (body's `breathiness`): the same measured quantity, two different tables. */
+function interpolateBreath(confidence: number, table: readonly [number, number][]): number {
   const first = table[0] as [number, number];
   const last = table[table.length - 1] as [number, number];
   if (confidence <= first[0]) return first[1];
@@ -507,8 +618,7 @@ function lpcMagnitude(a: number[], hz: number, sampleRate: number): number {
 
 /** The highest LPC-envelope peak between 2000 and 4500 Hz: a proxy for the third formant, the
  * most reliably trackable of the three on this engine (see `F3_ANCHORS`'s comment). */
-function f3InBand(frame: Float64Array, rate: number, order: number): number | undefined {
-  const a = lpc(frame, order);
+function f3InBand(a: number[], rate: number): number | undefined {
   let best: number | undefined;
   let bestMag = -1;
   let previous = lpcMagnitude(a, 2000 - 15, rate);
@@ -525,21 +635,36 @@ function f3InBand(frame: Float64Array, rate: number, order: number): number | un
   return best;
 }
 
-function medianF3(samples: Float32Array, sampleRate: number, active: boolean[], track: PitchPoint[]): number {
+/**
+ * The median F3 (see `f3InBand`) and spectral tilt (the LPC envelope at 3500 Hz over 600 Hz, in
+ * dB: positive is brighter) over confident voiced frames, one LPC fit per frame shared by both so
+ * this stays a single pass. 0 for either when too few frames carried a usable estimate.
+ */
+function measureSpectrum(
+  samples: Float32Array,
+  sampleRate: number,
+  active: boolean[],
+  track: PitchPoint[],
+): { f3Hz: number; tiltDb: number } {
   const { data, rate } = decimate(samples, sampleRate, 10_000);
   const frames = frameSignal(Float32Array.from(data), rate, FRAME_MS, HOP_MS);
   const rmsPerFrame = frames.map((f) => f.rmsDb);
   const noiseFloor = percentile(rmsPerFrame, 5);
   const order = Math.round(rate / 1000) + 4;
   const n = Math.min(frames.length, active.length, track.length);
-  const values: number[] = [];
+  const f3s: number[] = [];
+  const tilts: number[] = [];
   for (let i = 0; i < n; i++) {
     if ((rmsPerFrame[i] as number) < noiseFloor + 20) continue;
     if ((track[i]?.confidence ?? 0) < 0.65) continue;
-    const f3 = f3InBand(Float64Array.from((frames[i] as Frame).samples), rate, order);
-    if (f3 !== undefined) values.push(f3);
+    const a = lpc(Float64Array.from((frames[i] as Frame).samples), order);
+    const f3 = f3InBand(a, rate);
+    if (f3 !== undefined) f3s.push(f3);
+    const lo = lpcMagnitude(a, 600, rate);
+    const hi = lpcMagnitude(a, 3500, rate);
+    if (lo > 0 && hi > 0) tilts.push(20 * Math.log10(hi / lo));
   }
-  return values.length > 0 ? median(values) : 0;
+  return { f3Hz: f3s.length > 0 ? median(f3s) : 0, tiltDb: tilts.length > 0 ? median(tilts) : 0 };
 }
 
 /**
@@ -548,9 +673,9 @@ function medianF3(samples: Float32Array, sampleRate: number, active: boolean[], 
  * between the measured anchors. This is a single size scale, not a full timbre match: see the
  * README's caveat.
  */
-function bodyFromF3(f3Hz: number): Body {
+function bodyFromF3(f3Hz: number): { female: number; child: number } {
   const { male, female, child } = F3_ANCHORS;
-  if (f3Hz <= male) return "male";
+  if (f3Hz <= male) return { female: 0, child: 0 };
   if (f3Hz <= female) {
     const f = (f3Hz - male) / (female - male);
     return { female: f, child: 0 };

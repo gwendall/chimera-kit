@@ -243,4 +243,78 @@ describe("profile", () => {
       }
     });
   });
+
+  describe("body brightness", () => {
+    // TILT_ANCHORS's own comment has the numbers: the fit is interpolated by the recovered body
+    // blend (one shared intercept and slope per base, male/female/child, along the same path
+    // F3_ANCHORS walks), because a male-only fit read a female voice's brightness back wrong by
+    // up to 0.4. Pooled over 10 held-out sentences, recovered brightness was within 0.13 absolute
+    // at every true value tested on every base; 0.15 covers that with a margin.
+    test.each([
+      [0.2, {}],
+      [0.5, {}],
+      [0.8, {}],
+      [0.2, { female: 1 }],
+      [0.5, { female: 1 }],
+      [0.8, { female: 1 }],
+    ] as const)("recovers brightness %d within 0.15 absolute on body %j", async (brightness, base) => {
+      voice = await createVoice({ wasm, dictionary });
+      const { audio, sampleRate } = pooledRecording(voice, HELD_OUT, { body: { ...base, brightness } });
+      const p = profile(audio, sampleRate, { speakerAgreed: true });
+      const recovered = typeof p.body === "object" ? p.body.brightness : undefined;
+      expect(recovered).toBeDefined();
+      expect(Math.abs((recovered as number) - brightness)).toBeLessThan(0.15);
+    });
+  });
+
+  describe("body breathiness", () => {
+    // BODY_BREATHINESS_RELIABLE_BELOW's own comment has the numbers: below that confidence
+    // cutoff, breathiness round-trips within 0.02 at true 0.8 and 1 (0.805, 1.000); at or above
+    // it, body.breathiness is left undefined rather than guessed, because a plain default
+    // recording and a true-0.5 recording measure almost the same confidence (0.9517 vs 0.9484).
+    test("leaves breathiness undefined on a clean, default-breathiness body", async () => {
+      voice = await createVoice({ wasm, dictionary });
+      const { audio, sampleRate } = pooledRecording(voice, HELD_OUT, {});
+      const p = profile(audio, sampleRate, { speakerAgreed: true });
+      const recovered = typeof p.body === "object" ? p.body.breathiness : undefined;
+      expect(recovered).toBeUndefined();
+    });
+
+    test.each([0.8, 1])(
+      "recovers breathiness %d within 0.05 absolute on a male body",
+      async (breathiness) => {
+        voice = await createVoice({ wasm, dictionary });
+        const { audio, sampleRate } = pooledRecording(voice, HELD_OUT, { body: { breathiness } });
+        const p = profile(audio, sampleRate, { speakerAgreed: true });
+        const recovered = typeof p.body === "object" ? p.body.breathiness : undefined;
+        expect(recovered).toBeDefined();
+        expect(Math.abs((recovered as number) - breathiness)).toBeLessThan(0.05);
+      },
+    );
+
+    test("tells a clearly breathy body from a clean one", async () => {
+      voice = await createVoice({ wasm, dictionary });
+      const breathy = pooledRecording(voice, HELD_OUT, { body: { breathiness: 1 } });
+      const clean = pooledRecording(voice, HELD_OUT, { body: { breathiness: 0 } });
+      const pBreathy = profile(breathy.audio, breathy.sampleRate, { speakerAgreed: true });
+      const pClean = profile(clean.audio, clean.sampleRate, { speakerAgreed: true });
+      const rBreathy = typeof pBreathy.body === "object" ? pBreathy.body.breathiness : undefined;
+      const rClean = typeof pClean.body === "object" ? pClean.body.breathiness : undefined;
+      expect(rBreathy as number).toBeDefined();
+      expect(rClean).toBeUndefined();
+    });
+
+    // A rough-but-clean voice is misread as breathy here: roughness and breathiness lower the
+    // same periodicity confidence by similar amounts (see BODY_BREATHINESS_TABLE's comment for
+    // the numbers), so this is documented rather than asserted away. This test pins today's
+    // actual (wrong) reading so a future change to the gating or the measurement notices it.
+    test("documents that a rough but clean voice reads as breathy (known confound)", async () => {
+      voice = await createVoice({ wasm, dictionary });
+      const { audio, sampleRate } = pooledRecording(voice, HELD_OUT, { body: { roughness: 1 } });
+      const p = profile(audio, sampleRate, { speakerAgreed: true });
+      const recovered = typeof p.body === "object" ? p.body.breathiness : undefined;
+      expect(recovered).toBeDefined();
+      expect(recovered as number).toBeGreaterThan(0.5);
+    });
+  });
 });
