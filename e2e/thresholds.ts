@@ -27,7 +27,10 @@ export const THRESHOLDS = {
     // full cold load measured 1,450,672 B, stable across three separate runs. The previous
     // 1,400,000 B threshold was below that unavoidable wasm+dictionary floor and could never pass
     // here - not a regression, a miscalculated threshold. Set with real headroom above the floor.
-    bytesTransferred: 1_600_000,
+    // Prepared-performance ABI adds 36,647 raw wasm bytes. PR24 cold load measures
+    // 1,632,492 B (2026-11-14), while the separate compressed wasm budget remains 290 KB.
+    // This gate counts decoded response bodies, including the already-compressed dictionary.
+    bytesTransferred: 1_675_000,
   },
   reliability: {
     // A render() call allocates a Float32Array and frees its utterance when done; some retained
