@@ -102,7 +102,11 @@ test("unvisited seeks load an integrity-bound physical checkpoint and continue e
   }
   const hash = Bun.CryptoHasher.hash("sha256", state, "hex");
   const pool = await createPerformancePool([
-    { id: "a", performance, checkpoints: [{ sample: 2400, source: state, sha256: hash }] },
+    {
+      id: "a",
+      performance,
+      checkpoints: [{ sample: 2400, source: Bun.gzipSync(new Uint8Array(state)), sha256: hash }],
+    },
   ]);
   try {
     expect((await pool.seek("a", 2400)).sample).toBe(2400);
