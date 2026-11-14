@@ -7,7 +7,7 @@
  */
 
 /** Must match `ABI_VERSION` in `abi.rs`. */
-const ABI_VERSION = 5;
+const ABI_VERSION = 6;
 /** Must match `CHUNK` in `abi.rs`. */
 const MAX_CHUNK = 4096;
 
@@ -379,7 +379,7 @@ export class ChimeraLiveEngine {
 /** Fields before each array, in the order `live::pack_telemetry` writes them. */
 const TELEMETRY_HEADER = 19;
 
-function parseTelemetry(data: Float32Array): LiveTelemetry {
+export function parseTelemetry(data: Float32Array): LiveTelemetry {
   let at = TELEMETRY_HEADER;
   const take = (n: number): Float32Array => {
     const slice = data.slice(at, at + n);
