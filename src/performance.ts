@@ -7,6 +7,7 @@ import {
   parseTelemetry,
   type SourceValues,
 } from "./engines/chimera-live.js";
+import { validatePhysical } from "./physical-validation.js";
 
 export type { Body, LiveTelemetry, SourceValues };
 
@@ -37,6 +38,8 @@ export interface PhysicalPerformance {
   body?: Body;
   source?: SourceValues;
   gestures: PhysicalGesture[];
+  /** Sample-timed source changes, preserving one physical voice and its acoustic state. */
+  sourceEvents?: { at: number; source: SourceValues }[];
 }
 
 export interface PerformanceRenderer {
@@ -84,6 +87,7 @@ export async function createPerformanceRenderer(
   performance: PhysicalPerformance,
   options: { wasm?: Source; module?: WebAssembly.Module } = {},
 ): Promise<PerformanceRenderer> {
+  validatePhysical(performance);
   const module = options.module ?? (await compilePerformance(options.wasm));
   const instance = await WebAssembly.instantiate(module, {});
   const x = instance.exports as unknown as Exports;

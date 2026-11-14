@@ -6,6 +6,13 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SourceEvent {
+    pub at: f64,
+    pub source: SourcePatch,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Performance {
     pub version: u32,
     pub sample_rate: u32,
@@ -15,6 +22,8 @@ pub struct Performance {
     #[serde(default)]
     pub source: SourcePatch,
     pub gestures: Vec<Gesture>,
+    #[serde(default)]
+    pub source_events: Vec<SourceEvent>,
 }
 
 /// Preserve original summation order even when activation times are out of order. The final
@@ -97,6 +106,7 @@ struct Checkpoint {
     next_score: usize,
     next: usize,
     started: bool,
+    next_source: usize,
 }
 
 pub struct Renderer {
@@ -106,6 +116,8 @@ pub struct Renderer {
     pub position: usize,
     next_score: usize,
     checkpoints: Vec<Checkpoint>,
+    source_events: Vec<SourceEvent>,
+    next_source: usize,
 }
 
 impl Renderer {
@@ -116,6 +128,19 @@ impl Renderer {
         }
         if !input.duration.is_finite() || input.duration <= 0.0 || input.duration > 3600.0 {
             return Err("performance duration must be in (0, 3600]".into());
+        }
+        let mut previous = -1.0;
+        for event in &input.source_events {
+            if !event.at.is_finite()
+                || event.at < 0.0
+                || event.at > input.duration
+                || event.at <= previous
+            {
+                return Err(
+                    "source events must have increasing times within the performance".into(),
+                );
+            }
+            previous = event.at;
         }
         for g in &input.gestures {
             if ![g.t0, g.t1, g.ramp_in, g.ramp_out, g.strength]
@@ -142,6 +167,8 @@ impl Renderer {
             position: 0,
             next_score: 0,
             checkpoints: Vec::new(),
+            source_events: input.source_events,
+            next_source: 0,
         };
         renderer.checkpoint();
         Ok(renderer)
@@ -159,6 +186,7 @@ impl Renderer {
             next_score: self.next_score,
             next: self.schedule.next,
             started: self.schedule.started,
+            next_source: self.next_source,
         });
         self.checkpoints.sort_unstable_by_key(|c| c.position);
         if self.checkpoints.len() > 65 {
@@ -186,6 +214,7 @@ impl Renderer {
         self.next_score = c.next_score;
         self.schedule.next = c.next;
         self.schedule.started = c.started;
+        self.next_source = c.next_source;
         self.position
     }
 
@@ -193,6 +222,20 @@ impl Renderer {
         let n = out.len().min(self.samples - self.position);
         let mut written = 0;
         while written < n {
+            while let Some(event) = self.source_events.get(self.next_source) {
+                if (event.at * SAMPLE_RATE).round() as usize > self.position {
+                    break;
+                }
+                self.voice.set_source(&event.source);
+                self.next_source += 1;
+            }
+            let next_source = self
+                .source_events
+                .get(self.next_source)
+                .map_or(self.samples, |event| {
+                    (event.at * SAMPLE_RATE).round() as usize
+                });
+
             if self.position == self.next_score {
                 self.next_score = (self.position + SAMPLE_RATE as usize).min(self.samples);
                 self.schedule
@@ -200,6 +243,7 @@ impl Renderer {
             }
             let count = (n - written)
                 .min(self.next_score - self.position)
+                .min(next_source - self.position)
                 .min(BLOCK);
             self.voice.render(&mut out[written..written + count]);
             self.position += count;
@@ -224,6 +268,7 @@ mod tests {
                 drift: Some(0.0),
                 ..Default::default()
             },
+            source_events: Vec::new(),
             gestures: vec![
                 Gesture::new(
                     0.0,
@@ -268,6 +313,36 @@ mod tests {
             }
             assert_eq!(actual, expected);
         }
+    }
+
+    #[test]
+    fn source_events_change_on_the_sample_clock_and_survive_restore() {
+        let mut p = input();
+        let event = SourcePatch {
+            pressure: Some(5.7),
+            tension: Some(0.8),
+            ..Default::default()
+        };
+        p.source_events.push(SourceEvent {
+            at: 3841.0 / SAMPLE_RATE,
+            source: event,
+        });
+        let mut direct = HumanVoice::new(SAMPLE_RATE, p.body.anatomy(), OVERSAMPLE);
+        direct.set_source(&p.source);
+        direct.schedule(&p.gestures);
+        let mut expected = vec![0.0; 10000];
+        direct.render(&mut expected[..3841]);
+        direct.set_source(&event);
+        direct.render(&mut expected[3841..]);
+        let mut r = Renderer::new(p).unwrap();
+        let mut out = vec![0.0; expected.len()];
+        r.render(&mut out[..3000]).unwrap();
+        r.checkpoint();
+        r.render(&mut out[3000..]).unwrap();
+        assert_eq!(out, expected);
+        assert_eq!(r.restore(3000), 3000);
+        r.render(&mut out[3000..]).unwrap();
+        assert_eq!(out, expected);
     }
 
     #[test]

@@ -90,3 +90,9 @@ physical history, then resumes if previously playing. `state.preparing` exposes 
 Call `free()` when leaving the concert; it clears the timer, sources, Workers and owned context.
 A caller-provided context remains owned by the caller. The CI ensemble scenario checks six
 real browser voices, heard telemetry, zero late blocks, pause stability and exact seek time.
+
+`sourceEvents: [{ at, source }]` changes pressure, tension and other source controls at the
+rounded native sample for `at` seconds. It keeps the same airway and vibration state, and
+checkpoints include its event cursor. Times must increase within duration. Gestures still
+carry pitch, articulation and breath timing independently. Non-finite controls and unknown
+source/target names fail before JSON encoding, preventing NaN-to-null or silently ignored keys.
