@@ -10,6 +10,7 @@ type Probe = typeof window & {
   playError: string | null;
   peak: number;
   stopMeter(): void;
+  sharedPlayTask: boolean;
 };
 const ORIGIN = "https://chimera-kit.ensemble";
 export const scenario: Scenario = {
@@ -79,7 +80,9 @@ export const scenario: Scenario = {
               meter.disconnect();
             };
             document.querySelector("button")?.addEventListener("click", () => {
-              void ensemble.play().catch((error: Error) => {
+              const first = ensemble.play();
+              probe.sharedPlayTask = first === ensemble.play();
+              void first.catch((error: Error) => {
                 probe.playError = error.message;
               });
             });
@@ -129,11 +132,13 @@ export const scenario: Scenario = {
               telemetryLag: heard - physical,
               peak: p.peak,
               playError: p.playError,
+              sharedPlayTask: p.sharedPlayTask,
             };
           });
           const add = (metric: string, value: number, threshold: number, pass: boolean) =>
             rows.push({ name: `ensemble.${name}.${metric}`, value, unit: "", threshold, pass });
           add("lateBlocks", result.underruns, 0, result.underruns === 0);
+          add("duplicateStarts", result.sharedPlayTask ? 0 : 1, 0, result.sharedPlayTask);
           add("pauseDrift", result.drift, 0, result.drift === 0);
           add("seekError", result.seekError, 0.000001, result.seekError < 0.000001);
           add(
