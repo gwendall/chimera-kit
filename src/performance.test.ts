@@ -1,7 +1,10 @@
 import { expect, test } from "bun:test";
 import { createPerformanceRenderer, type PhysicalPerformance } from "../dist/performance.js";
 
-const readCopy = (renderer: Awaited<ReturnType<typeof createPerformanceRenderer>>, samples: number): Float32Array => {
+const readCopy = (
+  renderer: Awaited<ReturnType<typeof createPerformanceRenderer>>,
+  samples: number,
+): Float32Array => {
   const data = renderer.next(samples);
   if (!data) throw new Error("missing physical reference samples");
   return data.slice();
