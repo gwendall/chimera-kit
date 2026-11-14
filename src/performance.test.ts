@@ -68,3 +68,33 @@ test("checkpoints restore the exact acoustic history without copying or resettin
     r.free();
   }
 });
+
+test("physical data rejects controls that JSON or native target parsing would silently discard", async () => {
+  await expect(createPerformanceRenderer({ ...performance, source: { f0: NaN } })).rejects.toThrow("finite");
+  await expect(
+    createPerformanceRenderer({ ...performance, source: { typo: 1 } } as unknown as PhysicalPerformance),
+  ).rejects.toThrow("unknown physical source");
+  await expect(
+    createPerformanceRenderer({
+      ...performance,
+      gestures: [{ ...performance.gestures[0], targets: { typo: 1 } }],
+    } as unknown as PhysicalPerformance),
+  ).rejects.toThrow("unknown physical target");
+});
+
+test("timed source controls preserve continuous physical state across seek", async () => {
+  const r = await createPerformanceRenderer({
+    ...performance,
+    sourceEvents: [{ at: 0.08, source: { pressure: 5.5, tension: 0.8 } }],
+  });
+  try {
+    r.next(3000);
+    r.checkpoint();
+    const expected = r.next(4000)?.slice();
+    r.next(4000);
+    expect(r.restore(3000)).toBe(3000);
+    expect(r.next(4000)).toEqual(expected);
+  } finally {
+    r.free();
+  }
+});
