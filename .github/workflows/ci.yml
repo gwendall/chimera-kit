@@ -30,7 +30,7 @@ jobs:
       - run: bun scripts/browser-check.ts chromium
         env:
           BROWSER_CHANNEL: chrome
-      - run: bun run e2e:smoke -- --no-speed --json e2e/out/report.json
+      - run: bun run e2e:smoke -- --browser chromium --no-speed --json e2e/out/report.json
         env:
           BROWSER_CHANNEL: chrome
       - name: Pack the qualified npm artifact

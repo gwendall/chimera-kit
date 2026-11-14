@@ -66,7 +66,11 @@
       "types": "./dist/performance-pool.d.ts",
       "import": "./dist/performance-pool.js"
     },
-    "./performance-worker.js": "./dist/performance-worker.js"
+    "./performance-worker.js": "./dist/performance-worker.js",
+    "./ensemble": {
+      "types": "./dist/ensemble.d.ts",
+      "import": "./dist/ensemble.js"
+    }
   },
   "files": [
     "dist",
@@ -77,7 +81,7 @@
   },
   "scripts": {
     "build:wasm": "cargo build -p intone-chimera -p intone-creatures --release --target wasm32-unknown-unknown && mkdir -p dist && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_chimera.wasm -o dist/chimera.wasm && wasm-opt -O3 --enable-bulk-memory --enable-mutable-globals --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue target/wasm32-unknown-unknown/release/intone_creatures.wasm -o dist/creatures.wasm",
-    "build:js": "bun scripts/clean-dist.ts && bun build src/index.ts src/worker.ts src/live.ts src/creatures.ts src/imitate.ts src/tools.ts src/singing.ts src/performance.ts src/performance-pool.ts src/performance-worker.ts --root src --outdir dist --format esm --target browser --minify --splitting && bun build src/worklet-live.ts --root src --outdir dist --format esm --target browser --minify && tsc -p tsconfig.build.json",
+    "build:js": "bun scripts/clean-dist.ts && bun build src/index.ts src/worker.ts src/live.ts src/creatures.ts src/imitate.ts src/tools.ts src/singing.ts src/performance.ts src/performance-pool.ts src/performance-worker.ts src/ensemble.ts --root src --outdir dist --format esm --target browser --minify --splitting && bun build src/worklet-live.ts --root src --outdir dist --format esm --target browser --minify && tsc -p tsconfig.build.json",
     "build": "bun run build:wasm && bun run build:js && cp public/data/cmudict.txt.gz dist/",
     "test": "bun run build && cargo test --workspace && bun test --timeout 30000 src eval",
     "check:browser": "bun scripts/browser-check.ts",

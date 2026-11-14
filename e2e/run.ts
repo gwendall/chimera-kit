@@ -143,6 +143,7 @@ async function main() {
   const modules = await Promise.all(
     [
       "./scenarios/load.ts",
+      "./scenarios/ensemble.ts",
       "./scenarios/reliability.ts",
       "./scenarios/hostile.ts",
       "./scenarios/polyphony.ts",
