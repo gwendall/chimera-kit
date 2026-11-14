@@ -1,6 +1,11 @@
 /** Compiled physical performances. No dictionary, replanning, gain correction or voice resets. */
 import type { Body } from "./engine.js";
-import { readBytes, type Source } from "./engines/chimera.js";
+import type { Source } from "./engines/chimera.js";
+import { compilePerformance, performanceEngineId } from "./engines/performance-module.js";
+import { exportState, importState, type StateIdentity } from "./performance-state.js";
+
+export { compilePerformance } from "./engines/performance-module.js";
+
 import {
   type ArticValues,
   type LiveTelemetry,
@@ -52,6 +57,8 @@ export interface PerformanceRenderer {
   telemetry(): LiveTelemetry;
   /** Save a bounded physical checkpoint between blocks, for subsequent seeking. */
   checkpoint(): void;
+  /** Export a portable memory delta when captureState was enabled at creation. */
+  exportState(): Promise<Uint8Array>;
   /** Restore at or before sample; render the remaining interval to seek exactly. */
   restore(sample: number): number;
   /** Idempotent. All other methods throw after freeing. */
@@ -77,15 +84,15 @@ interface Exports {
   ic_performance_telemetry_len(h: number): number;
 }
 
-/** Compile once and share the module across a bounded Worker pool. */
-export async function compilePerformance(wasm?: Source): Promise<WebAssembly.Module> {
-  const bytes = await readBytes(wasm ?? new URL("./chimera.wasm", import.meta.url));
-  return WebAssembly.compile(bytes as BufferSource);
-}
-
 export async function createPerformanceRenderer(
   performance: PhysicalPerformance,
-  options: { wasm?: Source; module?: WebAssembly.Module } = {},
+  options: {
+    wasm?: Source;
+    module?: WebAssembly.Module;
+    engineId?: string;
+    captureState?: boolean;
+    state?: Uint8Array;
+  } = {},
 ): Promise<PerformanceRenderer> {
   validatePhysical(performance);
   const module = options.module ?? (await compilePerformance(options.wasm));
@@ -113,7 +120,31 @@ export async function createPerformanceRenderer(
   } finally {
     x.ic_free(pointer, bytes.length);
   }
-  let position = 0,
+  let base: Uint8Array | null = null,
+    identity: StateIdentity | null = null;
+  const knownId = performanceEngineId(module),
+    engineId = knownId ?? options.engineId;
+  if (knownId && options.engineId && options.engineId !== knownId) {
+    x.ic_performance_free(handle);
+    x.ic_speaker_free(speaker);
+    throw new Error("chimera-kit: module identity mismatch");
+  }
+  let restored = 0;
+  try {
+    if (options.captureState || options.state) {
+      if (!engineId) throw new Error("chimera-kit: transferred modules require engineId for portable state");
+      const initial = new Uint8Array(x.memory.buffer).slice();
+      const baseHash = new Uint8Array(await crypto.subtle.digest("SHA-256", initial));
+      identity = { engineId, baseHash, speaker, handle, samples: Math.round(performance.duration * 48000) };
+      if (options.captureState) base = initial;
+      if (options.state) restored = await importState(x.memory, options.state, identity);
+    }
+  } catch (error) {
+    x.ic_performance_free(handle);
+    x.ic_speaker_free(speaker);
+    throw error;
+  }
+  let position = restored,
     freed = false;
   const alive = () => {
     if (freed) throw new Error("chimera-kit: performance renderer was freed");
@@ -136,6 +167,11 @@ export async function createPerformanceRenderer(
       alive();
       const at = x.ic_performance_telemetry(handle);
       return parseTelemetry(new Float32Array(x.memory.buffer, at, x.ic_performance_telemetry_len(handle)));
+    },
+    async exportState() {
+      alive();
+      if (!base || !identity) throw new Error("chimera-kit: captureState was not enabled");
+      return exportState(new Uint8Array(x.memory.buffer), base, identity, position);
     },
     checkpoint() {
       alive();
