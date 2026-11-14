@@ -22,8 +22,10 @@ async function captured() {
   const r = await createPerformanceRenderer(input, { captureState: true });
   try {
     for (let i = 0; i < 8; i++) r.next(3000);
-    const state = await r.exportState(),
-      expected = r.next(4096)?.slice();
+    const state = await r.exportState();
+    const data = r.next(4096);
+    if (!data) throw new Error("missing reference continuation");
+    const expected = data.slice();
     return { state, expected };
   } finally {
     r.free();
