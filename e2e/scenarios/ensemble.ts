@@ -5,7 +5,12 @@ import { withBrowser } from "../lib/browsers.ts";
 import { serveDir } from "../lib/serve.ts";
 import type { Measurement, Scenario } from "../lib/types.ts";
 
-type Probe = typeof window & { ensemble: Ensemble; playError: string | null; peak: number; stopMeter(): void };
+type Probe = typeof window & {
+  ensemble: Ensemble;
+  playError: string | null;
+  peak: number;
+  stopMeter(): void;
+};
 const ORIGIN = "https://chimera-kit.ensemble";
 export const scenario: Scenario = {
   id: "ensemble",
