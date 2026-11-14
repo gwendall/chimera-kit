@@ -69,3 +69,24 @@ The pool saves checkpoints every five generated seconds. `pool.seek(id, sample, 
 restores and advances on the owning Worker, yielding during long forward preparation. Its
 progress uses rendered sample positions. Reads and seeks for the same voice are mutually
 exclusive. A slow but progressing seek keeps its request alive; a stalled Worker times out.
+
+## One ensemble transport
+
+`createEnsemble(parts, options)` from `chimera-kit/ensemble` adds a common audible transport to
+the pool. All parts declare the same duration. `play`, `pause`, `seek`, `time`, `state` and
+`subscribe` control it; `outputs` exposes one independently routed GainNode per part. The
+browser synthesizes samples in Workers, then schedules bounded native AudioBuffers on one
+AudioContext clock. Its audio device handles sample-rate conversion. No file-audio input is used.
+
+Two seconds of synthesis lookahead is the default, bounded to eight; recent audio and physical
+frames are retained for two seconds behind playback. `telemetry(id)` selects the latest
+physical frame at or before the audible clock, rather than showing an ahead-of-time pose.
+The context's output timestamp accounts for device latency when available. `state.underruns`
+counts blocks that missed their scheduling deadline; it must remain zero for qualification.
+An over-capacity device can miss deadlines: the counter does not imply every device is fast enough.
+
+Call `play()` from a user gesture and handle its promise. A seek pauses all parts, restores
+physical history, then resumes if previously playing. `state.preparing` exposes this work.
+Call `free()` when leaving the concert; it clears the timer, sources, Workers and owned context.
+A caller-provided context remains owned by the caller. The CI ensemble scenario checks six
+real browser voices, heard telemetry, zero late blocks, pause stability and exact seek time.
