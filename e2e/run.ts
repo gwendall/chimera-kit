@@ -144,6 +144,7 @@ async function main() {
     [
       "./scenarios/load.ts",
       "./scenarios/ensemble.ts",
+      "./scenarios/physical-state.ts",
       "./scenarios/reliability.ts",
       "./scenarios/hostile.ts",
       "./scenarios/polyphony.ts",

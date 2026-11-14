@@ -108,3 +108,23 @@ native voices. Assign `workerGroup` to place mutually exclusive phrases of one p
 the same Worker. Worker count is bounded by group count and the requested core budget.
 `pool.release(id)` drops a native instance while retaining its plan; reading it again starts
 at sample zero. This is an explicit phrase lifecycle operation, not a chunk boundary reset.
+
+## Prepared physical checkpoints
+
+For fast first-time seeks, enable `captureState` in `createPerformanceRenderer` and await
+`renderer.exportState()` at reviewed sample positions. The result contains changed memory pages
+against the fresh deterministic instance, rather than duplicating the static gesture plan.
+`createPerformanceRenderer(performance, { state })` restores it before rendering begins.
+The next samples are identical to an uninterrupted renderer, including waves and random state.
+
+States are application data tied to the exact wasm SHA256, input/base-memory hash, ABI, sample
+count and native handles. Bounds, page order and a whole-payload SHA256 are checked before any
+memory changes. Regenerate states when the engine or performance changes. Compilation records
+the module identity; a caller supplying an already-transferred `module` must also pass its
+verified `engineId` when importing or exporting state. Store checkpoints outside the package,
+with the prepared performance's own integrity manifest.
+
+Capture retains a base-memory copy and is intended for preparation. Normal playback does not
+retain that copy. Use the direct renderer when preparing portable states; adding many local
+`checkpoint()` clones would unnecessarily enlarge exported memory differences. The browser
+regression restores a Bun-generated state and requires bit-identical continuation samples.
