@@ -124,7 +124,9 @@ export async function runEnsembleProbe(ctx: ScenarioContext, sequence = false): 
               playError: p.playError,
             };
           });
-          throw new Error(`Ensemble startup did not settle: ${JSON.stringify(diagnostic)}; ${String(error)}`);
+          throw new Error(
+            `Ensemble ${name} startup did not settle: ${JSON.stringify(diagnostic)}; ${String(error)}`,
+          );
         }
         await page.waitForTimeout(1700);
         const result = await page.evaluate(async () => {
