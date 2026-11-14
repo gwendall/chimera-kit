@@ -13,8 +13,26 @@ loading, workers, playback, interruption and streaming answers.
 Every sound comes from a simulated airway. You can control each word's timing, pitch, breath and
 articulation through plain-data scores. It sounds synthetic, and currently speaks English.
 
-> **Version 0.1.** The API may change before 1.0. Synthesis is local, English-only and deliberately
+> **Version 0.2.** The API may change before 1.0. Synthesis is local, English-only and deliberately
 > synthetic. See the documentation for supported browsers and setup.
+
+## Prepared performances and ensembles
+
+Version 0.2 adds native gesture playback, bounded parallel voices, portable physical checkpoints
+and phrase-owned sequences. These interfaces preserve Chimera articulation and acoustic history;
+they do not load recorded vocals or expose alternate synthesis providers.
+
+| Entry                          | Use                                                             |
+| ------------------------------ | --------------------------------------------------------------- |
+| `chimera-kit/performance`      | Render prepared native gestures and export exact physical state |
+| `chimera-kit/performance-pool` | Keep independent voices on a bounded Worker pool                |
+| `chimera-kit/ensemble`         | Play continuous parts on one audible clock                      |
+| `chimera-kit/sequence`         | Place nonoverlapping native takes with exact source ownership   |
+
+See [prepared performances](docs/performance.md) for source settings, initial telemetry, gzip
+checkpoints, sample clocks and device limits. For a qualified GitHub tarball when npm publication
+is unavailable, follow the [release procedure](docs/npm-release.md). A version bump alone does not
+mean that either distribution channel has been published.
 
 ## Usage
 
