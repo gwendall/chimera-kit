@@ -102,3 +102,9 @@ Interpolation is linear, with endpoint holds, multiplied by the part's static ga
 reschedules the curve from the sought position; heard telemetry scales output RMS by the same
 curve. Native pressure remains a separate physical control. The transport owns output-node
 gain automation; route the node to spatial/capture buses rather than overriding its AudioParam.
+
+Pool plans are stored as data until their first read or seek; dormant phrases do not allocate
+native voices. Assign `workerGroup` to place mutually exclusive phrases of one performer on
+the same Worker. Worker count is bounded by group count and the requested core budget.
+`pool.release(id)` drops a native instance while retaining its plan; reading it again starts
+at sample zero. This is an explicit phrase lifecycle operation, not a chunk boundary reset.

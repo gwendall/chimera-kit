@@ -60,3 +60,26 @@ test("worker seek replays exact physical history and reports the requested sampl
     pool.free();
   }
 });
+
+test("inactive phrases share performer workers and release physical instances without losing their data", async () => {
+  const pool = await createPerformancePool(
+    [
+      { id: "first", workerGroup: "singer", performance },
+      { id: "second", workerGroup: "singer", performance },
+      { id: "bass", workerGroup: "bassist", performance },
+    ],
+    { workers: 8 },
+  );
+  try {
+    expect(pool.workers).toBe(2);
+    const first = await pool.read("first");
+    await pool.release("first");
+    expect((await pool.read("first")).audio).toEqual(first.audio);
+    expect((await pool.read("second")).audio).toEqual(first.audio);
+    await pool.release("first");
+    await pool.release("first");
+    await expect(pool.release("unknown")).rejects.toThrow("unknown");
+  } finally {
+    pool.free();
+  }
+});

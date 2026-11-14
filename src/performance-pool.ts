@@ -16,6 +16,8 @@ export interface PerformanceBlock {
 export interface PerformancePart {
   id: string;
   performance: PhysicalPerformance;
+  /** Keep mutually exclusive phrases of one performer on the same Worker. */
+  workerGroup?: string;
 }
 export interface PerformancePool {
   readonly workers: number;
@@ -23,6 +25,8 @@ export interface PerformancePool {
   read(id: string, samples?: number): Promise<PerformanceBlock>;
   /** Exact seek, restoring prior acoustic checkpoints before forward synthesis. */
   seek(id: string, sample: number, progress?: (sample: number) => void): Promise<PerformanceFrame>;
+  /** Release this native instance; a subsequent read starts its plan again at zero. */
+  release(id: string): Promise<void>;
   free(): void;
 }
 export interface PerformancePoolOptions {
@@ -47,9 +51,11 @@ export async function createPerformancePool(
   }
   if (parts.some((p) => !p.id)) throw new Error("chimera-kit: empty performance part ID");
   const available = Math.max(1, (globalThis.navigator?.hardwareConcurrency ?? 4) - 2);
-  const count = Math.min(parts.length, options.workers ?? Math.min(8, available));
-  if (!Number.isInteger(count) || count < 1 || count > 16)
+  const groups = [...new Set(parts.map((p) => p.workerGroup ?? p.id))];
+  const budget = options.workers ?? Math.min(8, available);
+  if (!Number.isInteger(budget) || budget < 1 || budget > 16)
     throw new Error("chimera-kit: workers must be 1..16");
+  const count = Math.min(groups.length, budget);
   const module = await compilePerformance(options.wasm);
   const workers: Worker[] = [];
   const pending = new Map<
@@ -121,7 +127,7 @@ export async function createPerformancePool(
     }
     await Promise.all(
       workers.map((w, i) => {
-        const assigned = parts.filter((_, n) => n % count === i);
+        const assigned = parts.filter((p) => groups.indexOf(p.workerGroup ?? p.id) % count === i);
         for (const p of assigned) owners.set(p.id, w);
         return rpc(w, { type: "init", module, parts: assigned });
       }),
@@ -160,6 +166,17 @@ export async function createPerformancePool(
         const frame = result?.frames[0];
         if (!frame) throw new Error("chimera-kit: missing seek state");
         return frame;
+      } finally {
+        reading.delete(id);
+      }
+    },
+    async release(id) {
+      const owner = owners.get(id);
+      if (!owner) throw new Error(`chimera-kit: unknown performance part ${id}`);
+      if (reading.has(id)) throw new Error(`chimera-kit: read already pending for ${id}`);
+      reading.add(id);
+      try {
+        await rpc(owner, { type: "release", id });
       } finally {
         reading.delete(id);
       }
