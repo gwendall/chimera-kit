@@ -105,7 +105,7 @@ export const scenario: Scenario = {
               };
             });
             throw new Error(
-              `Ensemble startup did not settle: ${JSON.stringify(diagnostic)}; ${String(error)}`,
+              `Ensemble ${name} startup did not settle: ${JSON.stringify(diagnostic)}; ${String(error)}`,
             );
           }
           await page.waitForTimeout(1700);
