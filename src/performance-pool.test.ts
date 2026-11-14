@@ -83,3 +83,39 @@ test("inactive phrases share performer workers and release physical instances wi
     pool.free();
   }
 });
+
+test("unvisited seeks load an integrity-bound physical checkpoint and continue exactly", async () => {
+  const r = await createPerformanceRenderer(performance, { captureState: true });
+  let state: Uint8Array, expected: Float32Array;
+  try {
+    r.next(2400);
+    state = await r.exportState();
+    expected = new Float32Array(4800);
+    const first = r.next(4096);
+    if (!first) throw new Error("missing reference");
+    expected.set(first);
+    const tail = r.next(704);
+    if (!tail) throw new Error("missing reference tail");
+    expected.set(tail, 4096);
+  } finally {
+    r.free();
+  }
+  const hash = Bun.CryptoHasher.hash("sha256", state, "hex");
+  const pool = await createPerformancePool([
+    { id: "a", performance, checkpoints: [{ sample: 2400, source: state, sha256: hash }] },
+  ]);
+  try {
+    expect((await pool.seek("a", 2400)).sample).toBe(2400);
+    expect((await pool.read("a")).audio).toEqual(expected);
+  } finally {
+    pool.free();
+  }
+  const invalid = await createPerformancePool([
+    { id: "a", performance, checkpoints: [{ sample: 2400, source: state, sha256: "0".repeat(64) }] },
+  ]);
+  try {
+    await expect(invalid.seek("a", 2400)).rejects.toThrow("integrity");
+  } finally {
+    invalid.free();
+  }
+});
