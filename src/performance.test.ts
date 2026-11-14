@@ -48,3 +48,23 @@ test("prepared performance rejects incompatible clocks and invalid chunks", asyn
     r.free();
   }
 });
+
+test("checkpoints restore the exact acoustic history without copying or resetting the plan", async () => {
+  const r = await createPerformanceRenderer(performance);
+  try {
+    r.next(4000);
+    r.checkpoint();
+    const expected = r.next(4000)?.slice();
+    r.next(4000);
+    expect(r.restore(4000)).toBe(4000);
+    expect(r.next(4000)).toEqual(expected);
+    expect(r.restore(1000)).toBe(0);
+    r.next(1000);
+    const first = r.next(1000)?.slice();
+    expect(r.restore(1000)).toBe(0);
+    r.next(1000);
+    expect(r.next(1000)).toEqual(first);
+  } finally {
+    r.free();
+  }
+});

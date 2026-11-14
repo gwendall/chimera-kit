@@ -47,6 +47,10 @@ export interface PerformanceRenderer {
   next(max?: number): Float32Array | null;
   /** Physical state at position/sampleRate. Consumers must align it with heard audio. */
   telemetry(): LiveTelemetry;
+  /** Save a bounded physical checkpoint between blocks, for subsequent seeking. */
+  checkpoint(): void;
+  /** Restore at or before sample; render the remaining interval to seek exactly. */
+  restore(sample: number): number;
   /** Idempotent. All other methods throw after freeing. */
   free(): void;
 }
@@ -62,6 +66,8 @@ interface Exports {
   ic_speaker_error_len(s: number): number;
   ic_performance_new(s: number, json: number, len: number): number;
   ic_performance_free(h: number): void;
+  ic_performance_checkpoint(h: number): void;
+  ic_performance_restore(h: number, sample: number): number;
   ic_performance_render(s: number, h: number, max: number): number;
   ic_performance_buffer(h: number): number;
   ic_performance_telemetry(h: number): number;
@@ -81,8 +87,8 @@ export async function createPerformanceRenderer(
   const module = options.module ?? (await compilePerformance(options.wasm));
   const instance = await WebAssembly.instantiate(module, {});
   const x = instance.exports as unknown as Exports;
-  if (x.ic_abi_version() !== 6)
-    throw new Error(`chimera-kit: performance requires ABI 6, got ${x.ic_abi_version()}`);
+  if (x.ic_abi_version() !== 7)
+    throw new Error(`chimera-kit: performance requires ABI 7, got ${x.ic_abi_version()}`);
   const bytes = new TextEncoder().encode(JSON.stringify(performance));
   const speaker = x.ic_speaker_new();
   const error = () =>
@@ -126,6 +132,17 @@ export async function createPerformanceRenderer(
       alive();
       const at = x.ic_performance_telemetry(handle);
       return parseTelemetry(new Float32Array(x.memory.buffer, at, x.ic_performance_telemetry_len(handle)));
+    },
+    checkpoint() {
+      alive();
+      x.ic_performance_checkpoint(handle);
+    },
+    restore(sample) {
+      alive();
+      if (!Number.isInteger(sample) || sample < 0 || sample > Math.round(performance.duration * 48000))
+        throw new Error("chimera-kit: restore sample is out of range");
+      position = x.ic_performance_restore(handle, sample);
+      return position;
     },
     free() {
       if (freed) return;

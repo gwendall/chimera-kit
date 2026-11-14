@@ -3,7 +3,7 @@ import type { Engine, EngineRequest, EngineUtterance, ScoreRequest, SongRequest 
 import type { Score } from "../layers.js";
 
 /** Must match `ABI_VERSION` in `crates/intone-chimera/src/abi.rs`. */
-const ABI_VERSION = 6;
+const ABI_VERSION = 7;
 /** Must match `CHUNK` in `abi.rs`. */
 const MAX_CHUNK = 4096;
 

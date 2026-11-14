@@ -19,7 +19,9 @@ const SIZE_LIMITS: Record<string, number> = {
   // Prepared native performances add 12,980 bytes over the 273,867-byte baseline: bounded
   // scheduling, full physical controls and telemetry without restarting long voices. Measured
   // 286,847 bytes gzipped (2026-11-14); existing JS entry budgets remain unchanged.
-  "chimera.wasm": 290_000,
+  // Exact physical checkpoints add 8,001 bytes (294,848 total, 2026-11-14), avoiding
+  // approximate voice resets when seeking. Static plans are not copied into checkpoints.
+  "chimera.wasm": 300_000,
   "cmudict.txt.gz": 880_000,
   // The 4 creatures (songbird, seal, alligator, elephant) and their airways: 108,935 measured.
   "creatures.wasm": 115_000,

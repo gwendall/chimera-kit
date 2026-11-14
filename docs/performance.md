@@ -51,3 +51,16 @@ Call `pool.free()` when finished; it terminates owned Workers and rejects outsta
 
 The default reserves two logical cores and uses at most eight Workers. This is a starting
 budget, not a device capacity guarantee. Measure sustained playback alongside rendering.
+
+## Exact seek state
+
+`renderer.checkpoint()` retains the current physical state, including airway waves, glottis,
+random state, articulation dynamics and scheduling cursor. `renderer.restore(sample)` restores
+the nearest checkpoint at or before that sample, or keeps a more recent current position when
+it is already suitable. Render the remaining interval to reach the exact requested position.
+This preserves acoustic history; starting a fresh voice at the target time does not.
+
+At most 65 checkpoints are retained, with sample zero always available. Static gesture plans
+are stored once. Saving checkpoints allocates and must happen between synthesis requests,
+never in an AudioWorklet callback. A position not yet generated requires forward synthesis;
+show preparation progress rather than claiming an instantaneous seek.
