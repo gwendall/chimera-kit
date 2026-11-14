@@ -93,7 +93,11 @@ export const scenario: Scenario = {
               pass: result.position === 24000,
             },
             { name: `physical-state.${name}.restoreMs`, value: result.restoreMs, unit: "ms" },
-            { name: `physical-state.${name}.gzipBytes`, value: Bun.gzipSync(state).length, unit: "bytes" },
+            {
+              name: `physical-state.${name}.gzipBytes`,
+              value: Bun.gzipSync(new Uint8Array(state)).length,
+              unit: "bytes",
+            },
           );
         } finally {
           await context.close();
