@@ -33,6 +33,7 @@ jobs:
       - run: bun run e2e:smoke -- --no-speed --json e2e/out/report.json
         env:
           BROWSER_CHANNEL: chrome
+          E2E_AUDIO_AUTOPLAY: "1"
       - name: Pack the qualified npm artifact
         run: npm pack --ignore-scripts --json --pack-destination "$RUNNER_TEMP" > "$RUNNER_TEMP/npm-pack.json"
       - uses: actions/upload-artifact@v4
