@@ -32,7 +32,7 @@ test("bounded workers preserve independent voice continuity and transfer sample-
       expect(block.audio).toEqual(expected);
       expect(block.start).toBe(0);
       expect(block.end).toBe(4800);
-      expect(block.frames.map((f) => f.sample)).toEqual([800, 1600, 2400, 3200, 4000, 4800]);
+      expect(block.frames.map((f) => f.sample)).toEqual([0, 800, 1600, 2400, 3200, 4000, 4800]);
     }
     expect((await pool.read("a")).start).toBe(4800);
     expect((await pool.read("a")).audio.length).toBe(0);
@@ -43,4 +43,20 @@ test("bounded workers preserve independent voice continuity and transfer sample-
     pool.free();
   }
   await expect(pool.read("a")).rejects.toThrow("closed");
+});
+
+test("worker seek replays exact physical history and reports the requested sample", async () => {
+  const pool = await createPerformancePool([{ id: "a", performance }], { workers: 1 });
+  try {
+    const original = await pool.read("a");
+    await pool.read("a");
+    expect((await pool.seek("a", 0)).sample).toBe(0);
+    expect((await pool.read("a")).audio).toEqual(original.audio);
+    expect((await pool.seek("a", 1600)).sample).toBe(1600);
+    const block = await pool.read("a", 3200);
+    expect(block.start).toBe(1600);
+    expect(block.audio).toEqual(original.audio.slice(1600));
+  } finally {
+    pool.free();
+  }
 });

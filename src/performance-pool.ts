@@ -21,6 +21,8 @@ export interface PerformancePool {
   readonly workers: number;
   /** Demand at most 4800 samples. Calls for a voice advance its one continuous renderer. */
   read(id: string, samples?: number): Promise<PerformanceBlock>;
+  /** Exact seek, restoring prior acoustic checkpoints before forward synthesis. */
+  seek(id: string, sample: number, progress?: (sample: number) => void): Promise<PerformanceFrame>;
   free(): void;
 }
 export interface PerformancePoolOptions {
@@ -33,6 +35,7 @@ interface Reply {
   request: number;
   result?: PerformanceBlock;
   error?: string;
+  progress?: number;
 }
 
 export async function createPerformancePool(
@@ -55,6 +58,7 @@ export async function createPerformancePool(
       resolve: (r: PerformanceBlock | undefined) => void;
       reject: (e: Error) => void;
       timer: ReturnType<typeof setTimeout>;
+      progress?: (sample: number) => void;
     }
   >();
   const owners = new Map<string, Worker>();
@@ -71,7 +75,11 @@ export async function createPerformancePool(
     }
     pending.clear();
   };
-  const rpc = (worker: Worker, message: object): Promise<PerformanceBlock | undefined> => {
+  const rpc = (
+    worker: Worker,
+    message: object,
+    progress?: (sample: number) => void,
+  ): Promise<PerformanceBlock | undefined> => {
     if (freed) return Promise.reject(new Error("chimera-kit: performance pool closed"));
     const request = ++serial;
     return new Promise((resolve, reject) => {
@@ -79,7 +87,7 @@ export async function createPerformancePool(
         reject(new Error("chimera-kit: performance worker timed out"));
         free();
       }, 30000);
-      pending.set(request, { resolve, reject, timer });
+      pending.set(request, { resolve, reject, timer, ...(progress ? { progress } : {}) });
       try {
         worker.postMessage({ ...message, request });
       } catch (error) {
@@ -98,6 +106,12 @@ export async function createPerformancePool(
       w.onmessage = (event: MessageEvent<Reply>) => {
         const p = pending.get(event.data.request);
         if (!p) return;
+        if (event.data.progress !== undefined) {
+          clearTimeout(p.timer);
+          p.timer = setTimeout(() => free(), 30000);
+          p.progress?.(event.data.progress);
+          return;
+        }
         pending.delete(event.data.request);
         clearTimeout(p.timer);
         if (event.data.error) p.reject(new Error(event.data.error));
@@ -129,6 +143,23 @@ export async function createPerformancePool(
         const result = await rpc(owner, { type: "read", id, samples });
         if (!result) throw new Error("chimera-kit: empty performance worker reply");
         return result;
+      } finally {
+        reading.delete(id);
+      }
+    },
+    async seek(id, sample, progress) {
+      const part = parts.find((p) => p.id === id),
+        owner = owners.get(id);
+      if (!part || !owner) throw new Error(`chimera-kit: unknown performance part ${id}`);
+      if (!Number.isInteger(sample) || sample < 0 || sample > Math.round(part.performance.duration * 48000))
+        throw new Error("chimera-kit: seek sample out of range");
+      if (reading.has(id)) throw new Error(`chimera-kit: read already pending for ${id}`);
+      reading.add(id);
+      try {
+        const result = await rpc(owner, { type: "seek", id, sample }, progress);
+        const frame = result?.frames[0];
+        if (!frame) throw new Error("chimera-kit: missing seek state");
+        return frame;
       } finally {
         reading.delete(id);
       }
