@@ -128,3 +128,18 @@ Capture retains a base-memory copy and is intended for preparation. Normal playb
 retain that copy. Use the direct renderer when preparing portable states; adding many local
 `checkpoint()` clones would unnecessarily enlarge exported memory differences. The browser
 regression restores a Bun-generated state and requires bit-identical continuation samples.
+
+## Owned native takes
+
+`createSequenceEnsemble` from `chimera-kit/sequence` reuses the same audible player for prepared
+phrase ownership. Each part declares duration and non-overlapping clips. A clip has its original
+PhysicalPerformance, integer `startSample`/`endSample` on the output clock, `sourceSample` on the
+native clock, explicit phrase/continuous intent and optional ordered float32 gain stages and
+prepared checkpoints. Warmup belongs to the native source; only the owned interval is heard.
+No file audio enters the sequence. Gaps are silent and native state is released at take changes.
+
+Keep connected syllables and ornaments inside their original take. Short owned intervals below
+200 ms require `shortEvent.evidence`, including a gain-only boundary within the same exact source.
+Ownership overlap and insufficient source coverage fail rather than summing or padding voices.
+The regression compares placed samples with direct warmed native output, including gain rounding,
+gaps and seeking; a real browser scenario checks six phrase-owned parts on the common clock.
