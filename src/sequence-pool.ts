@@ -24,6 +24,8 @@ export interface PhysicalClip {
 export interface SequencePart extends EnsembleMixPart {
   duration: number;
   clips: PhysicalClip[];
+  /** Prepared physical pose for silent gaps. Avoids allocating the first native take just for a pose. */
+  initialState?: LiveTelemetry;
 }
 interface Actor {
   part: SequencePart;
@@ -40,6 +42,22 @@ function validate(parts: SequencePart[]): void {
     if (!p.id || !Number.isFinite(p.duration) || p.duration <= 0 || !p.clips.length)
       throw new Error("sequence: duration and physical takes required");
     let through = 0;
+    if (p.initialState) {
+      for (const [key, value] of Object.entries(p.initialState)) {
+        if (
+          typeof value === "number"
+            ? !Number.isFinite(value)
+            : !(value instanceof Float32Array) || !value.every(Number.isFinite)
+        )
+          throw new Error(`sequence: invalid prepared initial state ${key}`);
+      }
+      if (
+        !p.initialState.artic.length ||
+        !p.initialState.pharynxAreas.length ||
+        !p.initialState.mouthAreas.length
+      )
+        throw new Error("sequence: incomplete prepared initial state");
+    }
     for (const c of p.clips) {
       if (
         ![c.startSample, c.endSample, c.sourceSample].every(Number.isInteger) ||
@@ -107,15 +125,18 @@ export async function createSequencePool(
   try {
     await Promise.all(
       parts.map(async (part) => {
-        const first = clipId(part.id, 0),
-          seed = await pool.seek(first, 0);
-        await pool.release(first);
+        let state = part.initialState;
+        if (!state) {
+          const first = clipId(part.id, 0);
+          state = (await pool.seek(first, 0)).state;
+          await pool.release(first);
+        }
         actors.set(part.id, {
           part,
           position: 0,
           active: null,
           idle: {
-            ...seed.state,
+            ...state,
             f0: 0,
             voicing: 0,
             lungPressure: 0,
