@@ -92,3 +92,22 @@ test("unreviewed tiny slices and overlapping voice ownership fail before native 
     createSequencePool([{ ...part, clips: [{ ...first, sourceSample: 17000 }] }], options),
   ).rejects.toThrow("ownership");
 });
+
+test("prepared idle pose avoids throwaway native warmup while retaining exact owned audio", async () => {
+  const renderer = await createPerformanceRenderer(performance);
+  const initialState = renderer.telemetry();
+  renderer.free();
+  const a = await createSequencePool([part], options);
+  const b = await createSequencePool([{ ...part, initialState }], options);
+  try {
+    for (let block = 0; block < 5; block++)
+      expect((await b.read("lead")).audio).toEqual((await a.read("lead")).audio);
+    expect((await b.seek("lead", 0)).state.gate).toBe(0);
+  } finally {
+    a.free();
+    b.free();
+  }
+  await expect(
+    createSequencePool([{ ...part, initialState: { ...initialState, f0: NaN } }], options),
+  ).rejects.toThrow("invalid prepared initial state");
+});
