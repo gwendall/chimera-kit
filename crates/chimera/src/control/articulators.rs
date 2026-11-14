@@ -41,7 +41,8 @@ pub const ARTIC_SPECS: [ArticSpec; N_ARTIC] = [
     spec(-1.6, 1.6, 8.0),   // larynx
     spec(0.0, 1.0, 6.0),    // epilarynx
     spec(0.0, 1.0, 6.0),    // ventricular
-    spec(0.0, 1.0, 10.0),   // lateral
+    // A prepared central consonant presses past contact so the sides close in finite time.
+    spec(-0.25, 1.0, 10.0), // lateral
     spec(0.0, 1.0, 9.0),    // dorsum
 ];
 
