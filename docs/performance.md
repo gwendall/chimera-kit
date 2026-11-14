@@ -64,3 +64,8 @@ At most 65 checkpoints are retained, with sample zero always available. Static g
 are stored once. Saving checkpoints allocates and must happen between synthesis requests,
 never in an AudioWorklet callback. A position not yet generated requires forward synthesis;
 show preparation progress rather than claiming an instantaneous seek.
+
+The pool saves checkpoints every five generated seconds. `pool.seek(id, sample, progress)`
+restores and advances on the owning Worker, yielding during long forward preparation. Its
+progress uses rendered sample positions. Reads and seeks for the same voice are mutually
+exclusive. A slow but progressing seek keeps its request alive; a stalled Worker times out.

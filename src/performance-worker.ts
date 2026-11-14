@@ -19,12 +19,41 @@ self.onmessage = (event) => {
           voices.set(p.id, await createPerformanceRenderer(p.performance, { module: m.module }));
         }
         self.postMessage({ request: m.request });
+      } else if (m.type === "seek") {
+        const voice = voices.get(m.id);
+        if (!voice) throw new Error("unknown performance voice");
+        voice.restore(m.sample);
+        let yielded = performance.now();
+        while (voice.position < m.sample) {
+          voice.next(Math.min(800 - (voice.position % 800), m.sample - voice.position));
+          if (voice.position % 800 === 0) voice.telemetry();
+          if (voice.position % 240000 === 0) voice.checkpoint();
+          if (performance.now() - yielded > 8) {
+            self.postMessage({ request: m.request, progress: voice.position });
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            yielded = performance.now();
+          }
+        }
+        self.postMessage({
+          request: m.request,
+          result: {
+            start: voice.position,
+            end: voice.position,
+            audio: new Float32Array(),
+            frames: [{ sample: voice.position, state: voice.telemetry() }],
+          },
+        });
       } else if (m.type === "read") {
         const voice = voices.get(m.id);
         if (!voice) throw new Error("unknown performance voice");
         const start = voice.position;
         const audio = new Float32Array(Math.min(m.samples, voice.samples - start));
-        const result: PerformanceBlock = { start, end: start, audio, frames: [] };
+        const result: PerformanceBlock = {
+          start,
+          end: start,
+          audio,
+          frames: start === 0 ? [{ sample: 0, state: voice.telemetry() }] : [],
+        };
         while (voice.position < start + audio.length) {
           const at = voice.position;
           const toFrame = 800 - (at % 800);
@@ -33,6 +62,7 @@ self.onmessage = (event) => {
           audio.set(chunk, at - start);
           if (voice.position % 800 === 0)
             result.frames.push({ sample: voice.position, state: voice.telemetry() });
+          if (voice.position % 240000 === 0) voice.checkpoint();
         }
         result.end = voice.position;
         const transfer: Transferable[] = [audio.buffer];
