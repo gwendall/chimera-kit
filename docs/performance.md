@@ -39,3 +39,15 @@ The native regression test compares windowed output with an unsplit plan byte fo
 out-of-order overlapping ramps and arbitrary render chunk sizes. A second test schedules a
 20000-gesture plan without exhausting the live score. Browser playback deadlines and maximum
 simultaneous voices require separate measurements on the target device.
+
+## Parallel voices
+
+`createPerformancePool` from `chimera-kit/performance-pool` shares one compiled wasm module
+across a bounded pool of Workers. Pass independent `{ id, performance }` parts, then request
+`pool.read(id)` for at most 4800 samples. Each voice retains its physical state; a Worker may
+own several voices. Output includes the block's sample range and physical snapshots at 60 Hz.
+Only one read may be pending per voice, so callers cannot create an unbounded synthesis queue.
+Call `pool.free()` when finished; it terminates owned Workers and rejects outstanding requests.
+
+The default reserves two logical cores and uses at most eight Workers. This is a starting
+budget, not a device capacity guarantee. Measure sustained playback alongside rendering.
