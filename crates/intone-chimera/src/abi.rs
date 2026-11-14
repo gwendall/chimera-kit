@@ -12,7 +12,7 @@ use std::slice;
 
 /// Bump when a signature below changes, along with `ABI_VERSION` in `src/engines/chimera.ts`
 /// and in `src/engines/chimera-live.ts`.
-const ABI_VERSION: u32 = 5;
+const ABI_VERSION: u32 = 6;
 /// The most samples one `ic_utterance_render` or `ic_live_render` call can hand over.
 const CHUNK: usize = 4096;
 
@@ -522,4 +522,95 @@ pub unsafe extern "C" fn ic_beat_tempo(h: *mut LiveHandle, json: *const u8, len:
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ic_beat_playing(h: *mut LiveHandle, playing: u32) {
     live::set_beat_playing(&mut unsafe { &mut *h }.engine, playing != 0);
+}
+
+/// A compiled performance owns one physical voice for its entire timeline.
+pub struct PerformanceHandle {
+    renderer: crate::performance::Renderer,
+    buffer: Box<[f32; CHUNK]>,
+    telemetry: VoiceTelemetry,
+    packed: Vec<f32>,
+}
+
+/// # Safety
+/// `s` must be live; `json` must point to `len` readable bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_performance_new(
+    s: *mut SpeakerHandle,
+    json: *const u8,
+    len: usize,
+) -> *mut PerformanceHandle {
+    let s = unsafe { &mut *s };
+    let result = serde_json::from_slice::<crate::performance::Performance>(unsafe {
+        slice::from_raw_parts(json, len)
+    })
+    .map_err(|e| format!("invalid performance: {e}"))
+    .and_then(crate::performance::Renderer::new);
+    match result {
+        Ok(mut renderer) => {
+            let mut telemetry = VoiceTelemetry::default();
+            renderer.voice.telemetry(&mut telemetry);
+            let mut packed = Vec::with_capacity(4096);
+            live::pack_telemetry(&telemetry, -1, &mut packed);
+            Box::into_raw(Box::new(PerformanceHandle {
+                renderer,
+                buffer: Box::new([0.0; CHUNK]),
+                telemetry,
+                packed,
+            }))
+        }
+        Err(error) => {
+            s.error = error;
+            std::ptr::null_mut()
+        }
+    }
+}
+
+/// # Safety
+/// `h` must be a live performance, not previously freed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_performance_free(h: *mut PerformanceHandle) {
+    drop(unsafe { Box::from_raw(h) });
+}
+
+/// # Safety
+/// Both handles must be live. Returns -1 with the speaker's error on scheduling failure.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_performance_render(
+    s: *mut SpeakerHandle,
+    h: *mut PerformanceHandle,
+    max: usize,
+) -> i32 {
+    let h = unsafe { &mut *h };
+    match h.renderer.render(&mut h.buffer[..max.min(CHUNK)]) {
+        Ok(n) => n as i32,
+        Err(error) => {
+            unsafe { &mut *s }.error = error;
+            -1
+        }
+    }
+}
+
+/// # Safety
+/// `h` must be live. The buffer is valid until the next render or free.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_performance_buffer(h: *const PerformanceHandle) -> *const f32 {
+    unsafe { &*h }.buffer.as_ptr()
+}
+
+/// # Safety
+/// `h` must be live. Snapshot clock is the number of rendered samples, not playback time.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_performance_telemetry(h: *mut PerformanceHandle) -> *const f32 {
+    let h = unsafe { &mut *h };
+    h.renderer.voice.telemetry(&mut h.telemetry);
+    live::pack_telemetry(&h.telemetry, -1, &mut h.packed);
+    h.packed.as_ptr()
+}
+
+/// # Safety
+/// `h` must be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_performance_telemetry_len(h: *const PerformanceHandle) -> usize {
+    unsafe { &*h }.packed.len()
 }

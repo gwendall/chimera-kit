@@ -1,0 +1,137 @@
+/** Compiled physical performances. No dictionary, replanning, gain correction or voice resets. */
+import type { Body } from "./engine.js";
+import { readBytes, type Source } from "./engines/chimera.js";
+import {
+  type ArticValues,
+  type LiveTelemetry,
+  parseTelemetry,
+  type SourceValues,
+} from "./engines/chimera-live.js";
+
+export type { Body, LiveTelemetry, SourceValues };
+
+export interface PhysicalGesture {
+  t0: number;
+  t1: number;
+  rampIn: number;
+  rampOut: number;
+  strength: number;
+  targets: ArticValues & {
+    abduction?: number;
+    closure?: number;
+    breath?: number;
+    f0?: number;
+    vibrato?: number;
+  };
+  speed?: number;
+  releaseHold?: number;
+  label?: string;
+  tag?: number;
+}
+
+/** Times are absolute seconds from this physical voice's origin, at the native 48 kHz clock. */
+export interface PhysicalPerformance {
+  version: 1;
+  sampleRate: 48000;
+  duration: number;
+  body?: Body;
+  source?: SourceValues;
+  gestures: PhysicalGesture[];
+}
+
+export interface PerformanceRenderer {
+  readonly sampleRate: 48000;
+  readonly samples: number;
+  readonly position: number;
+  /** Borrowed wasm view, valid until the next call. At most 4096 samples. Null at the end. */
+  next(max?: number): Float32Array | null;
+  /** Physical state at position/sampleRate. Consumers must align it with heard audio. */
+  telemetry(): LiveTelemetry;
+  /** Idempotent. All other methods throw after freeing. */
+  free(): void;
+}
+
+interface Exports {
+  memory: WebAssembly.Memory;
+  ic_abi_version(): number;
+  ic_alloc(n: number): number;
+  ic_free(p: number, n: number): void;
+  ic_speaker_new(): number;
+  ic_speaker_free(s: number): void;
+  ic_speaker_error_ptr(s: number): number;
+  ic_speaker_error_len(s: number): number;
+  ic_performance_new(s: number, json: number, len: number): number;
+  ic_performance_free(h: number): void;
+  ic_performance_render(s: number, h: number, max: number): number;
+  ic_performance_buffer(h: number): number;
+  ic_performance_telemetry(h: number): number;
+  ic_performance_telemetry_len(h: number): number;
+}
+
+/** Compile once and share the module across a bounded Worker pool. */
+export async function compilePerformance(wasm?: Source): Promise<WebAssembly.Module> {
+  const bytes = await readBytes(wasm ?? new URL("./chimera.wasm", import.meta.url));
+  return WebAssembly.compile(bytes as BufferSource);
+}
+
+export async function createPerformanceRenderer(
+  performance: PhysicalPerformance,
+  options: { wasm?: Source; module?: WebAssembly.Module } = {},
+): Promise<PerformanceRenderer> {
+  const module = options.module ?? (await compilePerformance(options.wasm));
+  const instance = await WebAssembly.instantiate(module, {});
+  const x = instance.exports as unknown as Exports;
+  if (x.ic_abi_version() !== 6)
+    throw new Error(`chimera-kit: performance requires ABI 6, got ${x.ic_abi_version()}`);
+  const bytes = new TextEncoder().encode(JSON.stringify(performance));
+  const speaker = x.ic_speaker_new();
+  const error = () =>
+    new Error(
+      `chimera-kit: ${new TextDecoder().decode(
+        new Uint8Array(x.memory.buffer, x.ic_speaker_error_ptr(speaker), x.ic_speaker_error_len(speaker)),
+      )}`,
+    );
+  const pointer = x.ic_alloc(bytes.length);
+  let handle: number;
+  try {
+    new Uint8Array(x.memory.buffer, pointer, bytes.length).set(bytes);
+    handle = x.ic_performance_new(speaker, pointer, bytes.length);
+    if (!handle) throw error();
+  } catch (e) {
+    x.ic_speaker_free(speaker);
+    throw e;
+  } finally {
+    x.ic_free(pointer, bytes.length);
+  }
+  let position = 0,
+    freed = false;
+  const alive = () => {
+    if (freed) throw new Error("chimera-kit: performance renderer was freed");
+  };
+  return {
+    sampleRate: 48000,
+    samples: Math.round(performance.duration * 48000),
+    get position() {
+      return position;
+    },
+    next(max = 4096) {
+      alive();
+      if (!Number.isInteger(max) || max < 1) throw new Error("chimera-kit: max must be a positive integer");
+      const n = x.ic_performance_render(speaker, handle, Math.min(4096, max));
+      if (n < 0) throw error();
+      position += n;
+      return n ? new Float32Array(x.memory.buffer, x.ic_performance_buffer(handle), n) : null;
+    },
+    telemetry() {
+      alive();
+      const at = x.ic_performance_telemetry(handle);
+      return parseTelemetry(new Float32Array(x.memory.buffer, at, x.ic_performance_telemetry_len(handle)));
+    },
+    free() {
+      if (freed) return;
+      freed = true;
+      x.ic_performance_free(handle);
+      x.ic_speaker_free(speaker);
+    },
+  };
+}

@@ -6,6 +6,7 @@
 pub mod abi;
 pub mod body;
 pub mod live;
+pub mod performance;
 pub mod score;
 pub mod sing;
 mod trace;
