@@ -52,7 +52,14 @@ self.onmessage = (event) => {
         const from = voice?.restore(m.sample) ?? 0;
         const checkpoint = plan.checkpoints?.filter((s) => s.sample <= m.sample && s.sample > from).at(-1);
         if (checkpoint) {
-          const bytes = await readBytes(checkpoint.source);
+          let bytes = await readBytes(checkpoint.source);
+          // A CDN may already decode Content-Encoding; only decompress explicit gzip bytes.
+          if (bytes[0] === 0x1f && bytes[1] === 0x8b)
+            bytes = new Uint8Array(
+              await new Response(
+                new Blob([bytes as BlobPart]).stream().pipeThrough(new DecompressionStream("gzip")),
+              ).arrayBuffer(),
+            );
           const hash = Array.from(
             new Uint8Array(await crypto.subtle.digest("SHA-256", bytes as BufferSource)),
             (b) => b.toString(16).padStart(2, "0"),
