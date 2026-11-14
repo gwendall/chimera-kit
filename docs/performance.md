@@ -186,17 +186,21 @@ integrity metadata outside this generic package.
 import { createSequenceEnsemble, type SequencePart } from "chimera-kit/sequence";
 
 // Each performance is a validated PhysicalPerformance, not an audio file or an asset URL.
-const parts: SequencePart[] = [{
-  id: "singer",
-  duration: 4,
-  clips: [{
-    performance: prepared,
-    startSample: 48000,
-    endSample: 144000,
-    sourceSample: 12000,
-    intent: "phrase",
-  }],
-}];
+const parts: SequencePart[] = [
+  {
+    id: "singer",
+    duration: 4,
+    clips: [
+      {
+        performance: prepared,
+        startSample: 48000,
+        endSample: 144000,
+        sourceSample: 12000,
+        intent: "phrase",
+      },
+    ],
+  },
+];
 const ensemble = await createSequenceEnsemble(parts, { workers: 2, ahead: 2 });
 // Call ensemble.play() from a user gesture; call ensemble.free() when leaving playback.
 ```
@@ -219,16 +223,16 @@ rather than the furthest sample synthesized by a Worker. `free()` is required on
 
 ## Qualification envelope and limits
 
-| Interface | Enforced bound or regression coverage |
-| --- | --- |
-| Direct `next()` | Borrowed wasm view, at most 4096 native samples |
-| Pool `read()` | At most 4800 samples, one pending read or seek per voice |
-| Physical snapshots | Native sample positions at 800-sample intervals, 60 Hz |
-| Worker budget | Default at most eight and two logical cores reserved; explicit budget 1..16, capped by group count |
-| Active gesture window | At most 16384 gestures; longer total plans use bounded windows |
-| Ensemble lookahead | 0.5..8 seconds, default 2; recent audio/frames retained for two seconds |
-| Sequence ownership | Integer half-open sample intervals, no overlaps or implicit audio padding |
-| Synthetic Worker regression | Three independent voices on two Workers match direct native output sample for sample |
+| Interface                       | Enforced bound or regression coverage                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Direct `next()`                 | Borrowed wasm view, at most 4096 native samples                                                                          |
+| Pool `read()`                   | At most 4800 samples, one pending read or seek per voice                                                                 |
+| Physical snapshots              | Native sample positions at 800-sample intervals, 60 Hz                                                                   |
+| Worker budget                   | Default at most eight and two logical cores reserved; explicit budget 1..16, capped by group count                       |
+| Active gesture window           | At most 16384 gestures; longer total plans use bounded windows                                                           |
+| Ensemble lookahead              | 0.5..8 seconds, default 2; recent audio/frames retained for two seconds                                                  |
+| Sequence ownership              | Integer half-open sample intervals, no overlaps or implicit audio padding                                                |
+| Synthetic Worker regression     | Three independent voices on two Workers match direct native output sample for sample                                     |
 | Browser ensemble/sequence smoke | Six synthetic parts, zero late blocks and pause drift, seek error below one microsecond, heard telemetry lag below 50 ms |
 
 These are implementation bounds and reproducible test checks, not a benchmark promise. The public

@@ -22,12 +22,12 @@ Version 0.2 adds native gesture playback, bounded parallel voices, portable phys
 and phrase-owned sequences. These interfaces preserve Chimera articulation and acoustic history;
 they do not load recorded vocals or expose alternate synthesis providers.
 
-| Entry | Use |
-| --- | --- |
-| `chimera-kit/performance` | Render prepared native gestures and export exact physical state |
-| `chimera-kit/performance-pool` | Keep independent voices on a bounded Worker pool |
-| `chimera-kit/ensemble` | Play continuous parts on one audible clock |
-| `chimera-kit/sequence` | Place nonoverlapping native takes with exact source ownership |
+| Entry                          | Use                                                             |
+| ------------------------------ | --------------------------------------------------------------- |
+| `chimera-kit/performance`      | Render prepared native gestures and export exact physical state |
+| `chimera-kit/performance-pool` | Keep independent voices on a bounded Worker pool                |
+| `chimera-kit/ensemble`         | Play continuous parts on one audible clock                      |
+| `chimera-kit/sequence`         | Place nonoverlapping native takes with exact source ownership   |
 
 See [prepared performances](docs/performance.md) for source settings, initial telemetry, gzip
 checkpoints, sample clocks and device limits. For a qualified GitHub tarball when npm publication
