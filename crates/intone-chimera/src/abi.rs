@@ -12,7 +12,7 @@ use std::slice;
 
 /// Bump when a signature below changes, along with `ABI_VERSION` in `src/engines/chimera.ts`
 /// and in `src/engines/chimera-live.ts`.
-const ABI_VERSION: u32 = 6;
+const ABI_VERSION: u32 = 7;
 /// The most samples one `ic_utterance_render` or `ic_live_render` call can hand over.
 const CHUNK: usize = 4096;
 
@@ -613,4 +613,18 @@ pub unsafe extern "C" fn ic_performance_telemetry(h: *mut PerformanceHandle) -> 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ic_performance_telemetry_len(h: *const PerformanceHandle) -> usize {
     unsafe { &*h }.packed.len()
+}
+
+/// # Safety
+/// `h` must be live. Saves physical state between blocks, with a fixed retention bound.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_performance_checkpoint(h: *mut PerformanceHandle) {
+    unsafe { &mut *h }.renderer.checkpoint();
+}
+
+/// # Safety
+/// `h` must be live; sample must be within the performance. Returns the restored sample.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ic_performance_restore(h: *mut PerformanceHandle, sample: usize) -> usize {
+    unsafe { &mut *h }.renderer.restore(sample)
 }

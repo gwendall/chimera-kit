@@ -1,6 +1,15 @@
 import { expect, test } from "bun:test";
 import { createPerformanceRenderer, type PhysicalPerformance } from "../dist/performance.js";
 
+const readCopy = (
+  renderer: Awaited<ReturnType<typeof createPerformanceRenderer>>,
+  samples: number,
+): Float32Array => {
+  const data = renderer.next(samples);
+  if (!data) throw new Error("missing physical reference samples");
+  return data.slice();
+};
+
 const performance: PhysicalPerformance = {
   version: 1,
   sampleRate: 48000,
@@ -44,6 +53,26 @@ test("prepared performance rejects incompatible clocks and invalid chunks", asyn
   const r = await createPerformanceRenderer(performance);
   try {
     expect(() => r.next(0)).toThrow("positive integer");
+  } finally {
+    r.free();
+  }
+});
+
+test("checkpoints restore the exact acoustic history without copying or resetting the plan", async () => {
+  const r = await createPerformanceRenderer(performance);
+  try {
+    r.next(4000);
+    r.checkpoint();
+    const expected = readCopy(r, 4000);
+    r.next(4000);
+    expect(r.restore(4000)).toBe(4000);
+    expect(r.next(4000)).toEqual(expected);
+    expect(r.restore(1000)).toBe(0);
+    r.next(1000);
+    const first = readCopy(r, 1000);
+    expect(r.restore(1000)).toBe(0);
+    r.next(1000);
+    expect(r.next(1000)).toEqual(first);
   } finally {
     r.free();
   }

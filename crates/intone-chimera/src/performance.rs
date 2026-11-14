@@ -91,12 +91,21 @@ impl Schedule {
     }
 }
 
+struct Checkpoint {
+    voice: HumanVoice,
+    position: usize,
+    next_score: usize,
+    next: usize,
+    started: bool,
+}
+
 pub struct Renderer {
     pub(crate) voice: HumanVoice,
     schedule: Schedule,
     pub samples: usize,
     pub position: usize,
     next_score: usize,
+    checkpoints: Vec<Checkpoint>,
 }
 
 impl Renderer {
@@ -126,13 +135,58 @@ impl Renderer {
         let mut voice = HumanVoice::new(SAMPLE_RATE, input.body.anatomy(), OVERSAMPLE);
         // No speech-level compensation: compiled performances reproduce the native raw voice.
         voice.set_source(&input.source);
-        Ok(Self {
+        let mut renderer = Self {
             voice,
             schedule: Schedule::new(input.gestures),
             samples: (input.duration * SAMPLE_RATE).round() as usize,
             position: 0,
             next_score: 0,
-        })
+            checkpoints: Vec::new(),
+        };
+        renderer.checkpoint();
+        Ok(renderer)
+    }
+
+    /// Called between synthesis blocks, outside the audio callback. Retain at most 65 states,
+    /// including sample zero, without copying the static gesture plan into each checkpoint.
+    pub fn checkpoint(&mut self) {
+        if self.checkpoints.iter().any(|c| c.position == self.position) {
+            return;
+        }
+        self.checkpoints.push(Checkpoint {
+            voice: self.voice.clone(),
+            position: self.position,
+            next_score: self.next_score,
+            next: self.schedule.next,
+            started: self.schedule.started,
+        });
+        self.checkpoints.sort_unstable_by_key(|c| c.position);
+        if self.checkpoints.len() > 65 {
+            self.checkpoints.remove(1);
+        }
+    }
+
+    /// Restore the nearest retained state at or before the requested sample. The caller renders
+    /// the remaining interval, preserving the actual acoustic history rather than inventing it.
+    pub fn restore(&mut self, sample: usize) -> usize {
+        let c = self
+            .checkpoints
+            .iter()
+            .rev()
+            .find(|c| c.position <= sample)
+            .unwrap();
+        if self.position <= sample && self.position >= c.position {
+            return self.position;
+        }
+        self.voice = c.voice.clone();
+        let mut score = GestureScore::new();
+        score.add_all(self.voice.score.gestures());
+        self.voice.score = score;
+        self.position = c.position;
+        self.next_score = c.next_score;
+        self.schedule.next = c.next;
+        self.schedule.started = c.started;
+        self.position
     }
 
     pub fn render(&mut self, out: &mut [f32]) -> Result<usize, String> {
