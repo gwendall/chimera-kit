@@ -52,7 +52,14 @@ async function getBrowser(name: BrowserName): Promise<Browser> {
   const cached = launched.get(name);
   if (cached) return cached;
   await ensureInstalled([name]);
-  const options = name === "chromium" && CHANNEL ? { channel: CHANNEL } : {};
+  // Headless CI validates rendered playback, not Chromium's engagement policy.
+  // Keep the opt-in off for the normal browser matrix and autoplay-policy cases.
+  const options = {
+    ...(name === "chromium" && CHANNEL ? { channel: CHANNEL } : {}),
+    ...(name === "chromium" && process.env.E2E_AUDIO_AUTOPLAY === "1"
+      ? { args: ["--autoplay-policy=no-user-gesture-required"] }
+      : {}),
+  };
   const promise = ENGINES[name].launch(options);
   launched.set(name, promise);
   return promise;
