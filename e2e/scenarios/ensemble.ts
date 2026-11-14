@@ -10,6 +10,7 @@ type Probe = typeof window & {
   playError: string | null;
   peak: number;
   stopMeter(): void;
+  sharedPlayTask: boolean;
 };
 const ORIGIN = "https://chimera-kit.ensemble";
 export const scenario: Scenario = {
@@ -87,10 +88,29 @@ export const scenario: Scenario = {
             });
           }, ORIGIN);
           await page.click("button");
-          await page.waitForFunction(
-            () => (window as Probe).ensemble.isPlaying || (window as Probe).playError,
-            { timeout: 15000 },
-          );
+          try {
+            await page.waitForFunction(
+              () =>
+                (window as Probe).ensemble.isPlaying ||
+                (window as Probe).playError ||
+                (window as Probe).ensemble.state.error,
+              undefined,
+              { timeout: 15000, polling: 50 },
+            );
+          } catch (error) {
+            const diagnostic = await page.evaluate(() => {
+              const p = window as Probe;
+              return {
+                state: p.ensemble.state,
+                audio: p.ensemble.context.state,
+                visibility: document.visibilityState,
+                playError: p.playError,
+              };
+            });
+            throw new Error(
+              `Ensemble startup did not settle: ${JSON.stringify(diagnostic)}; ${String(error)}`,
+            );
+          }
           await page.waitForTimeout(1700);
           const result = await page.evaluate(async () => {
             const p = window as Probe,
