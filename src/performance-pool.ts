@@ -1,6 +1,7 @@
 /** A bounded pool of persistent physical voices. Rendering advances only when asked. */
 
 import type { Source } from "./engines/chimera.js";
+import { performanceEngineId } from "./engines/performance-module.js";
 import { compilePerformance, type LiveTelemetry, type PhysicalPerformance } from "./performance.js";
 
 export interface PerformanceFrame {
@@ -13,11 +14,17 @@ export interface PerformanceBlock {
   audio: Float32Array;
   frames: PerformanceFrame[];
 }
+export interface PreparedCheckpoint {
+  sample: number;
+  source: Source;
+  sha256: string;
+}
 export interface PerformancePart {
   id: string;
   performance: PhysicalPerformance;
   /** Keep mutually exclusive phrases of one performer on the same Worker. */
   workerGroup?: string;
+  checkpoints?: PreparedCheckpoint[];
 }
 export interface PerformancePool {
   readonly workers: number;
@@ -50,6 +57,20 @@ export async function createPerformancePool(
     throw new Error("chimera-kit: performance part IDs must be nonempty and unique");
   }
   if (parts.some((p) => !p.id)) throw new Error("chimera-kit: empty performance part ID");
+  for (const part of parts) {
+    let previous = -1;
+    for (const state of part.checkpoints ?? []) {
+      if (
+        !Number.isInteger(state.sample) ||
+        state.sample < 0 ||
+        state.sample > Math.round(part.performance.duration * 48000) ||
+        state.sample <= previous ||
+        !/^[a-f0-9]{64}$/.test(state.sha256)
+      )
+        throw new Error("chimera-kit: invalid prepared checkpoint index");
+      previous = state.sample;
+    }
+  }
   const available = Math.max(1, (globalThis.navigator?.hardwareConcurrency ?? 4) - 2);
   const groups = [...new Set(parts.map((p) => p.workerGroup ?? p.id))];
   const budget = options.workers ?? Math.min(8, available);
@@ -129,7 +150,18 @@ export async function createPerformancePool(
       workers.map((w, i) => {
         const assigned = parts.filter((p) => groups.indexOf(p.workerGroup ?? p.id) % count === i);
         for (const p of assigned) owners.set(p.id, w);
-        return rpc(w, { type: "init", module, parts: assigned });
+        return rpc(w, {
+          type: "init",
+          module,
+          engineId: performanceEngineId(module),
+          parts: assigned.map((p) => ({
+            ...p,
+            checkpoints: p.checkpoints?.map((s) => ({
+              ...s,
+              source: s.source instanceof URL ? s.source.href : s.source,
+            })),
+          })),
+        });
       }),
     );
   } catch (error) {

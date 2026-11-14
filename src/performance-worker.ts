@@ -1,4 +1,6 @@
 /** Pull-based synthesis: no autonomous render loop and no unbounded output queue. */
+
+import { readBytes } from "./engines/chimera.js";
 import { createPerformanceRenderer, type PerformanceRenderer } from "./performance.js";
 import type { PerformanceBlock, PerformancePart } from "./performance-pool.js";
 import { validatePhysical } from "./physical-validation.js";
@@ -8,14 +10,18 @@ declare const self: {
   postMessage(message: unknown, transfer?: Transferable[]): void;
 };
 const voices = new Map<string, PerformanceRenderer>();
-const plans = new Map<string, PerformancePart["performance"]>();
+const plans = new Map<string, PerformancePart>();
+let engineId: string | undefined;
 let module: WebAssembly.Module;
 async function voiceFor(id: string): Promise<PerformanceRenderer> {
   const existing = voices.get(id);
   if (existing) return existing;
   const plan = plans.get(id);
   if (!plan) throw new Error("unknown performance voice");
-  const voice = await createPerformanceRenderer(plan, { module });
+  const voice = await createPerformanceRenderer(plan.performance, {
+    module,
+    ...(engineId ? { engineId } : {}),
+  });
   voices.set(id, voice);
   return voice;
 }
@@ -27,10 +33,11 @@ self.onmessage = (event) => {
     try {
       if (m.type === "init") {
         module = m.module;
+        engineId = m.engineId;
         for (const p of m.parts as PerformancePart[]) {
           if (plans.has(p.id)) throw new Error("duplicate performance voice");
           validatePhysical(p.performance);
-          plans.set(p.id, p.performance);
+          plans.set(p.id, p);
         }
         self.postMessage({ request: m.request });
       } else if (m.type === "release") {
@@ -39,8 +46,33 @@ self.onmessage = (event) => {
         voices.delete(m.id);
         self.postMessage({ request: m.request });
       } else if (m.type === "seek") {
-        const voice = await voiceFor(m.id);
-        voice.restore(m.sample);
+        const plan = plans.get(m.id);
+        if (!plan) throw new Error("unknown performance voice");
+        let voice = voices.get(m.id);
+        const from = voice?.restore(m.sample) ?? 0;
+        const checkpoint = plan.checkpoints?.filter((s) => s.sample <= m.sample && s.sample > from).at(-1);
+        if (checkpoint) {
+          const bytes = await readBytes(checkpoint.source);
+          const hash = Array.from(
+            new Uint8Array(await crypto.subtle.digest("SHA-256", bytes as BufferSource)),
+            (b) => b.toString(16).padStart(2, "0"),
+          ).join("");
+          if (hash !== checkpoint.sha256) throw new Error("prepared checkpoint integrity mismatch");
+          const restored = await createPerformanceRenderer(plan.performance, {
+            module,
+            ...(engineId ? { engineId } : {}),
+            state: bytes,
+          });
+          if (restored.position !== checkpoint.sample) {
+            restored.free();
+            throw new Error("prepared checkpoint position mismatch");
+          }
+          voice?.free();
+          voice = restored;
+          voices.set(m.id, voice);
+          self.postMessage({ request: m.request, progress: voice.position });
+        }
+        voice ??= await voiceFor(m.id);
         let yielded = performance.now();
         while (voice.position < m.sample) {
           voice.next(Math.min(800 - (voice.position % 800), m.sample - voice.position));
