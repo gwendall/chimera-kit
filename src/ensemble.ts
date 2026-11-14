@@ -72,6 +72,7 @@ class EnsemblePlayer implements Ensemble {
   private origin = 0;
   private startedAt = 0;
   private playing = false;
+  private playTask: Promise<void> | null = null;
   private preparing = false;
   private freed = false;
   private generation = 0;
@@ -125,6 +126,10 @@ class EnsemblePlayer implements Ensemble {
     }, 40);
   }
 
+  async warmup(): Promise<void> {
+    await this.fill(Math.min(this.ahead, 0.8));
+  }
+
   get isPlaying(): boolean {
     return this.playing;
   }
@@ -157,10 +162,13 @@ class EnsemblePlayer implements Ensemble {
   /** Device output time when available, so physical snapshots follow the samples being heard. */
   time(): number {
     if (!this.playing) return this.offset;
-    const stamp = this.context.getOutputTimestamp?.().contextTime ?? 0;
+    const stamp = this.context.getOutputTimestamp?.();
     const audioTime =
-      stamp > 0
-        ? Math.min(this.context.currentTime, stamp)
+      stamp?.contextTime !== undefined && stamp.contextTime > 0 && stamp.performanceTime !== undefined
+        ? Math.min(
+            this.context.currentTime,
+            stamp.contextTime + Math.max(0, performance.now() - stamp.performanceTime) / 1000,
+          )
         : this.context.currentTime - (this.context.outputLatency || this.context.baseLatency || 0);
     return Math.max(this.offset, Math.min(this.duration, this.origin / 48000 + audioTime - this.startedAt));
   }
@@ -238,11 +246,19 @@ class EnsemblePlayer implements Ensemble {
   }
 
   /** Call from the user gesture: resume is invoked before any asynchronous preparation. */
-  async play(): Promise<void> {
-    if (this.freed) throw new Error("ensemble: freed");
-    if (this.playing) return;
+  play(): Promise<void> {
+    if (this.freed) return Promise.reject(new Error("ensemble: freed"));
+    if (this.playing) return Promise.resolve();
+    if (this.playTask) return this.playTask;
     const resumed = this.context.resume();
-    const generation = this.generation;
+    this.playTask = this.start(resumed).finally(() => {
+      this.playTask = null;
+    });
+    return this.playTask;
+  }
+
+  private async start(resumed: Promise<void>): Promise<void> {
+    let generation = this.generation;
     this.preparing = true;
     this.emit();
     try {
@@ -250,8 +266,10 @@ class EnsemblePlayer implements Ensemble {
       await this.seeking;
       if (generation !== this.generation || this.freed) return;
       if (this.offset >= this.duration) {
-        await this.seek(0);
-        return this.play();
+        const reset = this.seek(0);
+        generation = this.generation;
+        await reset;
+        if (generation !== this.generation || this.freed) return;
       }
       await this.fill(this.offset + Math.min(this.ahead, 0.8));
       if (generation !== this.generation || this.freed) return;
@@ -352,7 +370,7 @@ export async function createEnsemble(
   let pool: PerformancePool | undefined;
   try {
     pool = await createPerformancePool(parts, options);
-    return new EnsemblePlayer(
+    const player = new EnsemblePlayer(
       context,
       pool,
       parts,
@@ -360,9 +378,16 @@ export async function createEnsemble(
       options.destination ?? context.destination,
       !options.context,
     );
+    try {
+      await player.warmup();
+      return player;
+    } catch (error) {
+      player.free();
+      throw error;
+    }
   } catch (error) {
     pool?.free();
-    if (!options.context) await context.close();
+    if (!options.context && context.state !== "closed") await context.close().catch(() => {});
     throw error;
   }
 }
