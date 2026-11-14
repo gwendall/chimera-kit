@@ -1,6 +1,10 @@
 /** Parallel physical voices, one audible clock, bounded synthesis and independently routed outputs. */
 
+import { type GainControl, type GainPoint, gainAt, prepareGain, scheduleGain } from "./ensemble-gain.js";
 import type { LiveTelemetry } from "./performance.js";
+
+export type { GainPoint };
+
 import {
   createPerformancePool,
   type PerformanceBlock,
@@ -12,6 +16,7 @@ import {
 
 export interface EnsemblePart extends PerformancePart {
   gain?: number;
+  gainCurve?: GainPoint[];
 }
 export interface EnsembleOptions extends PerformancePoolOptions {
   context?: AudioContext;
@@ -37,6 +42,7 @@ interface PartState {
   frames: PerformanceFrame[];
   end: number;
   scheduled: number;
+  gain: GainControl;
 }
 
 export interface Ensemble {
@@ -92,7 +98,15 @@ class EnsemblePlayer implements Ensemble {
       output.gain.value = p.gain ?? 1;
       output.connect(destination);
       this.outputs.set(p.id, output);
-      return { id: p.id, output, blocks: [], frames: [], end: 0, scheduled: 0 };
+      return {
+        id: p.id,
+        output,
+        blocks: [],
+        frames: [],
+        end: 0,
+        scheduled: 0,
+        gain: prepareGain(p.gain ?? 1, p.gainCurve, this.duration),
+      };
     });
     this.stateChange = () => {
       if (this.wasRunning && context.state !== "running") this.pause();
@@ -157,7 +171,8 @@ class EnsemblePlayer implements Ensemble {
     if (!part) return undefined;
     for (let i = part.frames.length - 1; i >= 0; i--) {
       const frame = part.frames[i];
-      if (frame && frame.sample <= sample) return frame.state;
+      if (frame && frame.sample <= sample)
+        return { ...frame.state, outputRms: frame.state.outputRms * gainAt(part.gain, time) };
     }
     return undefined;
   }
@@ -246,6 +261,7 @@ class EnsemblePlayer implements Ensemble {
       this.epoch++;
       for (const p of this.parts) {
         p.scheduled = this.origin;
+        scheduleGain(p.output.gain, p.gain, this.origin / 48000, this.startedAt);
         for (const block of p.blocks) this.schedule(p, block);
       }
     } catch (error) {
@@ -328,6 +344,7 @@ export async function createEnsemble(
     throw new Error("ensemble: parts need one shared duration");
   if (parts.some((p) => p.gain !== undefined && (!Number.isFinite(p.gain) || p.gain < 0 || p.gain > 4)))
     throw new Error("ensemble: gain must be 0..4");
+  for (const p of parts) prepareGain(p.gain ?? 1, p.gainCurve, p.performance.duration);
   const ahead = options.ahead ?? 2;
   if (!Number.isFinite(ahead) || ahead < 0.5 || ahead > 8)
     throw new Error("ensemble: ahead must be 0.5..8 seconds");

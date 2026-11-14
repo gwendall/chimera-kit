@@ -96,3 +96,9 @@ rounded native sample for `at` seconds. It keeps the same airway and vibration s
 checkpoints include its event cursor. Times must increase within duration. Gestures still
 carry pitch, articulation and breath timing independently. Non-finite controls and unknown
 source/target names fail before JSON encoding, preventing NaN-to-null or silently ignored keys.
+
+Each ensemble part may carry a `gainCurve` of increasing `[seconds, multiplier]` points.
+Interpolation is linear, with endpoint holds, multiplied by the part's static gain. Playback
+reschedules the curve from the sought position; heard telemetry scales output RMS by the same
+curve. Native pressure remains a separate physical control. The transport owns output-node
+gain automation; route the node to spatial/capture buses rather than overriding its AudioParam.
