@@ -150,7 +150,9 @@ const BREATH_TABLE: readonly [confidence: number, breath: number][] = [
  * (confident voiced frames only, no style): male 2535 Hz, female 2760 Hz, child 3060 Hz. A
  * shorter tract raises every formant, F3 most reliably trackable of the three on this engine (F1
  * and F2 peak-pick unreliably on CHIMERA's child voice, likely because its formants sit close
- * together at this engine's own LPC order; see the imitate.ts commit for what was tried).
+ * together at this engine's own LPC order; see the imitate.ts commit for what was tried). The
+ * linear voice (chimera-lab 706280c) left them in place: per-sentence medians over list 1 read
+ * male 2525, female 2758, child 3088 Hz, within 30 Hz of the 0.2.0 engine's 2525/2743/3058.
  */
 const F3_ANCHORS = { male: 2535, female: 2760, child: 3060 };
 
@@ -158,45 +160,52 @@ const F3_ANCHORS = { male: 2535, female: 2760, child: 3060 };
  * Body breathiness: the same `measured.breathConfidence` as `BREATH_TABLE`, now also read onto
  * `body.breathiness` (0 to 1), measured at `body: { breathiness: k }`, k from 0 to 1 (male body,
  * no style). Pairs are (confidence, breathiness), confidence ascending; measured on Harvard list 1
- * (the fit set): 0.877@1, 0.907@0.9, 0.924@0.8, 0.938@0.7, 0.944@0.6, 0.949@0.5, 0.953@0 (the last
- * is the top of a flat band: confidence stays 0.944 to 0.953 across breathiness 0 to 0.6, not
- * monotonic in that band on either the fit or held-out sentences). On held-out Harvard list 2
- * (pooled, male), a plain default-breathiness render (no override) measured confidence 0.9517,
- * which sits inside that same flat band and would read back as breathiness 0.16 if trusted - and
- * true 0.5 measured confidence 0.9484, only 0.003 away: the two are not reliably told apart here.
- * Below `BODY_BREATHINESS_RELIABLE_BELOW` that reading is not returned at all. Above it, recovered
- * breathiness was within 0.02 absolute at true 0.8 and 1 (0.805, 1.000; true 0.5 sits right at the
- * cutoff and is not claimed accurate, see below). `roughness` also lowers this confidence
- * (measured breathConfidence 0.953 to 0.851 across roughness 0 to 1, male, breathiness at its
- * default) by about as much as high breathiness does: a rough-but-clean voice reads back as
- * breathiness 1 at roughness 1 (confidence 0.851), and already breathiness 0.83 at roughness 0.6
- * (confidence 0.917) - inside the "reliable" zone below. Raising the cutoff would not fix this
- * (roughness and breathiness move the same measurement in the same direction by similar amounts),
- * so it is left as a known, documented confound rather than papered over: a speaker whose voice is
- * rough but not breathy will read back with some breathiness here. `tension` moves this confidence
- * less (0.958 to 0.893 across tension 0 to 1) but moves `tiltDb` a lot (see `TILT_ANCHORS`); this
- * file's measurements don't pull either apart from breathiness or brightness, so `tension` and
- * `roughness` are not returned as their own dials.
+ * (the fit set, pooled) on the linear voice (chimera-lab 706280c): 0.8582@1, 0.8899@0.9,
+ * 0.9139@0.8, 0.9225@0.7, 0.9324@0.6, 0.9397@0.5, 0.9472@0 (the last is the top of a flat band:
+ * confidence stays 0.940 to 0.947 across breathiness 0 to 0.5, the default 0.15 measuring 0.9472
+ * and 0 measuring 0.9449, not monotonic in that band). The 0.2.0 engine's table sat higher
+ * (0.877@1, 0.924@0.8, 0.944@0.6, 0.953@0): chimera-lab 570a22b dropped the Reynolds ceiling on
+ * the airway's turbulence noise, so the same breathiness carries more aspiration, and at true 0.8
+ * the vowel frames both engines kept lost 0.010 of median YIN confidence (935 frames; fricatives
+ * 0.016, nasals 0.001, stops 0). Reading the linear voice through the old table put true 0.8 at
+ * 0.864 (error 0.064). On held-out Harvard list 2 (pooled, male), a plain default-breathiness
+ * render (no override) measured confidence 0.9502 and true 0.5 measured 0.9420, both inside or
+ * at the edge of that flat band, so neither is told apart from a clean voice here. Below
+ * `BODY_BREATHINESS_RELIABLE_BELOW` that reading is not returned at all. Below it, held-out true
+ * 0.8, 0.9 and 1 measured 0.9131, 0.8898 and 0.8625 (recovered 0.803, 0.900, 0.986) and true 0.7
+ * measured 0.9262 (0.663, not claimed accurate); true 0.6 measured 0.9358, just above the cutoff,
+ * and is left undefined. `roughness` also lowers this confidence (0.953 to 0.851 across roughness
+ * 0 to 1 on the 0.2.0 engine, male, breathiness at its default; not re-measured on the linear
+ * voice, the confound test pins the reading) by about as much as high breathiness does: on the
+ * 0.2.0 engine a rough-but-clean voice read back as breathiness 1 at roughness 1, and already 0.83
+ * at roughness 0.6 (confidence 0.917) - inside the "reliable" zone below.
+ * Raising the cutoff would not fix this (roughness and breathiness move the same measurement in
+ * the same direction by similar amounts), so it is left as a known, documented confound rather
+ * than papered over: a speaker whose voice is rough but not breathy will read back with some
+ * breathiness here. `tension` moves this confidence less (0.958 to 0.893 across tension 0 to 1)
+ * but moves `tiltDb` a lot (see `TILT_ANCHORS`); this file's measurements don't pull either apart
+ * from breathiness or brightness, so `tension` and `roughness` are not returned as their own dials.
  */
 const BODY_BREATHINESS_TABLE: readonly [confidence: number, breathiness: number][] = [
-  [0.877, 1],
-  [0.907, 0.9],
-  [0.924, 0.8],
-  [0.938, 0.7],
-  [0.944, 0.6],
-  [0.949, 0.5],
-  [0.953, 0],
+  [0.8582, 1],
+  [0.8899, 0.9],
+  [0.9139, 0.8],
+  [0.9225, 0.7],
+  [0.9324, 0.6],
+  [0.9397, 0.5],
+  [0.9472, 0],
 ];
 
 /**
  * Below this `breathConfidence`, body breathiness is reliable enough to return (see the table's
  * comment above); at or above it, `body.breathiness` is left `undefined` so CHIMERA keeps its own
  * default (0.15) rather than reporting a clean voice as somewhat breathy. Set at the table's own
- * flat-band boundary (0.944, the confidence at breathiness 0.6): a plain default-breathiness
- * render measured 0.9517 (above the cutoff, correctly excluded) and true breathiness 0.8 measured
- * 0.9232 (below it, correctly included).
+ * flat-band boundary (0.9324, the confidence at breathiness 0.6, the same rule that gave 0.944 on
+ * the 0.2.0 engine): on held-out sentences a plain default-breathiness render measured 0.9502
+ * (above the cutoff, correctly excluded) and true breathiness 0.8 measured 0.9131 (below it,
+ * correctly included).
  */
-const BODY_BREATHINESS_RELIABLE_BELOW = 0.944;
+const BODY_BREATHINESS_RELIABLE_BELOW = 0.9324;
 
 /**
  * Brightness fit: tiltDb = INTERCEPT + SLOPE * brightness, where `tiltDb` is `measureSpectrum`'s

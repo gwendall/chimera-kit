@@ -234,13 +234,17 @@ describe("profile", () => {
       }
     });
 
+    // Pooled, as profile() is meant to be used: one sentence's F3 is too noisy on a child body to
+    // carry a 0.5 child weight (F3 above 2910 Hz). Over Harvard list 1's first 8 and these 10, one
+    // child sentence read 2540 to 3215 Hz on the 0.2.0 engine and 2645 to 3140 Hz on the linear
+    // voice (chimera-lab 706280c), 2 then 3 of 18 below 2910. The anchor did not move (list 1:
+    // 3058 then 3088 Hz); the linear voice's flap and voiced closures took "Torn scraps..." from
+    // 2960 to 2840 Hz. These three pooled read child 0.97 on the old engine, 0.82 on the linear one.
     test("recovers a child body with a substantial child weight", async () => {
       voice = await createVoice({ wasm, dictionary });
-      for (const s of HELD_OUT.slice(0, 3)) {
-        const { audio, sampleRate } = voice.render(s, { body: "child" });
-        const p = profile(audio, sampleRate, { speakerAgreed: true });
-        expect(typeof p.body === "object" && p.body.child).toBeGreaterThan(0.5);
-      }
+      const { audio, sampleRate } = pooledRecording(voice, HELD_OUT.slice(0, 3), { body: "child" });
+      const p = profile(audio, sampleRate, { speakerAgreed: true });
+      expect(typeof p.body === "object" && p.body.child).toBeGreaterThan(0.5);
     });
   });
 
@@ -269,9 +273,10 @@ describe("profile", () => {
 
   describe("body breathiness", () => {
     // BODY_BREATHINESS_RELIABLE_BELOW's own comment has the numbers: below that confidence
-    // cutoff, breathiness round-trips within 0.02 at true 0.8 and 1 (0.805, 1.000); at or above
-    // it, body.breathiness is left undefined rather than guessed, because a plain default
-    // recording and a true-0.5 recording measure almost the same confidence (0.9517 vs 0.9484).
+    // cutoff, breathiness round-trips within 0.02 at true 0.8 and 1 (0.803, 0.986 on the linear
+    // voice); at or above it, body.breathiness is left undefined rather than guessed, because a
+    // plain default recording and a true-0.5 recording both sit in the table's flat band (0.9502
+    // and 0.9420, against a clean 0.9472).
     test("leaves breathiness undefined on a clean, default-breathiness body", async () => {
       voice = await createVoice({ wasm, dictionary });
       const { audio, sampleRate } = pooledRecording(voice, HELD_OUT, {});

@@ -236,7 +236,19 @@ pub fn init() {
     LazyLock::force(&SYMBOLS);
 }
 
+/// [h̥]: /h/ written with the voiceless ring below, a breath placed on purpose (a breathed
+/// re-attack between two sung vowels, say) rather than a word's /h/. It has /h/'s definition
+/// ([`base_symbol`]), but the planner keeps it voiceless where it voices a written "h" (between
+/// two voiced sounds, [ɦ]).
+pub const VOICELESS_H: &str = "h\u{325}";
+
+/// The inventory symbol a written phone stands for: "h" for [`VOICELESS_H`], else the phone.
+pub fn base_symbol(ipa: &str) -> &str {
+    if ipa == VOICELESS_H { "h" } else { ipa }
+}
+
 fn by_ipa(ipa: &str) -> Option<&'static PhonemeDef> {
+    let ipa = base_symbol(ipa);
     // `new Map(BASE.map(...))`: a later duplicate would win; the table has none
     BASE.iter().rev().find(|p| p.ipa == ipa)
 }
@@ -246,7 +258,7 @@ fn by_ipa(ipa: &str) -> Option<&'static PhonemeDef> {
 /// is `Copy`).
 pub fn phoneme(ipa: &str, body: BodyMix) -> Option<PhonemeDef> {
     let p = by_ipa(ipa)?;
-    let of = |b: BodyName| match CAL.get(b.as_str()).and_then(|t| t.get(ipa)) {
+    let of = |b: BodyName| match CAL.get(b.as_str()).and_then(|t| t.get(p.ipa)) {
         Some(cal) => {
             let mut t = p.targets;
             t.merge(cal);
