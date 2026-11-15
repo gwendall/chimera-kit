@@ -70,6 +70,8 @@ impl HumanAirway {
         let k = body.scale;
         let tract = HumanVocalTract::new(body);
         let mut net = AirwayNetwork::new(fs);
+        // the jet noise follows the lung pressure as far as a singer pushes it (`compute_noise`)
+        net.re_ceiling = f64::INFINITY;
         let dx_min = (C_SOUND / fs) / 0.93;
         // node counts from the shortest expected lengths (larynx raised, lips retracted)
         let ph_min_len = 8.7 * k * (0.55 + 0.45 * body.pharynx) - 1.6 * k;

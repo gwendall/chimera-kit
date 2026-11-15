@@ -6,7 +6,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 
 const VOWEL_CHARS: &str = "iyɨʉɯuɪʏʊeøɘɵɤoəɛœɜɞʌɔæɐaɶɑɒɝɚ";
-const MULTI: [&str; 10] = ["tʃ", "dʒ", "ts", "dz", "pf", "aɪ", "aʊ", "ɔɪ", "eɪ", "oʊ"];
+// "h̥" keeps its ring: an /h/ the planner never voices (`inventory::VOICELESS_H`)
+const MULTI: [&str; 11] = ["tʃ", "dʒ", "ts", "dz", "pf", "aɪ", "aʊ", "ɔɪ", "eɪ", "oʊ", "h\u{325}"];
 const ALIASES: [(&str, &str); 9] = [("t͡ʃ", "tʃ"), ("d͡ʒ", "dʒ"), ("t͡s", "ts"), ("d͡z", "dz"), ("ɡ", "g"), ("ʧ", "tʃ"), ("ʤ", "dʒ"), ("r̥", "r"), ("ɐ̯", "ɐ")];
 
 

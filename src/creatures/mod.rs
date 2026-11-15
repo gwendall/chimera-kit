@@ -1,6 +1,7 @@
 //! Non-human creatures: their airways, sources, playable parameters and calls.
 pub mod alligator;
 pub mod build;
+pub mod cat;
 pub mod elephant;
 pub mod mammal;
 pub mod seal;

@@ -8,9 +8,13 @@ use crate::anatomy::geom::Vec2;
 use crate::anatomy::human::{ArticKey, ArticPatch, BODY_MALE, HumanBody, N_ARTIC};
 use crate::control::articulators::ArticulatorBank;
 use crate::control::score::{Blended, ControlKey, Gesture, GestureScore, Label, N_CONTROL};
-use crate::math::{PI, clamp, exp, js_max, js_min, js_sign, js_trunc_i32, pow, sqrt, tanh};
+use crate::math::{PI, clamp, exp, js_max, js_min, js_sign, js_trunc_i32, pow, sqrt};
 use crate::physics::CM_H2O;
+use crate::sources::glottis::{CLOSURE_SEAL, PHONATION_THRESHOLD, PUSHED_PRESSURE_CEILING, REGISTER_PITCH, threshold_rise};
 use serde::{Deserialize, Serialize};
+
+/// A semitone's frequency ratio.
+const SEMITONE: f64 = 1.059_463_094_359_295_3;
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -113,6 +117,13 @@ impl SourcePatch {
     }
 }
 
+/// The output's safety: a sample past it (or NaN) is a diverging network, not a voice, and is
+/// replaced (`HumanVoice::safety_trips` counts them). The loudest the voice sings, a male [a] at
+/// 370 Hz at 32 cmH2O (a crowd fan screaming at full breath), peaks at 10.8; speech at about 0.8
+/// (`tests/linear_output.rs`). Nothing under it is turned down: the voice is linear, and gain and
+/// limiting belong to the mix.
+pub const OUTPUT_SAFETY: f64 = 100.0;
+
 pub const SCOPE_POINTS: usize = 256;
 const SCOPE_LEN: usize = 4096;
 
@@ -161,10 +172,15 @@ pub struct HumanVoice {
     gate_target: f64,
     /// time left (s) during which a release of the gate follows the score's own breath ramp
     score_breath_hold: f64,
+    /// 0..1: the voice is in a phrase (a breath is given, whatever its level); 0 in a rest
+    phrase: f64,
     p_lung: f64,
     /// lung pressure applied this sample, ramped toward `p_lung` across the control block
     p_lung_now: f64,
     p_lung_step: f64,
+    /// laryngeal mechanism: 0 thick folds (M1, chest), 1 thin folds (M2, falsetto), and its goal
+    register: f64,
+    register_goal: f64,
     f0: f64,
     pub output_gain: f64,
     dc_x: f64,
@@ -190,10 +206,8 @@ pub struct HumanVoice {
     base_abduction: f64,
     base_closure: f64,
     score_f0: Option<f64>,
-    lim_env: f64,
-    lim_hold: i64,
-    lim_hold_n: i64,
-    lim_release: f64,
+    /// output samples the safety replaced (`OUTPUT_SAFETY`) since the voice was made
+    pub safety_trips: u64,
     /// tissue may compress this far (cm) before the palate stops the articulator
     pub max_penetration: f64,
 }
@@ -219,9 +233,12 @@ impl HumanVoice {
             gate: 0.0,
             gate_target: 0.0,
             score_breath_hold: 0.0,
+            phrase: 0.0,
             p_lung: 0.0,
             p_lung_now: 0.0,
             p_lung_step: 0.0,
+            register: 0.0,
+            register_goal: 0.0,
             f0: DEFAULT_SOURCE.f0,
             output_gain: 5.5e-7,
             dc_x: 0.0,
@@ -245,10 +262,7 @@ impl HumanVoice {
             base_abduction: 0.0,
             base_closure: 0.0,
             score_f0: None,
-            lim_env: 0.0,
-            lim_hold: 0,
-            lim_hold_n: crate::math::js_round(0.025 * fs_out) as i64,
-            lim_release: exp(-1.0 / (0.2 * fs_out)),
+            safety_trips: 0,
             max_penetration: 0.1,
         };
         let x = v.artic.x;
@@ -366,30 +380,18 @@ impl HumanVoice {
                 if self.dec.push(y) {
                     // output sample
                     let mut v = self.dec.value * self.output_gain;
+                    // The output is linear: the level of a note and of the consonant after it is the
+                    // voice's. Gain and limiting belong to the mix (the app's AudioEngine, the show's
+                    // client routing, a song's mix). Only a diverging network trips the safety.
+                    if !(v.abs() <= OUTPUT_SAFETY) {
+                        v = if v.is_nan() { 0.0 } else { js_sign(v) * OUTPUT_SAFETY };
+                        self.safety_trips += 1;
+                    }
                     // DC blocker
                     let hp = v - self.dc_x + self.dc_coef * self.dc_y;
                     self.dc_x = v;
                     self.dc_y = hp;
                     v = hp;
-                    // output limiter: a peak envelope held for longer than a glottal period, so a loud
-                    // sung vowel is turned down by a steady gain instead of being squared off; only a
-                    // rising level touches the soft clip
-                    let av = v.abs();
-                    if av >= self.lim_env {
-                        self.lim_env = av;
-                        self.lim_hold = self.lim_hold_n;
-                    } else if self.lim_hold > 0 {
-                        self.lim_hold -= 1;
-                    } else {
-                        self.lim_env *= self.lim_release;
-                    }
-                    if self.lim_env > 0.75 {
-                        v *= 0.75 / self.lim_env;
-                    }
-                    let al = v.abs();
-                    if al > 0.85 {
-                        v = js_sign(v) * (0.85 + 0.15 * tanh((al - 0.85) / 0.15));
-                    }
                     *o = v as f32;
                     self.out_acc += v * v;
                     self.out_count += 1;
@@ -490,7 +492,63 @@ impl HumanVoice {
             0.07
         };
         self.gate += (gate_goal - self.gate) * (1.0 - exp(-dt / tau));
-        self.p_lung = self.source.pressure * CM_H2O * self.gate;
+        // The phrase: on while a breath is given, whatever its level (a melisma's carried notes
+        // lower the breath without ending the phrase), off in a rest (a silence, the breath's
+        // end) and for an ingressive breath. It moves like the gate, so for a breath of 0 or 1
+        // it is the gate.
+        let phrase_goal = if score_breath < 0.0 {
+            0.0
+        } else {
+            js_max(if self.gate_target > 0.0 { 1.0 } else { 0.0 }, if score_breath > 0.0 { breath_act } else { 0.0 })
+        };
+        let tau = if phrase_goal > self.phrase {
+            0.025
+        } else if self.score_breath_hold > 0.0 {
+            0.02
+        } else {
+            0.07
+        };
+        self.phrase += (phrase_goal - self.phrase) * (1.0 - exp(-dt / tau));
+        // The laryngeal mechanism: thick folds below the passaggio, thin folds above it. A voice
+        // changes mechanism higher going up than coming down, so it flips a semitone above the
+        // passaggio and back a semitone below it, over a few cycles: a vibrato around it doesn't
+        // flip it back and forth. A silent voice sets up the mechanism its next note needs.
+        let silent = self.gate < 0.05;
+        if self.f0 >= REGISTER_PITCH * SEMITONE {
+            self.register_goal = 1.0;
+        } else if self.f0 <= REGISTER_PITCH / SEMITONE {
+            self.register_goal = 0.0;
+        } else if silent {
+            self.register_goal = if self.f0 > REGISTER_PITCH { 1.0 } else { 0.0 };
+        }
+        self.register = if silent { self.register_goal } else { self.register + (self.register_goal - self.register) * (1.0 - exp(-dt / 0.03)) };
+        // A higher note needs a higher lung pressure: the stiffer folds' phonation threshold rises
+        // and the singer pushes in proportion. The source's pressure (and the effort it sets) is
+        // that push relative to the threshold, so the airway (frication, aspiration, bursts) gets
+        // the pressure a singer actually uses. Without it a sung /s/ at 330 Hz sat 22 dB under its
+        // vowel against 8 dB at 110 Hz: the vowel grew with the pitch, the /s/ didn't, and the
+        // output limiter the voice had then, turning the vowel down, turned the /s/ after it down
+        // too. (The /s/ also needs the airway to let its noise grow with that pressure: see
+        // `compute_noise`.)
+        let rise = threshold_rise(self.f0, self.airway.body.speaking_f0, self.register);
+        self.glottis.threshold = PHONATION_THRESHOLD * rise;
+        // A glottal stop seals by pressing the folds together, and the voice presses harder as the
+        // pressure rises: the leak keeps its flow (its area falls as 1/sqrt of the pressure), so
+        // the stop stays as crisp on a high note as on a spoken one.
+        self.glottis.closure_seal = 1.0 - (1.0 - CLOSURE_SEAL) / sqrt(rise);
+        // That push is the phrase's: the pressure above the speaking one goes at a rest or a
+        // phrase's end (`phrase`), not with the breath's level. Held at full drive until the gate
+        // fell, it left the parting folds of a rest breathing at the high note's pressure, 7 to
+        // 10 dB more [h] than at a speaking pressure; let go at the rest, 3 to 4 dB. Scaled by the
+        // breath's level instead, every lowered breath lost its push too: a melisma's carried
+        // notes dipped up to 2.1 dB deeper than their source at 294 Hz. The push stops at the lung
+        // pressure singers reach (`PUSHED_PRESSURE_CEILING`): multiplied without a ceiling, a
+        // source at 32 cmH2O on a chest note an octave and a half over the speaking pitch asked
+        // 131 (32 times 4.1) and peaked 8.6 dB louder than without the push, and a crowd's
+        // screams asked up to 88. What the source drives by itself is never lowered.
+        let drive = self.source.pressure * self.gate;
+        let pushed = drive * (1.0 + (rise - 1.0) * self.phrase);
+        self.p_lung = js_min(pushed, js_max(drive, PUSHED_PRESSURE_CEILING)) * CM_H2O;
         self.p_lung_step = (self.p_lung - self.p_lung_now) / self.ctrl_every as f64;
         // vocal effort follows the pressure actually applied: a harder breath (a louder sung note)
         // gives wider, sharper-closing pulses, as in real phonation, not just more flow
