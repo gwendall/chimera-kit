@@ -48,6 +48,49 @@ pub struct GlottisParams {
     pub chaos: f64,
 }
 
+/// Phonation threshold pressure at the speaking pitch (dyn/cm²).
+pub const PHONATION_THRESHOLD: f64 = 2.5 * CM_H2O;
+
+/// Share of the static opening (posterior chink, abduction) a full closure shuts; the rest leaks.
+pub const CLOSURE_SEAL: f64 = 0.92;
+
+/// The passaggio (Hz, F4): below it a voice sings with thick folds (laryngeal mechanism M1: chest,
+/// modal), above it with thin folds (M2: falsetto, head voice). Men and women use both mechanisms
+/// over the same range of pitches; countertenors sing M1 up to E4 and M2 from E3 (Castellengo,
+/// Lamesch & Henrich 2007, ICA Madrid), so the mechanisms overlap around here and the voice
+/// changes one a semitone either side of it, depending on where it comes from.
+pub const REGISTER_PITCH: f64 = 350.0;
+
+/// How much the phonation threshold pressure has risen at `q` times a mechanism's reference
+/// pitch (1 at and below it). Titze (1992, JASA 91:2926) measured Pth = 0.14 + 0.06 (F0/F0n)² kPa
+/// in modal voice; singers keep their lung pressure in proportion to it, about doubling it per
+/// octave (Titze & Sundberg 1992, JASA 91:2936; Sundberg, Titze & Scherer 1993, J Voice 7:15), and
+/// that pressure, not the pitch, makes the high notes loud.
+pub fn pitch_threshold_rise(q: f64) -> f64 {
+    let q = js_max(1.0, q);
+    (0.14 + 0.06 * q * q) / 0.2
+}
+
+/// The rise of the phonation threshold at `f0` for a voice speaking at `speaking_f0`, in the
+/// laryngeal mechanism `m2` (0 thick folds, 1 thin folds, in between while it changes). Thick
+/// folds start from the speaking pitch; thin folds start from the passaggio, so above it falsetto
+/// needs far less pressure than a chest voice would at the same pitch and its need grows more
+/// slowly with the pitch. At the same note a voice is 8 to 10 dB quieter in M2 than in M1
+/// (Castellengo et al. 2007). The voice multiplies its lung pressure and threshold by this.
+pub fn threshold_rise(f0: f64, speaking_f0: f64, m2: f64) -> f64 {
+    let thick = pitch_threshold_rise(f0 / speaking_f0);
+    let thin = pitch_threshold_rise(f0 / REGISTER_PITCH);
+    thick + (thin - thick) * m2
+}
+
+/// The highest lung pressure the push for a high note takes the lungs to (cmH2O). Professional
+/// sopranos singing as loudly as they can across their range reach up to 40 cmH2O, against 5 to
+/// 10 in conversational speech; loud speech and stage speech may approach the singing values
+/// (Lindblom & Sundberg 2007, "The human voice in speech and singing", Springer Handbook of
+/// Acoustics, ch. 16, p. 676 and Fig. 16.10, after Molinder 1997). A source that drives harder by
+/// itself keeps its own pressure: the ceiling only bounds the push.
+pub const PUSHED_PRESSURE_CEILING: f64 = 40.0;
+
 pub const DEFAULT_GLOTTIS: GlottisParams = GlottisParams {
     f0: 110.0,
     amplitude: 0.16,
@@ -96,6 +139,8 @@ pub struct ParametricGlottis {
     pub f0_now: f64,
     /// phonation threshold pressure (dyn/cm²)
     pub threshold: f64,
+    /// share of the static opening a full closure shuts (a glottal stop's seal)
+    pub closure_seal: f64,
     // per-sample smoothing of control-rate parameters (steps in the glottal area at high airflow
     // radiate as clicks, because the output is the derivative of flow)
     static_sm: f64,
@@ -127,7 +172,8 @@ impl ParametricGlottis {
             voice_coef: 1.0 - exp(-TAU * 25.0 / fs),
             area: 0.0,
             f0_now: 110.0,
-            threshold: 2.5 * CM_H2O,
+            threshold: PHONATION_THRESHOLD,
+            closure_seal: CLOSURE_SEAL,
             static_sm: 0.0,
             closure_sm: 0.0,
             amp_sm: 0.0,
@@ -217,7 +263,7 @@ impl ParametricGlottis {
         self.closure_sm += sc * (p.closure - self.closure_sm);
         self.static_sm += sc * (p.abduction + p.chink - self.static_sm);
         let vib = self.amp_sm * self.cycle_amp * self.voicing_sm * pulse;
-        let statics = self.static_sm * (1.0 - 0.92 * self.closure_sm);
+        let statics = self.static_sm * (1.0 - self.closure_seal * self.closure_sm);
         let a = js_max(0.0, vib + statics);
         self.area = a;
         a

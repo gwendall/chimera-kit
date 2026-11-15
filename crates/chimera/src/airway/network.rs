@@ -325,6 +325,10 @@ pub struct AirwayNetwork {
     pub viscous_omega: f64,
     /// scale on turbulence noise gain
     pub noise_scale: f64,
+    /// Reynolds number at which the turbulence noise's growth (as Re² - Re_c²) is halved, a soft
+    /// ceiling; infinite: none. The creatures were voiced with one at 12000. The human airway has
+    /// none: see `compute_noise`.
+    pub re_ceiling: f64,
     /// last output sample (radiated pressure derivative)
     pub out: f64,
 }
@@ -419,6 +423,7 @@ impl AirwayNetwork {
             viscous_scale: 1.0,
             viscous_omega: 2.0 * PI * 700.0,
             noise_scale: 1.0,
+            re_ceiling: 12000.0,
             out: 0.0,
         }
     }
@@ -1097,7 +1102,7 @@ impl AirwayNetwork {
     fn compute_noise(&mut self) {
         // white noise power per Hz scales with fs: normalise to a 96 kHz reference
         let scale = self.noise_scale * sqrt(96000.0 / self.fs);
-        let sat = 12000.0 * 12000.0 - RE_CRIT * RE_CRIT;
+        let sat = self.re_ceiling * self.re_ceiling - RE_CRIT * RE_CRIT;
         for i in 0..self.noise.len() {
             let s = &mut self.noise[i];
             let a = self.branch_area[s.src];
@@ -1106,9 +1111,14 @@ impl AirwayNetwork {
             if a > self.closed_area {
                 // Re = v·d_h/ν with d_h = 2√(A/π) → Re = |U|·2/(ν·√(πA))
                 let re = (u.abs() * 2.0) / (NU * sqrt(PI * a));
+                // the jet's noise grows as Re² - Re_c², up to the network's ceiling if it has one.
+                // In a human airway a ceiling at 12000 took 2.5 dB off every fricative at a speaking
+                // pressure (Re 6000 to 8000) and 8 dB off a sung /s/ at 330 Hz, whose higher lung
+                // pressure takes its Re to 15000: the /s/ didn't follow the pressure that raised its
+                // vowel. Without it a stop's closure and release peak within 3 dB of where they did.
                 if re > RE_CRIT {
                     let x = re * re - RE_CRIT * RE_CRIT;
-                    amp = (s.gain * scale * x) / (1.0 + x / sat); // bounded growth at very high Re
+                    amp = (s.gain * scale * x) / (1.0 + x / sat);
                 }
             }
             // white → high-pass (1st order) → 2nd-order low-pass

@@ -6,7 +6,7 @@
 //! Inherent / minimum durations (ms) per phoneme follow Klatt's table.
 
 use super::Segment;
-use super::inventory::Manner;
+use super::inventory::{Manner, base_symbol};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -114,7 +114,7 @@ pub fn klatt_durations(segs: &[Segment], info: impl Fn(&Segment) -> SegInfo) -> 
                 return d;
             }
             let fallback = inf[i].dur.unwrap_or(0.08);
-            let (inh0, min0) = table(&s.ipa).unwrap_or((1000.0 * fallback, 600.0 * fallback));
+            let (inh0, min0) = table(base_symbol(&s.ipa)).unwrap_or((1000.0 * fallback, 600.0 * fallback));
             let (inh, mut min, mut p) = (inh0, min0, 1.0f64);
             if inf[i].vowel {
                 let stress = s.stress.unwrap_or(0);

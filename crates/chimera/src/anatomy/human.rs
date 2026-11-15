@@ -50,7 +50,7 @@ pub struct HumanArtic {
     pub epilarynx: f64,
     /// ventricular-fold narrowing 0..1
     pub ventricular: f64,
-    /// lateral channel opening 0..1 (for /l/)
+    /// lateral channel opening 0..1 (for /l/); negative targets press the sides closed
     pub lateral: f64,
     /// tongue dorsum depression between closures 0..1 (clicks)
     pub dorsum: f64,
@@ -271,11 +271,13 @@ pub struct HumanBody {
     pub tongue_radius: f64,
     /// max lip width (cm, before scale)
     pub lip_width: f64,
+    /// speaking pitch (Hz): above it the folds stiffen and the phonation threshold rises
+    pub speaking_f0: f64,
 }
 
-pub const BODY_MALE: HumanBody = HumanBody { name: "Adult male", scale: 1.0, pharynx: 1.0, tongue_radius: 2.25, lip_width: 4.6 };
-pub const BODY_FEMALE: HumanBody = HumanBody { name: "Adult female", scale: 0.9, pharynx: 0.88, tongue_radius: 2.2, lip_width: 4.4 };
-pub const BODY_CHILD: HumanBody = HumanBody { name: "Child", scale: 0.74, pharynx: 0.8, tongue_radius: 2.15, lip_width: 4.0 };
+pub const BODY_MALE: HumanBody = HumanBody { name: "Adult male", scale: 1.0, pharynx: 1.0, tongue_radius: 2.25, lip_width: 4.6, speaking_f0: 110.0 };
+pub const BODY_FEMALE: HumanBody = HumanBody { name: "Adult female", scale: 0.9, pharynx: 0.88, tongue_radius: 2.2, lip_width: 4.4, speaking_f0: 200.0 };
+pub const BODY_CHILD: HumanBody = HumanBody { name: "Child", scale: 0.74, pharynx: 0.8, tongue_radius: 2.15, lip_width: 4.0, speaking_f0: 260.0 };
 
 /// The three human bodies by their short names.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -377,6 +379,7 @@ impl BodyMix {
             pharynx: self.blend(|b| b.body().pharynx),
             tongue_radius: self.blend(|b| b.body().tongue_radius),
             lip_width: self.blend(|b| b.body().lip_width),
+            speaking_f0: self.blend(|b| b.body().speaking_f0),
         }
     }
 }

@@ -67,6 +67,20 @@ fn total(segs: &[Segment]) -> f64 {
     segs.iter().fold(0.0, |s, c| s + c.dur.unwrap_or(0.0))
 }
 
+/// One note's part of an actual sustained vowel. An interval crossing a diphthong's glide
+/// names the whole nucleus; one contained in a vowel target names that target.
+fn vowel_interval(vowels: &[PlannedSegment], nucleus: &str, a: f64, b: f64) -> PlannedSegment {
+    let first = vowels.iter().find(|s| s.t1 > a + 1e-9).unwrap_or(&vowels[vowels.len() - 1]);
+    let last = vowels.iter().rev().find(|s| s.t0 < b - 1e-9).unwrap_or(first);
+    let mut out = first.clone();
+    out.t0 = a;
+    out.t1 = b;
+    if first.ipa != last.ipa {
+        out.ipa = nucleus.to_string();
+    }
+    out
+}
+
 fn vibrato_gesture(t0: f64, t1: f64, depth: f64, tag: Option<f64>) -> Gesture {
     let mut g = Gesture::new(t0 + 0.22, t1, 0.3, 0.06, 4.0, Targets::default().with(ControlKey::VIBRATO, depth)).label("vibrato");
     g.tag = tag;
@@ -117,37 +131,43 @@ pub fn plan_song(notes: &[SungNote], o: &SongOptions) -> Plan {
         }
         let mut segs: Vec<Segment> = Vec::new();
         let mut vowel_spans: Vec<(f64, f64)> = Vec::new();
-        // each note's onset and coda consonants, at the note's pitch (a coda at the pitch of the
-        // note whose syllable it ends; a melisma has neither)
+        // Pitch changes inside a held vowel are not new articulations. Fit the consonants to
+        // the entire syllable, so subdividing its pitch contour cannot squeeze its final stop
+        // or the following onset into only the last pitch interval.
+        let starts: Vec<usize> = (i..=j).filter(|&k| k == i || !melisma(&notes[k].syl)).collect();
+        let ends: Vec<usize> = starts.iter().enumerate().map(|(n, _)| starts.get(n + 1).map_or(j, |next| next - 1)).collect();
         let hz_of = |k: usize| midi_to_hz(notes[k].midi);
-        let mut onsets: Vec<Vec<Segment>> = (i..=j).map(|k| if melisma(&notes[k].syl) { Vec::new() } else { consonants_at(&notes[k].syl.onset, o.body, 0.8, hz_of(k)) }).collect();
-        let mut codas: Vec<Vec<Segment>> = (i..=j)
-            .map(|k| if k < j && melisma(&notes[k + 1].syl) { Vec::new() } else { consonants_at(&last_of_chain(notes, k).coda, o.body, 0.8, hz_of(k)) })
+        let mut onsets: Vec<Vec<Segment>> = starts.iter().map(|&k| consonants_at(&notes[k].syl.onset, o.body, 0.8, hz_of(k))).collect();
+        let mut codas: Vec<Vec<Segment>> = starts.iter().zip(&ends)
+            .map(|(&k, &last)| consonants_at(&notes[k].syl.coda, o.body, 0.8, hz_of(last)))
             .collect();
         // the phrase's last vowel leaves a short breath before the next phrase. The call's last
         // phrase is followed by a rest (callers split phrases at rests), so the breath comes from
         // the rest: hold that note to its end, less the breath's release.
         let reserve = if j == notes.len() - 1 { 0.05 } else { 0.12 };
-        let last_end = times[j] + notes[j].beats * beat - js_min(reserve, 0.3 * notes[j].beats * beat);
-        for k in i..=j {
-            let (span, next) = if k < j { (times[k + 1] - times[k], &mut onsets[k + 1 - i][..]) } else { (last_end - times[k], &mut [][..]) };
-            fit([&mut codas[k - i][..], next], span);
+        let last_start = *starts.last().unwrap();
+        let last_duration = if last_start == j { notes[j].beats * beat } else { times[j] + notes[j].beats * beat - times[last_start] };
+        let last_end = times[j] + notes[j].beats * beat - js_min(reserve, 0.3 * last_duration);
+        for (n, &k) in starts.iter().enumerate() {
+            let (span, next) = if n + 1 < starts.len() { (times[starts[n + 1]] - times[k], &mut onsets[n + 1][..]) } else { (last_end - times[k], &mut [][..]) };
+            fit([&mut codas[n][..], next], span);
         }
         let first_onset = total(&onsets[0]);
-        for k in i..=j {
+        let mut pitch_spans = Vec::new();
+        for (syllable, &k) in starts.iter().enumerate() {
             let n = &notes[k];
             let hz = hz_of(k);
-            let next_melisma = k < j && melisma(&notes[k + 1].syl);
-            let coda = std::mem::take(&mut codas[k - i]);
-            let onset = std::mem::take(&mut onsets[k - i]);
+            let coda = std::mem::take(&mut codas[syllable]);
+            let onset = std::mem::take(&mut onsets[syllable]);
             // vowel from this note's beat to the next note's onset (less this note's coda)
-            let note_end = if k < j { times[k + 1] - total(&onsets[k + 1 - i]) } else { last_end };
+            let note_end = if syllable + 1 < starts.len() { times[starts[syllable + 1]] - total(&onsets[syllable + 1]) } else { last_end };
             // only consonants squeezed to their floor can leave less than MIN_VOWEL
             let vdur = js_max(0.02, note_end - times[k] - total(&coda));
             segs.extend(onset);
+            let vowel_first = segs.len();
             let parts = diphthong_parts(&n.syl.nucleus.ipa);
             match parts {
-                Some((a, b)) if !next_melisma => {
+                Some((a, b)) => {
                     segs.push(Segment { ipa: a.to_string(), dur: Some(vdur * 0.8), f0: Some(hz), stress: Some(1), word_end: None });
                     segs.push(Segment { ipa: b.to_string(), dur: Some(vdur * 0.2), f0: Some(hz), stress: Some(1), word_end: None });
                 }
@@ -156,12 +176,67 @@ pub fn plan_song(notes: &[SungNote], o: &SongOptions) -> Plan {
                     segs.push(Segment { ipa, dur: Some(vdur), f0: Some(hz), stress: Some(1), word_end: None });
                 }
             }
+            let vowel_last = segs.len() - 1;
             segs.extend(coda);
             vowel_spans.push((times[k], times[k] + vdur));
+            if ends[syllable] > k {
+                pitch_spans.push((k, ends[syllable], vowel_first, vowel_last, segs.len() - 1));
+            }
         }
         if !segs.is_empty() {
             // the planner lays segments out from t0 + 0.06: start so the first vowel lands on its beat
-            let plan = plan_utterance(&segs, &PlanOptions { body: o.body, t0: times[i] - first_onset - 0.06, f0: Some(hz_of(i)), intonation: Some(Intonation::Flat), sung: Some(true), ..Default::default() });
+            let mut plan = plan_utterance(&segs, &PlanOptions { body: o.body, t0: times[i] - first_onset - 0.06, f0: Some(hz_of(i)), intonation: Some(Intonation::Flat), sung: Some(true), ..Default::default() });
+            for &(first, last, vowel_first, _, syllable_last) in &pitch_spans {
+                // Diphthongs were expanded above. These indices also track the slight timing
+                // drift when irreducible consonant floors overfill an exceptionally short run.
+                let a = plan.segments[vowel_first].t0;
+                let b = plan.segments[syllable_last].t1;
+                // Pitch follows the melody independently through the vowel and its coda. The
+                // next syllable's onset still takes its new pitch before its own vowel starts.
+                plan.gestures.retain(|g| !(g.targets.has(ControlKey::F0) && g.t0 >= a - 1e-9 && g.t0 < b - 1e-9 && g.t1 <= b + 1e-9));
+                for k in first..=last {
+                    let start = times[k];
+                    let end = js_min(b, if k < last { times[k + 1] } else { b });
+                    if end > start {
+                        let ramp = js_min(0.06, js_max(0.008, 0.5 * (end - start)));
+                        plan.gestures.push(Gesture::new(start, end, ramp, ramp, 6.0, Targets::default().with(ControlKey::F0, hz_of(k))).label("pitch"));
+                    }
+                }
+            }
+            // Note consumers still need each pitch interval's vowel timing. Partition only the
+            // timeline metadata at pitch boundaries; the oral gesture above stays continuous.
+            // A pitch point inside a coda creates no fictitious vowel segment.
+            if !pitch_spans.is_empty() {
+                let mut timed = Vec::new();
+                let mut cursor = 0;
+                for &(first, last, vowel_first, vowel_last, _) in &pitch_spans {
+                    timed.extend_from_slice(&plan.segments[cursor..vowel_first]);
+                    let vowels = &plan.segments[vowel_first..=vowel_last];
+                    let start = vowels[0].t0;
+                    let end = vowels[vowels.len() - 1].t1;
+                    for k in first..=last {
+                        let a = js_max(start, times[k]);
+                        let b = js_min(end, if k < last { times[k + 1] } else { end });
+                        if b <= a {
+                            continue;
+                        }
+                        let nucleus = &notes[first].syl.nucleus.ipa;
+                        if k == last && diphthong_parts(nucleus).is_some() {
+                            let glide = vowels[vowels.len() - 1].t0;
+                            // Consumers retain the last note's two vowel phases. If the glide
+                            // began on an earlier note, both phases continue the same real target.
+                            let cut = if glide > a && glide < b { glide } else { 0.5 * (a + b) };
+                            timed.push(vowel_interval(vowels, nucleus, a, cut));
+                            timed.push(vowel_interval(vowels, nucleus, cut, b));
+                        } else {
+                            timed.push(vowel_interval(vowels, nucleus, a, b));
+                        }
+                    }
+                    cursor = vowel_last + 1;
+                }
+                timed.extend_from_slice(&plan.segments[cursor..]);
+                plan.segments = timed;
+            }
             gestures.extend_from_slice(&plan.gestures);
             segments.extend(plan.segments);
             for (a, b) in vowel_spans {
@@ -174,15 +249,6 @@ pub fn plan_song(notes: &[SungNote], o: &SongOptions) -> Plan {
         i = j + 1;
     }
     Plan { gestures, segments, end }
-}
-
-/// The syllable whose coda ends a melisma chain starting at note k.
-fn last_of_chain(notes: &[SungNote], k: usize) -> &Syllable {
-    let mut b = k;
-    while b > 0 && melisma(&notes[b].syl) {
-        b -= 1;
-    }
-    &notes[b].syl
 }
 
 /// Live: gestures relative to "now" (the planner's 60 ms lead is mostly taken back).
